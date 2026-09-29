@@ -130,7 +130,7 @@ mode needs a renderer, not a schema change.
 
 This is a hard product rule: **no invented football facts.**
 
-- All 109 seeded questions are written from well-established, widely documented facts —
+- All 139 seeded questions are written from well-established, widely documented facts —
   tournament results and hosts, famous transfers, club nicknames and stadiums, and the
   career histories of globally known players.
 - Statistics that shift season to season were avoided unless the record has been stable
@@ -151,12 +151,13 @@ This is a hard product rule: **no invented football facts.**
   Rather than fabricate numbers to make the mode work, the mode exists in the type system
   and validation layer but is excluded from `ENABLED_GAME_MODES`, so it never reaches
   players.
-- **Question bank size: 109 questions** against the 100-question target, but the
-  difficulty spread is weighted toward EASY/NORMAL/HARD (25/48/24) with 10 EXPERT and only
-  2 IMPOSSIBLE, rather than the suggested 20/30/25/15/10. Genuinely obscure-but-fair
-  IMPOSSIBLE-tier questions are the hardest to verify confidently, so fewer were written
-  deliberately. Selecting `בלתי אפשרי` alone therefore yields a very small pool — the
-  builder surfaces the live availability count so this is never a surprise.
+- **Question bank: 139 questions**, exceeding the 100-question target, spread
+  25 EASY / 50 NORMAL / 32 HARD / 22 EXPERT / 10 IMPOSSIBLE — at or above the suggested
+  20/30/25/15/10 in every tier. Coverage spans the top five European leagues, the
+  Champions League, the World Cup and Euros, Copa Libertadores, club history, coaches,
+  stadiums and Israeli football. Narrow filter combinations (e.g. `בלתי אפשרי` on its own)
+  still yield small pools, which is why the builder always shows a live availability count
+  before the player commits.
 - **No timer.** The brief listed it as optional; a half-implemented timer would hurt more
   than help, so scoring records per-answer `timeMs` (ready for speed bonuses) without
   putting a clock in the UI.
@@ -165,8 +166,13 @@ This is a hard product rule: **no invented football facts.**
 
 ## Adding questions
 
-1. Append entries to `seed/questions.ts` (typed; the generator validates them).
+1. **Append** entries to `seed/questions.ts` (typed; the generator validates them).
 2. `npm run seed:build`
 3. `npm run db:seed:local` (and `db:seed:remote` to publish)
 
-The seed script clears and reloads the question tables, so it is idempotent.
+The generated SQL assigns each question an explicit id from its position in the file, so
+reloading the bank is stable: previously shared challenge links and stored daily quizzes
+keep pointing at the same questions. Treat `seed/questions.ts` as **append-only** —
+reordering or deleting entries reassigns ids and would orphan existing challenges. The
+daily quiz additionally self-heals: if its stored question set no longer resolves, it is
+rebuilt once and re-persisted for that date.

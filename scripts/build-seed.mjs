@@ -41,35 +41,33 @@ seedQuestions.forEach((q, idx) => {
   counts.byDifficulty[q.difficulty] = (counts.byDifficulty[q.difficulty] || 0) + 1;
   counts.byMode[q.mode] = (counts.byMode[q.mode] || 0) + 1;
 
-  const publicId = `q_${String(idx + 1).padStart(4, "0")}`;
+  // Question ids are assigned explicitly from the position in questions.ts so
+  // that re-seeding is stable: previously shared challenge links and stored
+  // daily quizzes keep pointing at the same questions. This makes the file
+  // append-only in practice — reordering or deleting entries would reassign
+  // ids and orphan existing challenges.
+  const id = idx + 1;
+  const publicId = `q_${String(id).padStart(4, "0")}`;
   lines.push(
-    `INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('${publicId}', '${q.mode}', '${q.category}', '${q.difficulty}', '${sqlEscape(q.questionHe)}', '${sqlEscape(q.explanationHe)}', 1, 1, '${sqlEscape(q.sourceLabel)}');`
-  );
-  lines.push(
-    `INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, '${sqlEscape(
-      q.options[0]
-    )}', ${q.correctIndex === 0 ? 1 : 0}, 0 FROM questions WHERE public_id = '${publicId}';`
+    `INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (${id}, '${publicId}', '${q.mode}', '${q.category}', '${q.difficulty}', '${sqlEscape(q.questionHe)}', '${sqlEscape(q.explanationHe)}', 1, 1, '${sqlEscape(q.sourceLabel)}');`
   );
   q.options.forEach((opt, optIdx) => {
-    if (optIdx === 0) return; // already inserted above to anchor the subquery pattern
     lines.push(
-      `INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, '${sqlEscape(
+      `INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (${id}, '${sqlEscape(
         opt
-      )}', ${optIdx === q.correctIndex ? 1 : 0}, ${optIdx} FROM questions WHERE public_id = '${publicId}';`
+      )}', ${optIdx === q.correctIndex ? 1 : 0}, ${optIdx});`
     );
   });
   (q.clues || []).forEach((clue, clueIdx) => {
     lines.push(
-      `INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, '${sqlEscape(
-        clue
-      )}', ${clueIdx} FROM questions WHERE public_id = '${publicId}';`
+      `INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (${id}, '${sqlEscape(clue)}', ${clueIdx});`
     );
   });
   (q.scopes || []).forEach((scope) => {
     lines.push(
-      `INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, '${scope.type}', '${sqlEscape(
+      `INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (${id}, '${scope.type}', '${sqlEscape(
         scope.value
-      )}' FROM questions WHERE public_id = '${publicId}';`
+      )}');`
     );
   });
   lines.push("");

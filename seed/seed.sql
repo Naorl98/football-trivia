@@ -5,1014 +5,1294 @@ DELETE FROM question_clues;
 DELETE FROM question_options;
 DELETE FROM questions;
 
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0001', 'CLASSIC', 'WORLD_CUP', 'EASY', 'איזו נבחרת זכתה הכי הרבה פעמים במונדיאל?', 'ברזיל זכתה חמש פעמים: 1958, 1962, 1970, 1994 ו-2002 — יותר מכל נבחרת אחרת.', 1, 1, 'היסטוריית המונדיאל');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ברזיל', 1, 0 FROM questions WHERE public_id = 'q_0001';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'גרמניה', 0, 1 FROM questions WHERE public_id = 'q_0001';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'איטליה', 0, 2 FROM questions WHERE public_id = 'q_0001';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ארגנטינה', 0, 3 FROM questions WHERE public_id = 'q_0001';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'WORLD' FROM questions WHERE public_id = 'q_0001';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'WORLD_CUP' FROM questions WHERE public_id = 'q_0001';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'BRA' FROM questions WHERE public_id = 'q_0001';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0002', 'CLASSIC', 'WORLD_CUP', 'EASY', 'איזו מדינה אירחה את מונדיאל 2022?', 'מונדיאל 2022 נערך בקטאר, בפעם הראשונה שהמונדיאל נערך בחורף בשל האקלים באזור.', 1, 1, 'היסטוריית המונדיאל');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'קטאר', 1, 0 FROM questions WHERE public_id = 'q_0002';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'איחוד האמירויות', 0, 1 FROM questions WHERE public_id = 'q_0002';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'סעודיה', 0, 2 FROM questions WHERE public_id = 'q_0002';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ירדן', 0, 3 FROM questions WHERE public_id = 'q_0002';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'WORLD' FROM questions WHERE public_id = 'q_0002';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'WORLD_CUP' FROM questions WHERE public_id = 'q_0002';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0003', 'CLASSIC', 'WORLD_CUP', 'EASY', 'איזו נבחרת זכתה במונדיאל 2022?', 'ארגנטינה בניצחונו של ליאו מסי, ניצחה את צרפת בגמר דרמטי בנקיטת פנדלים לאחר 3:3.', 1, 1, 'היסטוריית המונדיאל');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ארגנטינה', 1, 0 FROM questions WHERE public_id = 'q_0003';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'צרפת', 0, 1 FROM questions WHERE public_id = 'q_0003';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ברזיל', 0, 2 FROM questions WHERE public_id = 'q_0003';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'קרואטיה', 0, 3 FROM questions WHERE public_id = 'q_0003';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'WORLD' FROM questions WHERE public_id = 'q_0003';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'WORLD_CUP' FROM questions WHERE public_id = 'q_0003';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ARG' FROM questions WHERE public_id = 'q_0003';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0004', 'CLASSIC', 'WORLD_CUP', 'EASY', 'איזו נבחרת זכתה במונדיאל 2018 ברוסיה?', 'נבחרת צרפת זכתה במונדיאל השני שלה בגמר נגד קרואטיה, 4:2.', 1, 1, 'היסטוריית המונדיאל');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'צרפת', 1, 0 FROM questions WHERE public_id = 'q_0004';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'קרואטיה', 0, 1 FROM questions WHERE public_id = 'q_0004';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'בלגיה', 0, 2 FROM questions WHERE public_id = 'q_0004';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אנגליה', 0, 3 FROM questions WHERE public_id = 'q_0004';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'WORLD' FROM questions WHERE public_id = 'q_0004';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'WORLD_CUP' FROM questions WHERE public_id = 'q_0004';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'FRA' FROM questions WHERE public_id = 'q_0004';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0005', 'CLASSIC', 'WORLD_CUP', 'NORMAL', 'מי כבש את שער הניצחון של גרמניה בגמר מונדיאל 2014 מול ארגנטינה?', 'מריו גצה כבש בדקה 113 והעניק לגרמניה את התואר הרביעי שלה, 0:1.', 1, 1, 'היסטוריית המונדיאל');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מריו גצה', 1, 0 FROM questions WHERE public_id = 'q_0005';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'תומאס מולר', 0, 1 FROM questions WHERE public_id = 'q_0005';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מסוט אוזיל', 0, 2 FROM questions WHERE public_id = 'q_0005';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מירוסלב קלוזה', 0, 3 FROM questions WHERE public_id = 'q_0005';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'WORLD' FROM questions WHERE public_id = 'q_0005';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'WORLD_CUP' FROM questions WHERE public_id = 'q_0005';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'GER' FROM questions WHERE public_id = 'q_0005';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0006', 'CLASSIC', 'WORLD_CUP', 'NORMAL', 'איזו נבחרת זכתה במונדיאל 2010 בדרום אפריקה?', 'ספרד זכתה בתואר הראשון שלה בהיסטוריה, לאחר ניצחון 0:1 על הולנד בגמר בשער של איניאסטה.', 1, 1, 'היסטוריית המונדיאל');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ספרד', 1, 0 FROM questions WHERE public_id = 'q_0006';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'הולנד', 0, 1 FROM questions WHERE public_id = 'q_0006';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'גרמניה', 0, 2 FROM questions WHERE public_id = 'q_0006';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אורוגוואי', 0, 3 FROM questions WHERE public_id = 'q_0006';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'WORLD' FROM questions WHERE public_id = 'q_0006';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'WORLD_CUP' FROM questions WHERE public_id = 'q_0006';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ESP' FROM questions WHERE public_id = 'q_0006';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0007', 'CLASSIC', 'WORLD_CUP', 'NORMAL', 'איזו נבחרת זכתה במונדיאל 2006 בגרמניה?', 'איטליה זכתה בתואר הרביעי שלה, לאחר ניצחון בנקיטת פנדלים על צרפת בגמר שבו זידאן נפסל על נגיחה במטראצי.', 1, 1, 'היסטוריית המונדיאל');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'איטליה', 1, 0 FROM questions WHERE public_id = 'q_0007';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'צרפת', 0, 1 FROM questions WHERE public_id = 'q_0007';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'גרמניה', 0, 2 FROM questions WHERE public_id = 'q_0007';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'פורטוגל', 0, 3 FROM questions WHERE public_id = 'q_0007';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'WORLD' FROM questions WHERE public_id = 'q_0007';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'WORLD_CUP' FROM questions WHERE public_id = 'q_0007';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ITA' FROM questions WHERE public_id = 'q_0007';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0008', 'CLASSIC', 'WORLD_CUP', 'HARD', 'מי מלך השערים ההיסטורי של המונדיאל, עם 16 שערים?', 'מירוסלב קלוזה מגרמניה, עם 16 שערים בארבעה מונדיאלים (2002-2014), הוא מלך השערים ההיסטורי.', 1, 1, 'היסטוריית המונדיאל');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מירוסלב קלוזה', 1, 0 FROM questions WHERE public_id = 'q_0008';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'רונאלדו הברזילאי', 0, 1 FROM questions WHERE public_id = 'q_0008';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'פלה', 0, 2 FROM questions WHERE public_id = 'q_0008';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'גרד מולר', 0, 3 FROM questions WHERE public_id = 'q_0008';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'WORLD' FROM questions WHERE public_id = 'q_0008';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'WORLD_CUP' FROM questions WHERE public_id = 'q_0008';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'GER' FROM questions WHERE public_id = 'q_0008';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0009', 'CLASSIC', 'WORLD_CUP', 'HARD', 'מי היה מלך השערים של מונדיאל 2022, עם 8 שערים?', 'קיליאן אמבפה כבש 8 שערים במונדיאל 2022, כולל שלישייה בגמר מול ארגנטינה, וזכה בנעל הזהב.', 1, 1, 'היסטוריית המונדיאל');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'קיליאן אמבפה', 1, 0 FROM questions WHERE public_id = 'q_0009';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ליאו מסי', 0, 1 FROM questions WHERE public_id = 'q_0009';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אוליבייה ז''ירו', 0, 2 FROM questions WHERE public_id = 'q_0009';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'חוליאן אלווארס', 0, 3 FROM questions WHERE public_id = 'q_0009';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'WORLD' FROM questions WHERE public_id = 'q_0009';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'WORLD_CUP' FROM questions WHERE public_id = 'q_0009';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'FRA' FROM questions WHERE public_id = 'q_0009';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0010', 'CLASSIC', 'WORLD_CUP', 'HARD', 'איזו נבחרת אירחה וזכתה במונדיאל הראשון בהיסטוריה ב-1930?', 'אורוגוואי אירחה וזכתה במונדיאל הראשון ב-1930, בניצחון על ארגנטינה בגמר.', 1, 1, 'היסטוריית המונדיאל');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אורוגוואי', 1, 0 FROM questions WHERE public_id = 'q_0010';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ארגנטינה', 0, 1 FROM questions WHERE public_id = 'q_0010';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ברזיל', 0, 2 FROM questions WHERE public_id = 'q_0010';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'איטליה', 0, 3 FROM questions WHERE public_id = 'q_0010';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'WORLD' FROM questions WHERE public_id = 'q_0010';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'WORLD_CUP' FROM questions WHERE public_id = 'q_0010';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'SOUTH_AMERICA' FROM questions WHERE public_id = 'q_0010';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0011', 'CLASSIC', 'WORLD_CUP', 'NORMAL', 'מי היה קפטן נבחרת ארגנטינה שהרים את גביע המונדיאל ב-2022?', 'ליאו מסי הרים את גביע העולם כקפטן ארגנטינה, בהישג שהשלים את הקריירה הבינלאומית שלו.', 1, 1, 'היסטוריית המונדיאל');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ליאו מסי', 1, 0 FROM questions WHERE public_id = 'q_0011';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אנחל די מריה', 0, 1 FROM questions WHERE public_id = 'q_0011';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'פאולו דיבאלה', 0, 2 FROM questions WHERE public_id = 'q_0011';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'רודריגו דה פאול', 0, 3 FROM questions WHERE public_id = 'q_0011';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'WORLD' FROM questions WHERE public_id = 'q_0011';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'WORLD_CUP' FROM questions WHERE public_id = 'q_0011';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ARG' FROM questions WHERE public_id = 'q_0011';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0012', 'CLASSIC', 'WORLD_CUP', 'NORMAL', 'כל כמה שנים מתקיים המונדיאל?', 'המונדיאל מתקיים אחת לארבע שנים מאז 1930 (למעט הפסקה בשנות מלחמת העולם השנייה).', 1, 1, 'היסטוריית המונדיאל');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, '4 שנים', 1, 0 FROM questions WHERE public_id = 'q_0012';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, '2 שנים', 0, 1 FROM questions WHERE public_id = 'q_0012';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, '3 שנים', 0, 2 FROM questions WHERE public_id = 'q_0012';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, '5 שנים', 0, 3 FROM questions WHERE public_id = 'q_0012';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'WORLD' FROM questions WHERE public_id = 'q_0012';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'WORLD_CUP' FROM questions WHERE public_id = 'q_0012';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0013', 'CLASSIC', 'WORLD_CUP', 'NORMAL', 'איזה שחקן כינויו ''יד האלוהים'' ו''שער המאה'' באותו משחק במונדיאל 1986?', 'דייגו מראדונה כבש את שני השערים הידועים במשחק רבע הגמר של ארגנטינה מול אנגליה במונדיאל 1986.', 1, 1, 'היסטוריית המונדיאל');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'דייגו מראדונה', 1, 0 FROM questions WHERE public_id = 'q_0013';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מריו קמפוס', 0, 1 FROM questions WHERE public_id = 'q_0013';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'חורחה בורוצ''אגה', 0, 2 FROM questions WHERE public_id = 'q_0013';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'דניאל פסארלה', 0, 3 FROM questions WHERE public_id = 'q_0013';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'WORLD' FROM questions WHERE public_id = 'q_0013';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'WORLD_CUP' FROM questions WHERE public_id = 'q_0013';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ARG' FROM questions WHERE public_id = 'q_0013';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0014', 'CLASSIC', 'WORLD_CUP', 'NORMAL', 'באיזו מדינה נערך מונדיאל 1994?', 'מונדיאל 1994 נערך בארצות הברית, וברזיל זכתה בתואר לאחר ניצחון בפנדלים על איטליה.', 1, 1, 'היסטוריית המונדיאל');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ארצות הברית', 1, 0 FROM questions WHERE public_id = 'q_0014';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מקסיקו', 0, 1 FROM questions WHERE public_id = 'q_0014';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'קנדה', 0, 2 FROM questions WHERE public_id = 'q_0014';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ברזיל', 0, 3 FROM questions WHERE public_id = 'q_0014';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'WORLD' FROM questions WHERE public_id = 'q_0014';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'WORLD_CUP' FROM questions WHERE public_id = 'q_0014';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0015', 'CLASSIC', 'WORLD_CUP', 'HARD', 'איזו נבחרת זכתה במונדיאל 1990 באיטליה?', 'מערב גרמניה זכתה בתואר השלישי שלה, בניצחון 0:1 על ארגנטינה בגמר.', 1, 1, 'היסטוריית המונדיאל');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מערב גרמניה', 1, 0 FROM questions WHERE public_id = 'q_0015';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ארגנטינה', 0, 1 FROM questions WHERE public_id = 'q_0015';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'איטליה', 0, 2 FROM questions WHERE public_id = 'q_0015';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אנגליה', 0, 3 FROM questions WHERE public_id = 'q_0015';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'WORLD' FROM questions WHERE public_id = 'q_0015';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'WORLD_CUP' FROM questions WHERE public_id = 'q_0015';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'GER' FROM questions WHERE public_id = 'q_0015';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0016', 'CLASSIC', 'WORLD_CUP', 'NORMAL', 'כמה מונדיאלים זכה פלה במהלך הקריירה שלו?', 'פלה זכה בשלושה מונדיאלים עם ברזיל: 1958, 1962 ו-1970 — היחיד בהיסטוריה שהשיג זאת.', 1, 1, 'היסטוריית המונדיאל');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, '3', 1, 0 FROM questions WHERE public_id = 'q_0016';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, '2', 0, 1 FROM questions WHERE public_id = 'q_0016';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, '4', 0, 2 FROM questions WHERE public_id = 'q_0016';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, '1', 0, 3 FROM questions WHERE public_id = 'q_0016';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'WORLD' FROM questions WHERE public_id = 'q_0016';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'WORLD_CUP' FROM questions WHERE public_id = 'q_0016';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'BRA' FROM questions WHERE public_id = 'q_0016';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0017', 'CLASSIC', 'WORLD_CUP', 'IMPOSSIBLE', 'בגיל כמה זכה פלה במונדיאל הראשון שלו ב-1958, כשהיה לצעיר הזוכים בהיסטוריה?', 'פלה היה בן 17 בלבד כשזכה במונדיאל 1958 בשוודיה, ונותר לשחקן הצעיר ביותר שזכה במונדיאל.', 1, 1, 'היסטוריית המונדיאל');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, '17', 1, 0 FROM questions WHERE public_id = 'q_0017';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, '19', 0, 1 FROM questions WHERE public_id = 'q_0017';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, '16', 0, 2 FROM questions WHERE public_id = 'q_0017';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, '21', 0, 3 FROM questions WHERE public_id = 'q_0017';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'WORLD' FROM questions WHERE public_id = 'q_0017';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'WORLD_CUP' FROM questions WHERE public_id = 'q_0017';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'BRA' FROM questions WHERE public_id = 'q_0017';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0018', 'CLASSIC', 'WORLD_CUP', 'NORMAL', 'באיזו מדינה משותפת נערך מונדיאל 2002?', 'מונדיאל 2002 היה הראשון שנערך באסיה, בארגון משותף של דרום קוריאה ויפן. ברזיל זכתה בתואר.', 1, 1, 'היסטוריית המונדיאל');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'דרום קוריאה ויפן', 1, 0 FROM questions WHERE public_id = 'q_0018';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'סין ויפן', 0, 1 FROM questions WHERE public_id = 'q_0018';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'תאילנד ווייטנאם', 0, 2 FROM questions WHERE public_id = 'q_0018';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'יפן והפיליפינים', 0, 3 FROM questions WHERE public_id = 'q_0018';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'WORLD' FROM questions WHERE public_id = 'q_0018';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'WORLD_CUP' FROM questions WHERE public_id = 'q_0018';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0019', 'CLASSIC', 'WORLD_CUP', 'EXPERT', 'מי החמיץ את הפנדל המכריע עבור איטליה בגמר מונדיאל 1994 מול ברזיל?', 'רוברטו באג''ו החמיץ את הפנדל המכריע בגמר 1994, ומאפשר לברזיל לזכות בתואר.', 1, 1, 'היסטוריית המונדיאל');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'רוברטו באג''ו', 1, 0 FROM questions WHERE public_id = 'q_0019';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'פרנקו בארזי', 0, 1 FROM questions WHERE public_id = 'q_0019';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'דמטריו אלברטיני', 0, 2 FROM questions WHERE public_id = 'q_0019';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'דניאלה מאסארו', 0, 3 FROM questions WHERE public_id = 'q_0019';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'WORLD' FROM questions WHERE public_id = 'q_0019';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'WORLD_CUP' FROM questions WHERE public_id = 'q_0019';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ITA' FROM questions WHERE public_id = 'q_0019';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0020', 'CLASSIC', 'WORLD_CUP', 'EASY', 'אילו שלוש מדינות יארחו יחד את מונדיאל 2026?', 'מונדיאל 2026 יהיה הראשון עם 48 נבחרות, ויתקיים במשותף בארצות הברית, קנדה ומקסיקו.', 1, 1, 'היסטוריית המונדיאל');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ארה"ב, קנדה ומקסיקו', 1, 0 FROM questions WHERE public_id = 'q_0020';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ארה"ב, ברזיל וקנדה', 0, 1 FROM questions WHERE public_id = 'q_0020';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מקסיקו, ספרד ופורטוגל', 0, 2 FROM questions WHERE public_id = 'q_0020';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'קנדה, יפן וקוריאה', 0, 3 FROM questions WHERE public_id = 'q_0020';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'WORLD' FROM questions WHERE public_id = 'q_0020';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'WORLD_CUP' FROM questions WHERE public_id = 'q_0020';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0021', 'CLASSIC', 'CHAMPIONS_LEAGUE', 'EASY', 'איזו קבוצה זכתה הכי הרבה פעמים בליגת האלופות?', 'ריאל מדריד זכתה בליגת האלופות 15 פעמים, יותר מכל קבוצה אחרת בהיסטוריה.', 1, 1, 'היסטוריית ליגת האלופות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ריאל מדריד', 1, 0 FROM questions WHERE public_id = 'q_0021';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מילאן', 0, 1 FROM questions WHERE public_id = 'q_0021';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ליברפול', 0, 2 FROM questions WHERE public_id = 'q_0021';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ברצלונה', 0, 3 FROM questions WHERE public_id = 'q_0021';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0021';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'UCL' FROM questions WHERE public_id = 'q_0021';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ESP' FROM questions WHERE public_id = 'q_0021';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0022', 'CLASSIC', 'CHAMPIONS_LEAGUE', 'EASY', 'מי מלך השערים ההיסטורי של ליגת האלופות?', 'כריסטיאנו רונאלדו הוא מלך השערים ההיסטורי של ליגת האלופות, עם למעלה מ-140 שערים.', 1, 1, 'היסטוריית ליגת האלופות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'כריסטיאנו רונאלדו', 1, 0 FROM questions WHERE public_id = 'q_0022';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ליאו מסי', 0, 1 FROM questions WHERE public_id = 'q_0022';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'רוברט לבנדובסקי', 0, 2 FROM questions WHERE public_id = 'q_0022';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'קרים בנזמה', 0, 3 FROM questions WHERE public_id = 'q_0022';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0022';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'UCL' FROM questions WHERE public_id = 'q_0022';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0023', 'CLASSIC', 'CHAMPIONS_LEAGUE', 'NORMAL', 'איזו קבוצה זכתה בליגת האלופות 2023, והשלימה טרפל היסטורי?', 'מנצ''סטר סיטי ניצחה את אינטר מילאנו 0:1 בגמר 2023, והשלימה טרפל (ליגה, גביע וליגת האלופות).', 1, 1, 'היסטוריית ליגת האלופות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מנצ''סטר סיטי', 1, 0 FROM questions WHERE public_id = 'q_0023';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אינטר מילאנו', 0, 1 FROM questions WHERE public_id = 'q_0023';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ריאל מדריד', 0, 2 FROM questions WHERE public_id = 'q_0023';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'באיירן מינכן', 0, 3 FROM questions WHERE public_id = 'q_0023';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0023';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'UCL' FROM questions WHERE public_id = 'q_0023';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ENG' FROM questions WHERE public_id = 'q_0023';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0024', 'CLASSIC', 'CHAMPIONS_LEAGUE', 'NORMAL', 'איזו קבוצה זכתה בליגת האלופות 2019, בגמר אנגלי כולו מול טוטנהאם?', 'ליברפול ניצחה את טוטנהאם 0:2 בגמר 2019 במדריד, וזכתה בתואר השישי שלה.', 1, 1, 'היסטוריית ליגת האלופות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ליברפול', 1, 0 FROM questions WHERE public_id = 'q_0024';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'טוטנהאם', 0, 1 FROM questions WHERE public_id = 'q_0024';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'צ''לסי', 0, 2 FROM questions WHERE public_id = 'q_0024';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ארסנל', 0, 3 FROM questions WHERE public_id = 'q_0024';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0024';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'UCL' FROM questions WHERE public_id = 'q_0024';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ENG' FROM questions WHERE public_id = 'q_0024';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0025', 'CLASSIC', 'CHAMPIONS_LEAGUE', 'HARD', 'איזו קבוצה ביצעה את ''הנס איסטנבול'' ב-2005, כשהשלימה מפנה מ-0:3 לניצחון בפנדלים?', 'ליברפול פיגרה 0:3 למילאן במחצית הגמר ב-2005, השוותה ל-3:3 וניצחה בפנדלים.', 1, 1, 'היסטוריית ליגת האלופות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ליברפול', 1, 0 FROM questions WHERE public_id = 'q_0025';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ניוקאסל יונייטד', 0, 1 FROM questions WHERE public_id = 'q_0025';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'צ''לסי', 0, 2 FROM questions WHERE public_id = 'q_0025';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אברטון', 0, 3 FROM questions WHERE public_id = 'q_0025';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0025';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'UCL' FROM questions WHERE public_id = 'q_0025';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ENG' FROM questions WHERE public_id = 'q_0025';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0026', 'CLASSIC', 'CHAMPIONS_LEAGUE', 'HARD', 'איזו קבוצה זכתה בליגת האלופות 2012, לאחר ניצחון בפנדלים על באיירן מינכן במינכן עצמה?', 'צ''לסי ניצחה את באיירן מינכן בפנדלים על מגרשה של באיירן, ה-Allianz Arena, וזכתה בתואר הראשון שלה.', 1, 1, 'היסטוריית ליגת האלופות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'צ''לסי', 1, 0 FROM questions WHERE public_id = 'q_0026';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'באיירן מינכן', 0, 1 FROM questions WHERE public_id = 'q_0026';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ריאל מדריד', 0, 2 FROM questions WHERE public_id = 'q_0026';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ברצלונה', 0, 3 FROM questions WHERE public_id = 'q_0026';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0026';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'UCL' FROM questions WHERE public_id = 'q_0026';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ENG' FROM questions WHERE public_id = 'q_0026';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0027', 'CLASSIC', 'CHAMPIONS_LEAGUE', 'HARD', 'בגמר ליגת האלופות 2014, ריאל מדריד ניצחה את אתלטיקו מדריד והשלימה את ה''עשירית'' שלה. מה היתה התוצאה?', 'ריאל מדריד ניצחה 1:4 אחרי הארכה, לאחר שאתלטיקו הובילה עד דקה 93 (שער השוואה של רמוס).', 1, 1, 'היסטוריית ליגת האלופות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, '1:4 אחרי הארכה', 1, 0 FROM questions WHERE public_id = 'q_0027';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, '0:1', 0, 1 FROM questions WHERE public_id = 'q_0027';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, '2:3', 0, 2 FROM questions WHERE public_id = 'q_0027';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, '0:2', 0, 3 FROM questions WHERE public_id = 'q_0027';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0027';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'UCL' FROM questions WHERE public_id = 'q_0027';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ESP' FROM questions WHERE public_id = 'q_0027';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0028', 'CLASSIC', 'CHAMPIONS_LEAGUE', 'NORMAL', 'איזו קבוצה ניצחה את יובנטוס 1:4 בגמר ליגת האלופות 2017 בקרדיף?', 'ריאל מדריד ניצחה את יובנטוס בגמר 2017, עם שני שערים של כריסטיאנו רונאלדו.', 1, 1, 'היסטוריית ליגת האלופות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ריאל מדריד', 1, 0 FROM questions WHERE public_id = 'q_0028';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ברצלונה', 0, 1 FROM questions WHERE public_id = 'q_0028';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'באיירן מינכן', 0, 2 FROM questions WHERE public_id = 'q_0028';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מנצ''סטר סיטי', 0, 3 FROM questions WHERE public_id = 'q_0028';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0028';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'UCL' FROM questions WHERE public_id = 'q_0028';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ESP' FROM questions WHERE public_id = 'q_0028';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0029', 'CLASSIC', 'CHAMPIONS_LEAGUE', 'EXPERT', 'מי כבש את שער הניצחון של באיירן מינכן בגמר 2020 מול פריז סן ז''רמן, קבוצתו לשעבר?', 'קינגסלי קומאן, בוגר אקדמיית פריז סן ז''רמן, כבש את שער הניצחון עבור באיירן מינכן נגד קבוצתו הישנה.', 1, 1, 'היסטוריית ליגת האלופות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'קינגסלי קומאן', 1, 0 FROM questions WHERE public_id = 'q_0029';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'תומאס מולר', 0, 1 FROM questions WHERE public_id = 'q_0029';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'רוברט לבנדובסקי', 0, 2 FROM questions WHERE public_id = 'q_0029';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'סרג'' גנאברי', 0, 3 FROM questions WHERE public_id = 'q_0029';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0029';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'UCL' FROM questions WHERE public_id = 'q_0029';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'GER' FROM questions WHERE public_id = 'q_0029';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0030', 'CLASSIC', 'CHAMPIONS_LEAGUE', 'EXPERT', 'כמה פעמים זכה ליאו מסי בליגת האלופות עם ברצלונה?', 'מסי זכה בליגת האלופות ארבע פעמים עם ברצלונה: 2006, 2009, 2011 ו-2015.', 1, 1, 'היסטוריית ליגת האלופות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, '4', 1, 0 FROM questions WHERE public_id = 'q_0030';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, '3', 0, 1 FROM questions WHERE public_id = 'q_0030';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, '5', 0, 2 FROM questions WHERE public_id = 'q_0030';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, '2', 0, 3 FROM questions WHERE public_id = 'q_0030';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0030';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'UCL' FROM questions WHERE public_id = 'q_0030';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ESP' FROM questions WHERE public_id = 'q_0030';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0031', 'CLASSIC', 'CHAMPIONS_LEAGUE', 'NORMAL', 'איזו קבוצה זכתה בליגת האלופות 2016, בגמר מדריד''ני כולו מול אתלטיקו?', 'ריאל מדריד ניצחה את אתלטיקו מדריד בפנדלים בגמר 2016 בסן סירו, מילאנו.', 1, 1, 'היסטוריית ליגת האלופות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ריאל מדריד', 1, 0 FROM questions WHERE public_id = 'q_0031';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אתלטיקו מדריד', 0, 1 FROM questions WHERE public_id = 'q_0031';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ברצלונה', 0, 2 FROM questions WHERE public_id = 'q_0031';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ולנסיה', 0, 3 FROM questions WHERE public_id = 'q_0031';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0031';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'UCL' FROM questions WHERE public_id = 'q_0031';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ESP' FROM questions WHERE public_id = 'q_0031';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0032', 'CLASSIC', 'CHAMPIONS_LEAGUE', 'IMPOSSIBLE', 'איזו קבוצה צרפתית זכתה בגביע האלופות האירופי ב-1993, בעונה הראשונה תחת השם ''ליגת האלופות''?', 'מארסיי זכתה בתואר האירופי היחיד שלה ב-1993, בעונה הראשונה שבה התחרות שונתה למתכונת ''ליגת האלופות''.', 1, 1, 'היסטוריית ליגת האלופות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מארסיי', 1, 0 FROM questions WHERE public_id = 'q_0032';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'פריז סן ז''רמן', 0, 1 FROM questions WHERE public_id = 'q_0032';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מונקו', 0, 2 FROM questions WHERE public_id = 'q_0032';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'בורדו', 0, 3 FROM questions WHERE public_id = 'q_0032';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0032';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'UCL' FROM questions WHERE public_id = 'q_0032';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'FRA' FROM questions WHERE public_id = 'q_0032';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0033', 'CLASSIC', 'CHAMPIONS_LEAGUE', 'HARD', 'מי המאמן היחיד שזכה בליגת האלופות עם שלוש קבוצות שונות?', 'חוזה מוריניו זכה בליגת האלופות עם פורטו (2004) ואינטר מילאנו (2010); קרלו אנצ''לוטי זכה עם מילאן וריאל מדריד. אך המאמן שזכה עם שלוש קבוצות שונות הוא ארנסט האפל.', 1, 1, 'היסטוריית ליגת האלופות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ארנסט האפל', 1, 0 FROM questions WHERE public_id = 'q_0033';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'חוזה מוריניו', 0, 1 FROM questions WHERE public_id = 'q_0033';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'קרלו אנצ''לוטי', 0, 2 FROM questions WHERE public_id = 'q_0033';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'פפ גווארדיולה', 0, 3 FROM questions WHERE public_id = 'q_0033';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0033';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'UCL' FROM questions WHERE public_id = 'q_0033';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0034', 'CLASSIC', 'STADIUMS', 'EASY', 'באיזה אצטדיון משחקת ריאל מדריד את משחקי הבית שלה?', 'ריאל מדריד משחקת בסנטיאגו ברנבאו שבמדריד, אחד האצטדיונים המפורסמים בעולם.', 1, 1, 'עובדות מועדונים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'סנטיאגו ברנבאו', 1, 0 FROM questions WHERE public_id = 'q_0034';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'קאמפ נואו', 0, 1 FROM questions WHERE public_id = 'q_0034';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'וונדה מטרופוליטנו', 0, 2 FROM questions WHERE public_id = 'q_0034';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'סן מאמס', 0, 3 FROM questions WHERE public_id = 'q_0034';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0034';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'LA_LIGA' FROM questions WHERE public_id = 'q_0034';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ESP' FROM questions WHERE public_id = 'q_0034';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0035', 'CLASSIC', 'STADIUMS', 'EASY', 'באיזה אצטדיון משחקת ברצלונה את משחקי הבית שלה?', 'ברצלונה משחקת בקאמפ נואו, אחד האצטדיונים הגדולים באירופה.', 1, 1, 'עובדות מועדונים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'קאמפ נואו', 1, 0 FROM questions WHERE public_id = 'q_0035';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'סנטיאגו ברנבאו', 0, 1 FROM questions WHERE public_id = 'q_0035';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מסטאייה', 0, 2 FROM questions WHERE public_id = 'q_0035';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'סן סירו', 0, 3 FROM questions WHERE public_id = 'q_0035';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0035';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'LA_LIGA' FROM questions WHERE public_id = 'q_0035';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ESP' FROM questions WHERE public_id = 'q_0035';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0036', 'CLASSIC', 'STADIUMS', 'EASY', 'מהו הכינוי של אצטדיון הבית של מנצ''סטר יונייטד, אולד טראפורד?', 'אולד טראפורד מכונה ''תיאטרון החלומות'' (Theatre of Dreams).', 1, 1, 'עובדות מועדונים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'תיאטרון החלומות', 1, 0 FROM questions WHERE public_id = 'q_0036';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'בית האריות', 0, 1 FROM questions WHERE public_id = 'q_0036';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'המבצר האדום', 0, 2 FROM questions WHERE public_id = 'q_0036';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'קן הנשרים', 0, 3 FROM questions WHERE public_id = 'q_0036';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0036';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'PREMIER_LEAGUE' FROM questions WHERE public_id = 'q_0036';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ENG' FROM questions WHERE public_id = 'q_0036';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0037', 'CLASSIC', 'STADIUMS', 'NORMAL', 'אילו שתי קבוצות מילאנזיות חולקות את אצטדיון סן סירו?', 'מילאן ואינטר מילאנו, יריבות עירוניות, חולקות יחד את אצטדיון סן סירו (סטדיו ג''וזפה מאצה).', 1, 1, 'עובדות מועדונים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מילאן ואינטר מילאנו', 1, 0 FROM questions WHERE public_id = 'q_0037';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'יובנטוס ומילאן', 0, 1 FROM questions WHERE public_id = 'q_0037';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'רומא ולאציו', 0, 2 FROM questions WHERE public_id = 'q_0037';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'נאפולי ואינטר', 0, 3 FROM questions WHERE public_id = 'q_0037';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0037';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'SERIE_A' FROM questions WHERE public_id = 'q_0037';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ITA' FROM questions WHERE public_id = 'q_0037';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0038', 'CLASSIC', 'STADIUMS', 'NORMAL', 'איזה אצטדיון ידוע ב''קיר הצהוב'' המפורסם שלו, היציע הגדול באירופה?', 'היציע הדרומי של בורוסיה דורטמונד באצטדיון זיגנל איידונה פארק מכונה ''הקיר הצהוב'', והוא יציע העמידה הגדול באירופה.', 1, 1, 'עובדות מועדונים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'זיגנל איידונה פארק (דורטמונד)', 1, 0 FROM questions WHERE public_id = 'q_0038';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אליאנץ ארנה (באיירן)', 0, 1 FROM questions WHERE public_id = 'q_0038';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'פולקספארקשטדיון (המבורג)', 0, 2 FROM questions WHERE public_id = 'q_0038';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אולימפיאשטדיון (ברלין)', 0, 3 FROM questions WHERE public_id = 'q_0038';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0038';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'BUNDESLIGA' FROM questions WHERE public_id = 'q_0038';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'GER' FROM questions WHERE public_id = 'q_0038';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0039', 'CLASSIC', 'TITLES', 'NORMAL', 'איזו קבוצה זכתה הכי הרבה פעמים באליפות הפרמיירליג (מאז 1992)?', 'מנצ''סטר יונייטד זכתה 13 פעמים באליפות הפרמיירליג, יותר מכל קבוצה אחרת מאז שהתחרות שונתה לשמה הנוכחי ב-1992.', 1, 1, 'עובדות מועדונים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מנצ''סטר יונייטד', 1, 0 FROM questions WHERE public_id = 'q_0039';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מנצ''סטר סיטי', 0, 1 FROM questions WHERE public_id = 'q_0039';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ארסנל', 0, 2 FROM questions WHERE public_id = 'q_0039';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'צ''לסי', 0, 3 FROM questions WHERE public_id = 'q_0039';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0039';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'PREMIER_LEAGUE' FROM questions WHERE public_id = 'q_0039';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ENG' FROM questions WHERE public_id = 'q_0039';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0040', 'CLASSIC', 'TITLES', 'EASY', 'איזו קבוצה זכתה הכי הרבה פעמים באליפות לה ליגה הספרדית?', 'ריאל מדריד היא הקבוצה המצליחה ביותר בהיסטוריית לה ליגה, עם יותר תארים מכל קבוצה אחרת.', 1, 1, 'עובדות מועדונים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ריאל מדריד', 1, 0 FROM questions WHERE public_id = 'q_0040';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ברצלונה', 0, 1 FROM questions WHERE public_id = 'q_0040';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אתלטיקו מדריד', 0, 2 FROM questions WHERE public_id = 'q_0040';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ולנסיה', 0, 3 FROM questions WHERE public_id = 'q_0040';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0040';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'LA_LIGA' FROM questions WHERE public_id = 'q_0040';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ESP' FROM questions WHERE public_id = 'q_0040';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0041', 'CLASSIC', 'TITLES', 'EASY', 'איזו קבוצה זכתה הכי הרבה פעמים באליפות איטליה (סרייה א'')?', 'יובנטוס היא הקבוצה המצליחה ביותר בהיסטוריית הסקודטו האיטלקי.', 1, 1, 'עובדות מועדונים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'יובנטוס', 1, 0 FROM questions WHERE public_id = 'q_0041';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מילאן', 0, 1 FROM questions WHERE public_id = 'q_0041';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אינטר מילאנו', 0, 2 FROM questions WHERE public_id = 'q_0041';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'רומא', 0, 3 FROM questions WHERE public_id = 'q_0041';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0041';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'SERIE_A' FROM questions WHERE public_id = 'q_0041';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ITA' FROM questions WHERE public_id = 'q_0041';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0042', 'CLASSIC', 'TITLES', 'EASY', 'איזו קבוצה שולטת באליפות גרמניה (בונדסליגה) בעשור האחרון?', 'באיירן מינכן זכתה באליפות הבונדסליגה 11 פעמים ברציפות בין 2013 ל-2023.', 1, 1, 'עובדות מועדונים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'באיירן מינכן', 1, 0 FROM questions WHERE public_id = 'q_0042';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'בורוסיה דורטמונד', 0, 1 FROM questions WHERE public_id = 'q_0042';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'לייפציג', 0, 2 FROM questions WHERE public_id = 'q_0042';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'באייר לברקוזן', 0, 3 FROM questions WHERE public_id = 'q_0042';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0042';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'BUNDESLIGA' FROM questions WHERE public_id = 'q_0042';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'GER' FROM questions WHERE public_id = 'q_0042';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0043', 'CLASSIC', 'CLUBS', 'EASY', 'מה הכינוי של מועדון מנצ''סטר יונייטד?', 'מנצ''סטר יונייטד מכונה ''השדים האדומים'' (Red Devils).', 1, 1, 'עובדות מועדונים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'השדים האדומים', 1, 0 FROM questions WHERE public_id = 'q_0043';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'האזרחים', 0, 1 FROM questions WHERE public_id = 'q_0043';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'התותחנים', 0, 2 FROM questions WHERE public_id = 'q_0043';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'האריות', 0, 3 FROM questions WHERE public_id = 'q_0043';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0043';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'PREMIER_LEAGUE' FROM questions WHERE public_id = 'q_0043';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ENG' FROM questions WHERE public_id = 'q_0043';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0044', 'CLASSIC', 'CLUBS', 'EASY', 'מה הכינוי של מועדון ליברפול?', 'ליברפול מכונה ''האדומים'' (The Reds), על שם צבעי האצטדיון והמדים.', 1, 1, 'עובדות מועדונים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'האדומים', 1, 0 FROM questions WHERE public_id = 'q_0044';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'הכחולים', 0, 1 FROM questions WHERE public_id = 'q_0044';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'התותחנים', 0, 2 FROM questions WHERE public_id = 'q_0044';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'הזאבים', 0, 3 FROM questions WHERE public_id = 'q_0044';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0044';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'PREMIER_LEAGUE' FROM questions WHERE public_id = 'q_0044';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ENG' FROM questions WHERE public_id = 'q_0044';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0045', 'CLASSIC', 'CLUBS', 'EASY', 'מה הכינוי של מועדון ארסנל?', 'ארסנל מכונה ''התותחנים'' (The Gunners), בשל שורשי המועדון כקבוצת פועלי תעשיית נשק.', 1, 1, 'עובדות מועדונים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'התותחנים', 1, 0 FROM questions WHERE public_id = 'q_0045';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'האזרחים', 0, 1 FROM questions WHERE public_id = 'q_0045';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'הפטישים', 0, 2 FROM questions WHERE public_id = 'q_0045';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'הענקים', 0, 3 FROM questions WHERE public_id = 'q_0045';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0045';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'PREMIER_LEAGUE' FROM questions WHERE public_id = 'q_0045';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ENG' FROM questions WHERE public_id = 'q_0045';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0046', 'CLASSIC', 'CLUBS', 'NORMAL', 'מה הכינוי הנפוץ לאוהדי ולשחקני ברצלונה?', 'ברצלונה מכונה ''בלאוגרנה'' (Blaugrana) על שם צבעי הכחול-בורדו, ואוהדיה מכונים ''קולה'' (Culés).', 1, 1, 'עובדות מועדונים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'בלאוגרנה', 1, 0 FROM questions WHERE public_id = 'q_0046';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'רוחינגרוס', 0, 1 FROM questions WHERE public_id = 'q_0046';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ביאנקונרי', 0, 2 FROM questions WHERE public_id = 'q_0046';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'נראצורי', 0, 3 FROM questions WHERE public_id = 'q_0046';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0046';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'LA_LIGA' FROM questions WHERE public_id = 'q_0046';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ESP' FROM questions WHERE public_id = 'q_0046';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0047', 'CLASSIC', 'CLUBS', 'NORMAL', 'בין אילו שתי קבוצות מתקיים ''אל קלאסיקו'' הספרדי המפורסם?', 'אל קלאסיקו הוא הדרבי בין ריאל מדריד לברצלונה, אחד המשחקים הצפויים ביותר בעולם הכדורגל.', 1, 1, 'עובדות מועדונים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ריאל מדריד וברצלונה', 1, 0 FROM questions WHERE public_id = 'q_0047';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ריאל מדריד ואתלטיקו מדריד', 0, 1 FROM questions WHERE public_id = 'q_0047';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ברצלונה וסביליה', 0, 2 FROM questions WHERE public_id = 'q_0047';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אתלטיקו וולנסיה', 0, 3 FROM questions WHERE public_id = 'q_0047';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0047';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'LA_LIGA' FROM questions WHERE public_id = 'q_0047';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ESP' FROM questions WHERE public_id = 'q_0047';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0048', 'CLASSIC', 'CLUBS', 'NORMAL', 'בין אילו שתי קבוצות מתקיים ה''סופרקלאסיקו'' הארגנטינאי?', 'הסופרקלאסיקו הוא הדרבי הגדול בכדורגל הארגנטינאי, בין בוקה ג''וניורס לריבר פלייט.', 1, 1, 'עובדות מועדונים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'בוקה ג''וניורס וריבר פלייט', 1, 0 FROM questions WHERE public_id = 'q_0048';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אינדפנדיינטה וראסינג', 0, 1 FROM questions WHERE public_id = 'q_0048';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'סן לורנסו וולז סארספילד', 0, 2 FROM questions WHERE public_id = 'q_0048';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אסטודיאנטס וג''ימנסיה', 0, 3 FROM questions WHERE public_id = 'q_0048';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'SOUTH_AMERICA' FROM questions WHERE public_id = 'q_0048';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ARG' FROM questions WHERE public_id = 'q_0048';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0049', 'CLASSIC', 'CLUBS', 'HARD', 'בין אילו שתי קבוצות מתקיים ה''אולד פירם'' הסקוטי?', 'האולד פירם הוא הדרבי בין סלטיק לריינג''רס בגלזגו, אחד הדרבים העתיקים והנטענים בעולם.', 1, 1, 'עובדות מועדונים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'סלטיק וריינג''רס', 1, 0 FROM questions WHERE public_id = 'q_0049';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'הרטס והייברניאן', 0, 1 FROM questions WHERE public_id = 'q_0049';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אברדין ודנדי יונייטד', 0, 2 FROM questions WHERE public_id = 'q_0049';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'קילמרנוק ומות''רוול', 0, 3 FROM questions WHERE public_id = 'q_0049';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0049';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0050', 'CLASSIC', 'CLUBS', 'EXPERT', 'איזה מועדון אנגלי נחשב, לפי תיעוד היסטורי נפוץ, לוותיק בעולם שעדיין פעיל, שנוסד ב-1857?', 'שפילד FC, שנוסדה ב-1857, נחשבת למועדון הכדורגל הוותיק ביותר בעולם שעדיין פעיל כיום.', 1, 1, 'עובדות מועדונים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'שפילד FC', 1, 0 FROM questions WHERE public_id = 'q_0050';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'נוטס קאונטי', 0, 1 FROM questions WHERE public_id = 'q_0050';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'סטוק סיטי', 0, 2 FROM questions WHERE public_id = 'q_0050';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'עיריית ברמינגהאם', 0, 3 FROM questions WHERE public_id = 'q_0050';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0050';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ENG' FROM questions WHERE public_id = 'q_0050';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0051', 'CLASSIC', 'STATS', 'NORMAL', 'מי מלך השערים ההיסטורי של ריאל מדריד?', 'כריסטיאנו רונאלדו כבש 450 שערים עבור ריאל מדריד בין 2009-2018, ועקף את ראול לתואר מלך השערים ההיסטורי.', 1, 1, 'עובדות סטטיסטיות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'כריסטיאנו רונאלדו', 1, 0 FROM questions WHERE public_id = 'q_0051';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ראול גונזלס', 0, 1 FROM questions WHERE public_id = 'q_0051';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אלפרדו די סטפנו', 0, 2 FROM questions WHERE public_id = 'q_0051';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'קרים בנזמה', 0, 3 FROM questions WHERE public_id = 'q_0051';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0051';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'LA_LIGA' FROM questions WHERE public_id = 'q_0051';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ESP' FROM questions WHERE public_id = 'q_0051';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0052', 'CLASSIC', 'STATS', 'HARD', 'מי מלך השערים ההיסטורי של הפרמיירליג האנגלית?', 'אלן שירר כבש 260 שערים בפרמיירליג, שיא שעדיין עומד.', 1, 1, 'עובדות סטטיסטיות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אלן שירר', 1, 0 FROM questions WHERE public_id = 'q_0052';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'וויין רוני', 0, 1 FROM questions WHERE public_id = 'q_0052';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'האריי קיין', 0, 2 FROM questions WHERE public_id = 'q_0052';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'תיירי אנרי', 0, 3 FROM questions WHERE public_id = 'q_0052';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0052';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'PREMIER_LEAGUE' FROM questions WHERE public_id = 'q_0052';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ENG' FROM questions WHERE public_id = 'q_0052';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0053', 'CLASSIC', 'STATS', 'EXPERT', 'מי מלך הבישולים (אסיסטים) ההיסטורי של הפרמיירליג?', 'ראיין גיגס, אגדת מנצ''סטר יונייטד, הוא בעל שיא האסיסטים ההיסטורי בפרמיירליג.', 1, 1, 'עובדות סטטיסטיות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ראיין גיגס', 1, 0 FROM questions WHERE public_id = 'q_0053';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'סטיבן ג''רארד', 0, 1 FROM questions WHERE public_id = 'q_0053';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'סזאר אזפיליקואטה', 0, 2 FROM questions WHERE public_id = 'q_0053';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'קווין דה בריינה', 0, 3 FROM questions WHERE public_id = 'q_0053';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0053';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'PREMIER_LEAGUE' FROM questions WHERE public_id = 'q_0053';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ENG' FROM questions WHERE public_id = 'q_0053';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0054', 'CLASSIC', 'STATS', 'NORMAL', 'מי זכה בכדורגל הזהב הכי הרבה פעמים בהיסטוריה?', 'ליאו מסי זכה בכדורגל הזהב שמונה פעמים, שיא היסטורי, כשכריסטיאנו רונאלדו במקום השני עם חמש זכיות.', 1, 1, 'עובדות סטטיסטיות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ליאו מסי', 1, 0 FROM questions WHERE public_id = 'q_0054';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'כריסטיאנו רונאלדו', 0, 1 FROM questions WHERE public_id = 'q_0054';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מישל פלטיני', 0, 2 FROM questions WHERE public_id = 'q_0054';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'יוהאן קרויף', 0, 3 FROM questions WHERE public_id = 'q_0054';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'WORLD' FROM questions WHERE public_id = 'q_0054';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0055', 'CLASSIC', 'TRANSFERS', 'NORMAL', 'לאיזו קבוצה עבר ניימאר ב-2017 בעסקה ששברה את שיא סכום ההעברה העולמי?', 'ניימאר עבר מברצלונה לפריז סן ז''רמן תמורת כ-222 מיליון אירו, שיא עולמי שעדיין לא נשבר.', 1, 1, 'היסטוריית העברות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'פריז סן ז''רמן', 1, 0 FROM questions WHERE public_id = 'q_0055';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ריאל מדריד', 0, 1 FROM questions WHERE public_id = 'q_0055';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מנצ''סטר סיטי', 0, 2 FROM questions WHERE public_id = 'q_0055';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'יובנטוס', 0, 3 FROM questions WHERE public_id = 'q_0055';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0055';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'LIGUE_1' FROM questions WHERE public_id = 'q_0055';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'FRA' FROM questions WHERE public_id = 'q_0055';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0056', 'CLASSIC', 'TRANSFERS', 'NORMAL', 'לאיזו קבוצה עבר קיליאן אמבפה ב-2024, בתום החוזה שלו בפריז סן ז''רמן?', 'אמבפה עבר לריאל מדריד ב-2024 בהעברה חופשית, לאחר שנים של שמועות על המעבר.', 1, 1, 'היסטוריית העברות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ריאל מדריד', 1, 0 FROM questions WHERE public_id = 'q_0056';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ליברפול', 0, 1 FROM questions WHERE public_id = 'q_0056';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מנצ''סטר סיטי', 0, 2 FROM questions WHERE public_id = 'q_0056';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ברצלונה', 0, 3 FROM questions WHERE public_id = 'q_0056';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0056';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'LA_LIGA' FROM questions WHERE public_id = 'q_0056';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ESP' FROM questions WHERE public_id = 'q_0056';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0057', 'CLASSIC', 'TRANSFERS', 'NORMAL', 'לאיזו קבוצה עבר ארלינג הולנד ב-2022 מבורוסיה דורטמונד?', 'הולנד עבר למנצ''סטר סיטי ב-2022, ושבר שיאי כבישה כבר בעונת הבכורה שלו.', 1, 1, 'היסטוריית העברות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מנצ''סטר סיטי', 1, 0 FROM questions WHERE public_id = 'q_0057';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ריאל מדריד', 0, 1 FROM questions WHERE public_id = 'q_0057';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'באיירן מינכן', 0, 2 FROM questions WHERE public_id = 'q_0057';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'צ''לסי', 0, 3 FROM questions WHERE public_id = 'q_0057';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0057';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'PREMIER_LEAGUE' FROM questions WHERE public_id = 'q_0057';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ENG' FROM questions WHERE public_id = 'q_0057';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0058', 'CLASSIC', 'TRANSFERS', 'HARD', 'מאיזו קבוצה עבר לואיס פיגו לריאל מדריד ב-2000, בעסקה שהפכה אותו לשנוא ביותר בקאמפ נואו?', 'פיגו עבר מברצלונה לריאל מדריד היריבה ב-2000, מעבר שנחשב לאחד השנויים במחלוקת בהיסטוריה.', 1, 1, 'היסטוריית העברות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ברצלונה', 1, 0 FROM questions WHERE public_id = 'q_0058';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'פורטו', 0, 1 FROM questions WHERE public_id = 'q_0058';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ספורטינג ליסבון', 0, 2 FROM questions WHERE public_id = 'q_0058';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אינטר מילאנו', 0, 3 FROM questions WHERE public_id = 'q_0058';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0058';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'LA_LIGA' FROM questions WHERE public_id = 'q_0058';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ESP' FROM questions WHERE public_id = 'q_0058';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0059', 'CLASSIC', 'TRANSFERS', 'NORMAL', 'באיזו עונה עזב ליאו מסי את ברצלונה, המועדון בו גדל, לאחר קשיים כלכליים של המועדון?', 'מסי עזב את ברצלונה ב-2021 עקב אילוצי שכר לפי תקנות הליגה, ועבר לפריז סן ז''רמן.', 1, 1, 'היסטוריית העברות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, '2021', 1, 0 FROM questions WHERE public_id = 'q_0059';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, '2019', 0, 1 FROM questions WHERE public_id = 'q_0059';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, '2023', 0, 2 FROM questions WHERE public_id = 'q_0059';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, '2017', 0, 3 FROM questions WHERE public_id = 'q_0059';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0059';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'LA_LIGA' FROM questions WHERE public_id = 'q_0059';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ESP' FROM questions WHERE public_id = 'q_0059';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0060', 'CLASSIC', 'TRANSFERS', 'EASY', 'לאיזו קבוצה אמריקאית עבר ליאו מסי ב-2023 מפריז סן ז''רמן?', 'מסי עבר לאינטר מיאמי בליגת ה-MLS האמריקאית ב-2023.', 1, 1, 'היסטוריית העברות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אינטר מיאמי', 1, 0 FROM questions WHERE public_id = 'q_0060';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'לוס אנג''לס גלאקסי', 0, 1 FROM questions WHERE public_id = 'q_0060';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ניו יורק סיטי', 0, 2 FROM questions WHERE public_id = 'q_0060';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אטלנטה יונייטד', 0, 3 FROM questions WHERE public_id = 'q_0060';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'WORLD' FROM questions WHERE public_id = 'q_0060';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0061', 'CLASSIC', 'NATIONAL_TEAMS', 'EASY', 'איזו נבחרת זכתה באליפות אירופה (יורו) 2024?', 'ספרד זכתה ביורו 2024 בגרמניה, לאחר ניצחון 1:2 על אנגליה בגמר, ובכך השלימה שיא של ארבעה תארי יורו.', 1, 1, 'היסטוריית נבחרות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ספרד', 1, 0 FROM questions WHERE public_id = 'q_0061';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אנגליה', 0, 1 FROM questions WHERE public_id = 'q_0061';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'הולנד', 0, 2 FROM questions WHERE public_id = 'q_0061';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'צרפת', 0, 3 FROM questions WHERE public_id = 'q_0061';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0061';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'EURO' FROM questions WHERE public_id = 'q_0061';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ESP' FROM questions WHERE public_id = 'q_0061';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0062', 'CLASSIC', 'NATIONAL_TEAMS', 'NORMAL', 'כמה פעמים הגיעה נבחרת הולנד לגמר המונדיאל מבלי לזכות בו מעולם?', 'הולנד הגיעה לגמר המונדיאל שלוש פעמים (1974, 1978, 2010) ומעולם לא זכתה בתואר.', 1, 1, 'היסטוריית נבחרות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, '3 פעמים', 1, 0 FROM questions WHERE public_id = 'q_0062';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, '2 פעמים', 0, 1 FROM questions WHERE public_id = 'q_0062';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, '4 פעמים', 0, 2 FROM questions WHERE public_id = 'q_0062';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'פעם אחת', 0, 3 FROM questions WHERE public_id = 'q_0062';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0062';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'NED' FROM questions WHERE public_id = 'q_0062';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0063', 'CLASSIC', 'NATIONAL_TEAMS', 'EXPERT', 'באיזה מונדיאל היחיד השתתפה אי פעם נבחרת ישראל?', 'נבחרת ישראל השתתפה במונדיאל פעם אחת בלבד, ב-1970 במקסיקו.', 1, 1, 'היסטוריית נבחרת ישראל');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מונדיאל 1970', 1, 0 FROM questions WHERE public_id = 'q_0063';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מונדיאל 1978', 0, 1 FROM questions WHERE public_id = 'q_0063';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מונדיאל 1986', 0, 2 FROM questions WHERE public_id = 'q_0063';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מונדיאל 1994', 0, 3 FROM questions WHERE public_id = 'q_0063';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'WORLD_CUP' FROM questions WHERE public_id = 'q_0063';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ISR' FROM questions WHERE public_id = 'q_0063';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0064', 'CLASSIC', 'NATIONAL_TEAMS', 'NORMAL', 'מהו הכינוי הנפוץ לנבחרת גרמניה בכדורגל?', 'נבחרת גרמניה מכונה ''די מנשאפט'' (Die Mannschaft), שפירושו ''הקבוצה''.', 1, 1, 'היסטוריית נבחרות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'די מנשאפט', 1, 0 FROM questions WHERE public_id = 'q_0064';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'לה סלסאו', 0, 1 FROM questions WHERE public_id = 'q_0064';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אצוררי', 0, 2 FROM questions WHERE public_id = 'q_0064';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'לה רוחה', 0, 3 FROM questions WHERE public_id = 'q_0064';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0064';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'GER' FROM questions WHERE public_id = 'q_0064';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0065', 'CLASSIC', 'NATIONAL_TEAMS', 'NORMAL', 'מהו הכינוי הנפוץ לנבחרת ברזיל בכדורגל?', 'נבחרת ברזיל מכונה ''הסלסאו'' (A Seleção), ולעיתים גם ''הקנריות'' בשל צבע החולצה הצהוב.', 1, 1, 'היסטוריית נבחרות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'הסלסאו', 1, 0 FROM questions WHERE public_id = 'q_0065';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'לה טרי', 0, 1 FROM questions WHERE public_id = 'q_0065';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'האורים והתומים', 0, 2 FROM questions WHERE public_id = 'q_0065';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'הפומס', 0, 3 FROM questions WHERE public_id = 'q_0065';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'SOUTH_AMERICA' FROM questions WHERE public_id = 'q_0065';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'BRA' FROM questions WHERE public_id = 'q_0065';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0066', 'CLASSIC', 'COACHES', 'NORMAL', 'אילו שלוש קבוצות אימן פפ גווארדיולה במהלך הקריירה שלו כמאמן ראשי?', 'גווארדיולה אימן את ברצלונה, באיירן מינכן ומנצ''סטר סיטי, וזכה בתארים גדולים בכל אחת מהן.', 1, 1, 'עובדות מאמנים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ברצלונה, באיירן מינכן ומנצ''סטר סיטי', 1, 0 FROM questions WHERE public_id = 'q_0066';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ריאל מדריד, באיירן ומנצ''סטר יונייטד', 0, 1 FROM questions WHERE public_id = 'q_0066';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ברצלונה, יובנטוס וצ''לסי', 0, 2 FROM questions WHERE public_id = 'q_0066';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אתלטיק בילבאו, באיירן וארסנל', 0, 3 FROM questions WHERE public_id = 'q_0066';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0066';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0067', 'CLASSIC', 'COACHES', 'NORMAL', 'איזה מאמן הוביל את לסטר סיטי לזכייה המפתיעה בפרמיירליג 2015-16?', 'קלאודיו רניירי הוביל את לסטר סיטי לאחת ההפתעות הגדולות בהיסטוריית הספורט, זכייה באליפות אנגליה.', 1, 1, 'עובדות מאמנים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'קלאודיו רניירי', 1, 0 FROM questions WHERE public_id = 'q_0067';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ברנדן רודג''רס', 0, 1 FROM questions WHERE public_id = 'q_0067';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'נייג''ל פירסון', 0, 2 FROM questions WHERE public_id = 'q_0067';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'רוברטו מרטינז', 0, 3 FROM questions WHERE public_id = 'q_0067';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0067';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'PREMIER_LEAGUE' FROM questions WHERE public_id = 'q_0067';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ENG' FROM questions WHERE public_id = 'q_0067';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0068', 'CLASSIC', 'COACHES', 'HARD', 'איזה מאמן זכה בליגת האלופות שלוש פעמים ברציפות עם ריאל מדריד (2016-2018)?', 'זינדין זידאן הוביל את ריאל מדריד לשלושה תארי ליגת אלופות רצופים, הישג נדיר בעידן המודרני.', 1, 1, 'עובדות מאמנים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'זינדין זידאן', 1, 0 FROM questions WHERE public_id = 'q_0068';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'רפאל בניטס', 0, 1 FROM questions WHERE public_id = 'q_0068';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'קרלו אנצ''לוטי', 0, 2 FROM questions WHERE public_id = 'q_0068';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'חוזה מוריניו', 0, 3 FROM questions WHERE public_id = 'q_0068';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0068';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'UCL' FROM questions WHERE public_id = 'q_0068';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ESP' FROM questions WHERE public_id = 'q_0068';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0069', 'CLASSIC', 'COACHES', 'HARD', 'איזה מאמן זכה בליגת האלופות עם שתי קבוצות שונות — מילאן וריאל מדריד — יותר מכל מאמן אחר (4 תארים)?', 'קרלו אנצ''לוטי זכה בליגת האלופות ארבע פעמים: פעמיים עם מילאן ופעמיים עם ריאל מדריד (ולאחר מכן תואר חמישי ב-2024).', 1, 1, 'עובדות מאמנים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'קרלו אנצ''לוטי', 1, 0 FROM questions WHERE public_id = 'q_0069';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אלכס פרגוסון', 0, 1 FROM questions WHERE public_id = 'q_0069';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'בוב פייזלי', 0, 2 FROM questions WHERE public_id = 'q_0069';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'חוזה מוריניו', 0, 3 FROM questions WHERE public_id = 'q_0069';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0069';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'UCL' FROM questions WHERE public_id = 'q_0069';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0070', 'CLASSIC', 'COACHES', 'NORMAL', 'כמה שנים אימן סר אלכס פרגוסון את מנצ''סטר יונייטד (1986-2013)?', 'פרגוסון אימן את מנצ''סטר יונייטד במשך כ-27 שנים, והפך למאמן המעוטר ביותר בכדורגל האנגלי.', 1, 1, 'עובדות מאמנים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'כ-27 שנים', 1, 0 FROM questions WHERE public_id = 'q_0070';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'כ-15 שנים', 0, 1 FROM questions WHERE public_id = 'q_0070';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'כ-20 שנים', 0, 2 FROM questions WHERE public_id = 'q_0070';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'כ-35 שנים', 0, 3 FROM questions WHERE public_id = 'q_0070';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0070';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'PREMIER_LEAGUE' FROM questions WHERE public_id = 'q_0070';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ENG' FROM questions WHERE public_id = 'q_0070';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0071', 'CLASSIC', 'COACHES', 'NORMAL', 'איזה מאמן הוביל את ליברפול משנת 2015 ועד 2024, וזכה איתה בליגת האלופות ובפרמיירליג?', 'יורגן קלופ אימן את ליברפול תשע שנים, וזכה בליגת האלופות 2019 ובפרמיירליג 2020.', 1, 1, 'עובדות מאמנים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'יורגן קלופ', 1, 0 FROM questions WHERE public_id = 'q_0071';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'רפאל בניטס', 0, 1 FROM questions WHERE public_id = 'q_0071';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ברנדן רודג''רס', 0, 2 FROM questions WHERE public_id = 'q_0071';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ארנה סלוט', 0, 3 FROM questions WHERE public_id = 'q_0071';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0071';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'PREMIER_LEAGUE' FROM questions WHERE public_id = 'q_0071';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ENG' FROM questions WHERE public_id = 'q_0071';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0072', 'CLASSIC', 'PLAYERS', 'EASY', 'איזה שחקן ידוע בכינוי ''המלך פלה'' וזכה בשלושה מונדיאלים עם ברזיל?', 'פלה, ששמו האמיתי אדסון אריאנטס דו נסימנטו, נחשב לאחד השחקנים הגדולים בהיסטוריה.', 1, 1, 'עובדות שחקנים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'פלה', 1, 0 FROM questions WHERE public_id = 'q_0072';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'גרינקו', 0, 1 FROM questions WHERE public_id = 'q_0072';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'זיקו', 0, 2 FROM questions WHERE public_id = 'q_0072';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'רומאריו', 0, 3 FROM questions WHERE public_id = 'q_0072';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'SOUTH_AMERICA' FROM questions WHERE public_id = 'q_0072';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'BRA' FROM questions WHERE public_id = 'q_0072';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0073', 'CLASSIC', 'PLAYERS', 'NORMAL', 'מהו כינויו הנפוץ של דייגו מראדונה?', 'מראדונה כונה ''אל פיבה דה אורו'' (הילד הזהוב) ונחשב לאחת האגדות הגדולות בהיסטוריית הספורט.', 1, 1, 'עובדות שחקנים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אל פיבה דה אורו', 1, 0 FROM questions WHERE public_id = 'q_0073';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אל פנומנו', 0, 1 FROM questions WHERE public_id = 'q_0073';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'הפיה הכחולה', 0, 2 FROM questions WHERE public_id = 'q_0073';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'הנשר הלבן', 0, 3 FROM questions WHERE public_id = 'q_0073';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'SOUTH_AMERICA' FROM questions WHERE public_id = 'q_0073';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ARG' FROM questions WHERE public_id = 'q_0073';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0074', 'CLASSIC', 'PLAYERS', 'EASY', 'מי כבש את שער הניצחון של ספרד בגמר מונדיאל 2010 מול הולנד?', 'אנדרס איניאסטה כבש בדקות הסיום של ההארכה, והעניק לספרד את המונדיאל הראשון בתולדותיה.', 1, 1, 'עובדות שחקנים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אנדרס איניאסטה', 1, 0 FROM questions WHERE public_id = 'q_0074';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'דיוויד וייה', 0, 1 FROM questions WHERE public_id = 'q_0074';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'צ''אבי הרננדס', 0, 2 FROM questions WHERE public_id = 'q_0074';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'פרננדו טורס', 0, 3 FROM questions WHERE public_id = 'q_0074';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0074';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'WORLD_CUP' FROM questions WHERE public_id = 'q_0074';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ESP' FROM questions WHERE public_id = 'q_0074';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0075', 'CLASSIC', 'PLAYERS', 'HARD', 'על שם מי נקראת בעיטת הפנדל המכונה ''פאנצ''קה'', שבה כדור מוגלש במרכז השער?', 'הבעיטה נקראת על שמו של אנטונין פאנצ''קה, שביצע אותה בגמר יורו 1976 עבור צ''כוסלובקיה.', 1, 1, 'עובדות שחקנים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אנטונין פאנצ''קה', 1, 0 FROM questions WHERE public_id = 'q_0075';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'זינדין זידאן', 0, 1 FROM questions WHERE public_id = 'q_0075';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'פרנצ'' פוסקאש', 0, 2 FROM questions WHERE public_id = 'q_0075';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מישל פלטיני', 0, 3 FROM questions WHERE public_id = 'q_0075';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0075';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'EURO' FROM questions WHERE public_id = 'q_0075';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0076', 'CLASSIC', 'PLAYERS', 'NORMAL', 'איזה שחקן כבש שלושער (הט-טריק) בגמר מונדיאל 2022 ועדיין הפסיד בגמר?', 'קיליאן אמבפה כבש שלושער בגמר 2022, אך צרפת הפסידה לארגנטינה בפנדלים.', 1, 1, 'עובדות שחקנים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'קיליאן אמבפה', 1, 0 FROM questions WHERE public_id = 'q_0076';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ליאו מסי', 0, 1 FROM questions WHERE public_id = 'q_0076';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אנטואן גריזמן', 0, 2 FROM questions WHERE public_id = 'q_0076';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אוסמאן דמבלה', 0, 3 FROM questions WHERE public_id = 'q_0076';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'WORLD' FROM questions WHERE public_id = 'q_0076';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'WORLD_CUP' FROM questions WHERE public_id = 'q_0076';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'FRA' FROM questions WHERE public_id = 'q_0076';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0077', 'CLASSIC', 'PLAYERS', 'EXPERT', 'איזה שחקן כבש את שני השערים של מנצ''סטר יונייטד בדקות הסיום של גמר ליגת האלופות 1999 מול באיירן מינכן?', 'טדי שרינגהאם השווה ואולה גונאר סולשייר כבש את שער הניצחון בתוספת הזמן, והשלים את ה''טרפל'' ההיסטורי של יונייטד.', 1, 1, 'עובדות שחקנים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'טדי שרינגהאם ואולה גונאר סולשייר', 1, 0 FROM questions WHERE public_id = 'q_0077';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'רויקי גיגס ופול סקולס', 0, 1 FROM questions WHERE public_id = 'q_0077';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אנדי קול ודווייט יורק', 0, 2 FROM questions WHERE public_id = 'q_0077';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'דיוויד בקהאם ורוי קין', 0, 3 FROM questions WHERE public_id = 'q_0077';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0077';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'UCL' FROM questions WHERE public_id = 'q_0077';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ENG' FROM questions WHERE public_id = 'q_0077';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0078', 'CLUB_CONNECTION', 'TRANSFERS', 'NORMAL', 'איזה שחקן שיחק גם בברצלונה וגם בפריז סן ז''רמן?', 'ניימאר שיחק בברצלונה בין 2013-2017 ולאחר מכן עבר לפריז סן ז''רמן בהעברה שיא עולמי.', 1, 1, 'היסטוריית העברות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ניימאר', 1, 0 FROM questions WHERE public_id = 'q_0078';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אנטואן גריזמן', 0, 1 FROM questions WHERE public_id = 'q_0078';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'לואיס סוארס', 0, 2 FROM questions WHERE public_id = 'q_0078';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'עוסמאן דמבלה', 0, 3 FROM questions WHERE public_id = 'q_0078';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0078';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ESP' FROM questions WHERE public_id = 'q_0078';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'FRA' FROM questions WHERE public_id = 'q_0078';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0079', 'CLUB_CONNECTION', 'TRANSFERS', 'NORMAL', 'איזה שחקן שיחק גם בריאל מדריד וגם ביובנטוס?', 'כריסטיאנו רונאלדו שיחק בריאל מדריד 2009-2018 ולאחר מכן עבר ליובנטוס 2018-2021.', 1, 1, 'היסטוריית העברות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'כריסטיאנו רונאלדו', 1, 0 FROM questions WHERE public_id = 'q_0079';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'קאקה', 0, 1 FROM questions WHERE public_id = 'q_0079';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אנחל די מריה', 0, 2 FROM questions WHERE public_id = 'q_0079';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'פאולו דיבאלה', 0, 3 FROM questions WHERE public_id = 'q_0079';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0079';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ESP' FROM questions WHERE public_id = 'q_0079';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ITA' FROM questions WHERE public_id = 'q_0079';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0080', 'CLUB_CONNECTION', 'TRANSFERS', 'HARD', 'איזה שוער שיחק גם בצ''לסי וגם בריאל מדריד?', 'טיבו קורטואה שיחק בצ''לסי 2014-2018 (לאחר השאלה באתלטיקו) ולאחר מכן עבר לריאל מדריד ב-2018.', 1, 1, 'היסטוריית העברות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'טיבו קורטואה', 1, 0 FROM questions WHERE public_id = 'q_0080';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'פטר צ''ך', 0, 1 FROM questions WHERE public_id = 'q_0080';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'קפא ארריזבלגה', 0, 2 FROM questions WHERE public_id = 'q_0080';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אדוארד מנדי', 0, 3 FROM questions WHERE public_id = 'q_0080';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0080';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ENG' FROM questions WHERE public_id = 'q_0080';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ESP' FROM questions WHERE public_id = 'q_0080';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0081', 'CLUB_CONNECTION', 'TRANSFERS', 'HARD', 'איזה שחקן ברזילאי שיחק גם בפריז סן ז''רמן, גם בברצלונה וגם במילאן?', 'רונאלדיניו שיחק בפריז סן ז''רמן (2001-2003), ברצלונה (2003-2008) ומילאן (2008-2011).', 1, 1, 'היסטוריית העברות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'רונאלדיניו', 1, 0 FROM questions WHERE public_id = 'q_0081';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'קאקה', 0, 1 FROM questions WHERE public_id = 'q_0081';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'רוברטו קרלוס', 0, 2 FROM questions WHERE public_id = 'q_0081';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ריבאלדו', 0, 3 FROM questions WHERE public_id = 'q_0081';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0081';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'SOUTH_AMERICA' FROM questions WHERE public_id = 'q_0081';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0082', 'CLUB_CONNECTION', 'TRANSFERS', 'NORMAL', 'איזה שחקן שיחק גם בליברפול וגם בברצלונה?', 'לואיס סוארס שיחק בליברפול 2011-2014 ולאחר מכן עבר לברצלונה 2014-2020, שם היה חלק מ''הטרio המערכתי'' עם מסי ונימאר.', 1, 1, 'היסטוריית העברות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'לואיס סוארס', 1, 0 FROM questions WHERE public_id = 'q_0082';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'פיליפה קוטיניו', 0, 1 FROM questions WHERE public_id = 'q_0082';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'פרננדו טורס', 0, 2 FROM questions WHERE public_id = 'q_0082';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מייקל אוון', 0, 3 FROM questions WHERE public_id = 'q_0082';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0082';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ENG' FROM questions WHERE public_id = 'q_0082';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ESP' FROM questions WHERE public_id = 'q_0082';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0083', 'CLUB_CONNECTION', 'TRANSFERS', 'EXPERT', 'איזה מגן שיחק גם באקדמיית מנצ''סטר יונייטד וגם בברצלונה, שם הפך לאגדה?', 'ג''רארד פיקה שיחק במנצ''סטר יונייטד 2004-2008 (כולל הופעות בקבוצה הבוגרת) ולאחר מכן חזר לברצלונה, מועדון ילדותו, ושיחק שם עד 2022.', 1, 1, 'היסטוריית העברות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ג''רארד פיקה', 1, 0 FROM questions WHERE public_id = 'q_0083';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מרק-אנדרה טר שטגן', 0, 1 FROM questions WHERE public_id = 'q_0083';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ז''ורדי אלבה', 0, 2 FROM questions WHERE public_id = 'q_0083';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'סרחיו בוסקטס', 0, 3 FROM questions WHERE public_id = 'q_0083';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0083';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ENG' FROM questions WHERE public_id = 'q_0083';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ESP' FROM questions WHERE public_id = 'q_0083';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0084', 'CLUB_CONNECTION', 'TRANSFERS', 'HARD', 'איזה שחקן ברזילאי, המכונה ''הפנומנו'', שיחק גם באינטר מילאנו וגם במילאן היריבה?', 'רונאלדו הברזילאי שיחק באינטר מילאנו 1997-2002, ולאחר תקופה בריאל מדריד, סיים את הקריירה שלו באיטליה דווקא במילאן היריבה (2007-2008).', 1, 1, 'היסטוריית העברות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'רונאלדו (הפנומנו)', 1, 0 FROM questions WHERE public_id = 'q_0084';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אדריאנו', 0, 1 FROM questions WHERE public_id = 'q_0084';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'רונאלדיניו', 0, 2 FROM questions WHERE public_id = 'q_0084';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'פאביו קנאבארו', 0, 3 FROM questions WHERE public_id = 'q_0084';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0084';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ITA' FROM questions WHERE public_id = 'q_0084';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0085', 'CLUB_CONNECTION', 'TRANSFERS', 'NORMAL', 'איזה חלוץ פולני שיחק גם בבאיירן מינכן וגם בברצלונה?', 'רוברט לבנדובסקי שיחק בבאיירן מינכן 2014-2022 ולאחר מכן עבר לברצלונה ב-2022.', 1, 1, 'היסטוריית העברות');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'רוברט לבנדובסקי', 1, 0 FROM questions WHERE public_id = 'q_0085';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ארקדיוש מילק', 0, 1 FROM questions WHERE public_id = 'q_0085';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'קשיישטוף פיונטק', 0, 2 FROM questions WHERE public_id = 'q_0085';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'יאקוב בלשצ''יקובסקי', 0, 3 FROM questions WHERE public_id = 'q_0085';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0085';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'GER' FROM questions WHERE public_id = 'q_0085';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ESP' FROM questions WHERE public_id = 'q_0085';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0086', 'WHO_AM_I', 'WHO_AM_I', 'NORMAL', 'מי אני?', 'מדובר בזלאטן איברהימוביץ'', חלוץ שוודי שסחף כמעט את כל המועדונים הגדולים באירופה.', 1, 1, 'קריירת שחקן');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'זלאטן איברהימוביץ''', 1, 0 FROM questions WHERE public_id = 'q_0086';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'רוד ואן ניסטלרוי', 0, 1 FROM questions WHERE public_id = 'q_0086';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אדין דז''קו', 0, 2 FROM questions WHERE public_id = 'q_0086';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'פרננדו טורס', 0, 3 FROM questions WHERE public_id = 'q_0086';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'שיחקתי באיאקס', 0 FROM questions WHERE public_id = 'q_0086';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'שיחקתי ביובנטוס', 1 FROM questions WHERE public_id = 'q_0086';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'שיחקתי בברצלונה', 2 FROM questions WHERE public_id = 'q_0086';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'שיחקתי במילאן', 3 FROM questions WHERE public_id = 'q_0086';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'שיחקתי בפריז סן ז''רמן', 4 FROM questions WHERE public_id = 'q_0086';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0086';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0087', 'WHO_AM_I', 'WHO_AM_I', 'EASY', 'מי אני?', 'מדובר בכריסטיאנו רונאלדו, שחקן פורטוגזי שזכה בכדורגל הזהב חמש פעמים.', 1, 1, 'קריירת שחקן');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'כריסטיאנו רונאלדו', 1, 0 FROM questions WHERE public_id = 'q_0087';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'לואיס פיגו', 0, 1 FROM questions WHERE public_id = 'q_0087';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'פפה', 0, 2 FROM questions WHERE public_id = 'q_0087';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ננו', 0, 3 FROM questions WHERE public_id = 'q_0087';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'נולדתי במדיירה, פורטוגל', 0 FROM questions WHERE public_id = 'q_0087';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'התחלתי את הקריירה שלי בספורטינג ליסבון', 1 FROM questions WHERE public_id = 'q_0087';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'זכיתי בכדורגל הזהב חמש פעמים', 2 FROM questions WHERE public_id = 'q_0087';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'שיחקתי בריאל מדריד ובמנצ''סטר יונייטד', 3 FROM questions WHERE public_id = 'q_0087';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0087';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'POR' FROM questions WHERE public_id = 'q_0087';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0088', 'WHO_AM_I', 'WHO_AM_I', 'EASY', 'מי אני?', 'מדובר בליאו מסי, שחקן ארגנטינאי שזכה בכדורגל הזהב פעמים רבות יותר מכל שחקן אחר.', 1, 1, 'קריירת שחקן');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ליאו מסי', 1, 0 FROM questions WHERE public_id = 'q_0088';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'סרחיו אגואירו', 0, 1 FROM questions WHERE public_id = 'q_0088';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אנחל די מריה', 0, 2 FROM questions WHERE public_id = 'q_0088';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'פאולו דיבאלה', 0, 3 FROM questions WHERE public_id = 'q_0088';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'נולדתי ברוסאריו, ארגנטינה', 0 FROM questions WHERE public_id = 'q_0088';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'עברתי לברצלונה כשהייתי ילד', 1 FROM questions WHERE public_id = 'q_0088';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'זכיתי במונדיאל 2022 עם ארגנטינה', 2 FROM questions WHERE public_id = 'q_0088';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'זכיתי בכדורגל הזהב שמונה פעמים', 3 FROM questions WHERE public_id = 'q_0088';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'SOUTH_AMERICA' FROM questions WHERE public_id = 'q_0088';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ARG' FROM questions WHERE public_id = 'q_0088';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0089', 'WHO_AM_I', 'WHO_AM_I', 'HARD', 'מי אני?', 'מדובר בדייגו מראדונה, שכבש את ''יד האלוהים'' ו''שער המאה'' באותו משחק במונדיאל 1986.', 1, 1, 'קריירת שחקן');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'דייגו מראדונה', 1, 0 FROM questions WHERE public_id = 'q_0089';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מריו קמפוס', 0, 1 FROM questions WHERE public_id = 'q_0089';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'גבריאל באטיסטוטה', 0, 2 FROM questions WHERE public_id = 'q_0089';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'חואן רומן ריקלמה', 0, 3 FROM questions WHERE public_id = 'q_0089';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'נולדתי בארגנטינה בשכונה ענייה', 0 FROM questions WHERE public_id = 'q_0089';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'כבשתי שני שערים מפורסמים באותו משחק במונדיאל 1986', 1 FROM questions WHERE public_id = 'q_0089';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'שיחקתי בנאפולי ועזרתי לה לזכות באליפות איטליה', 2 FROM questions WHERE public_id = 'q_0089';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'כונתי ''אל פיבה דה אורו''', 3 FROM questions WHERE public_id = 'q_0089';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'SOUTH_AMERICA' FROM questions WHERE public_id = 'q_0089';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ARG' FROM questions WHERE public_id = 'q_0089';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0090', 'WHO_AM_I', 'WHO_AM_I', 'NORMAL', 'מי אני?', 'מדובר בפלה, שזכה בשלושה מונדיאלים ונחשב לאחת האגדות הגדולות בהיסטוריה.', 1, 1, 'קריירת שחקן');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'פלה', 1, 0 FROM questions WHERE public_id = 'q_0090';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'גרינקו', 0, 1 FROM questions WHERE public_id = 'q_0090';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'רומאריו', 0, 2 FROM questions WHERE public_id = 'q_0090';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'זיקו', 0, 3 FROM questions WHERE public_id = 'q_0090';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'שמי האמיתי הוא אדסון אריאנטס דו נסימנטו', 0 FROM questions WHERE public_id = 'q_0090';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'זכיתי בשלושה מונדיאלים עם ברזיל', 1 FROM questions WHERE public_id = 'q_0090';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'שיחקתי כמעט את כל הקריירה שלי בסנטוס', 2 FROM questions WHERE public_id = 'q_0090';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'כונו אותי ''המלך''', 3 FROM questions WHERE public_id = 'q_0090';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'SOUTH_AMERICA' FROM questions WHERE public_id = 'q_0090';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'BRA' FROM questions WHERE public_id = 'q_0090';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0091', 'WHO_AM_I', 'WHO_AM_I', 'NORMAL', 'מי אני?', 'מדובר בניימאר, כוכב ברזילאי שעבר בהעברת שיא עולמי מברצלונה לפריז סן ז''רמן.', 1, 1, 'קריירת שחקן');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ניימאר', 1, 0 FROM questions WHERE public_id = 'q_0091';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'פיליפה קוטיניו', 0, 1 FROM questions WHERE public_id = 'q_0091';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'וויניציוס ז''וניור', 0, 2 FROM questions WHERE public_id = 'q_0091';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'רודריגו', 0, 3 FROM questions WHERE public_id = 'q_0091';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'נולדתי בברזיל', 0 FROM questions WHERE public_id = 'q_0091';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'שיחקתי בסנטוס לפני שעברתי לאירופה', 1 FROM questions WHERE public_id = 'q_0091';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'שיחקתי בברצלונה ולאחר מכן בפריז סן ז''רמן', 2 FROM questions WHERE public_id = 'q_0091';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'העברה שלי ב-2017 שברה שיא עולמי', 3 FROM questions WHERE public_id = 'q_0091';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'SOUTH_AMERICA' FROM questions WHERE public_id = 'q_0091';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0091';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'BRA' FROM questions WHERE public_id = 'q_0091';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0092', 'WHO_AM_I', 'WHO_AM_I', 'HARD', 'מי אני?', 'מדובר בלוקה מודריץ'', קפטן נבחרת קרואטיה שזכה בכדורגל הזהב ב-2018.', 1, 1, 'קריירת שחקן');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'לוקה מודריץ''', 1, 0 FROM questions WHERE public_id = 'q_0092';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'איבן ראקיטיץ''', 0, 1 FROM questions WHERE public_id = 'q_0092';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מריו מנג''וקיץ''', 0, 2 FROM questions WHERE public_id = 'q_0092';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'איבן פריסיץ''', 0, 3 FROM questions WHERE public_id = 'q_0092';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'נולדתי בקרואטיה בתקופת מלחמה', 0 FROM questions WHERE public_id = 'q_0092';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'שיחקתי בטוטנהאם לפני שעברתי לריאל מדריד', 1 FROM questions WHERE public_id = 'q_0092';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'זכיתי בכדורגל הזהב ב-2018', 2 FROM questions WHERE public_id = 'q_0092';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'הובלתי את נבחרת קרואטיה לגמר המונדיאל 2018', 3 FROM questions WHERE public_id = 'q_0092';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0092';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0093', 'WHO_AM_I', 'WHO_AM_I', 'NORMAL', 'מי אני?', 'מדובר בקיליאן אמבפה, כוכב צרפתי שכבש שלושער בגמר מונדיאל 2022.', 1, 1, 'קריירת שחקן');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'קיליאן אמבפה', 1, 0 FROM questions WHERE public_id = 'q_0093';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אנטואן גריזמן', 0, 1 FROM questions WHERE public_id = 'q_0093';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אוסמאן דמבלה', 0, 2 FROM questions WHERE public_id = 'q_0093';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ראפאל ורן', 0, 3 FROM questions WHERE public_id = 'q_0093';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'נולדתי בצרפת ליד פריז', 0 FROM questions WHERE public_id = 'q_0093';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'התחלתי את הקריירה שלי במונקו', 1 FROM questions WHERE public_id = 'q_0093';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'כבשתי שלושער בגמר מונדיאל 2022', 2 FROM questions WHERE public_id = 'q_0093';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'עברתי מפריז סן ז''רמן לריאל מדריד ב-2024', 3 FROM questions WHERE public_id = 'q_0093';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0093';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'FRA' FROM questions WHERE public_id = 'q_0093';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0094', 'CAREER_PATH', 'CAREER_PATH', 'NORMAL', 'של מי מסלול הקריירה הזה?', 'זהו מסלול הקריירה של כריסטיאנו רונאלדו — מספורטינג ליסבון ועד אל נאסר הסעודית, דרך שתי תקופות במנצ''סטר יונייטד.', 1, 1, 'קריירת שחקן');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'כריסטיאנו רונאלדו', 1, 0 FROM questions WHERE public_id = 'q_0094';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'וויין רוני', 0, 1 FROM questions WHERE public_id = 'q_0094';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'קרים בנזמה', 0, 2 FROM questions WHERE public_id = 'q_0094';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אנחל די מריה', 0, 3 FROM questions WHERE public_id = 'q_0094';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'ספורטינג ליסבון', 0 FROM questions WHERE public_id = 'q_0094';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'מנצ''סטר יונייטד', 1 FROM questions WHERE public_id = 'q_0094';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'ריאל מדריד', 2 FROM questions WHERE public_id = 'q_0094';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'יובנטוס', 3 FROM questions WHERE public_id = 'q_0094';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'מנצ''סטר יונייטד', 4 FROM questions WHERE public_id = 'q_0094';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'אל נאסר', 5 FROM questions WHERE public_id = 'q_0094';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0094';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'POR' FROM questions WHERE public_id = 'q_0094';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0095', 'CAREER_PATH', 'CAREER_PATH', 'HARD', 'של מי מסלול הקריירה הזה?', 'זהו מסלול הקריירה של לואיס סוארס — מנסיונל אורוגוואי ועד אתלטיקו מדריד, דרך ברצלונה וליברפול.', 1, 1, 'קריירת שחקן');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'לואיס סוארס', 1, 0 FROM questions WHERE public_id = 'q_0095';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אדינסון קוואני', 0, 1 FROM questions WHERE public_id = 'q_0095';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'דייגו פורלאן', 0, 2 FROM questions WHERE public_id = 'q_0095';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'דארווין נונייז', 0, 3 FROM questions WHERE public_id = 'q_0095';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'נסיונל (אורוגוואי)', 0 FROM questions WHERE public_id = 'q_0095';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'כרונינגן', 1 FROM questions WHERE public_id = 'q_0095';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'אייאקס', 2 FROM questions WHERE public_id = 'q_0095';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'ליברפול', 3 FROM questions WHERE public_id = 'q_0095';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'ברצלונה', 4 FROM questions WHERE public_id = 'q_0095';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'אתלטיקו מדריד', 5 FROM questions WHERE public_id = 'q_0095';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'SOUTH_AMERICA' FROM questions WHERE public_id = 'q_0095';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0095';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0096', 'CAREER_PATH', 'CAREER_PATH', 'EXPERT', 'של מי מסלול הקריירה הזה?', 'זהו מסלול הקריירה של זלאטן איברהימוביץ'' — ממאלמה השוודית ועד לוס אנג''לס גלאקסי, דרך כמעט כל מועדון גדול באירופה.', 1, 1, 'קריירת שחקן');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'זלאטן איברהימוביץ''', 1, 0 FROM questions WHERE public_id = 'q_0096';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אדין דז''קו', 0, 1 FROM questions WHERE public_id = 'q_0096';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'רוד ואן ניסטלרוי', 0, 2 FROM questions WHERE public_id = 'q_0096';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מריו באלוטלי', 0, 3 FROM questions WHERE public_id = 'q_0096';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'מאלמה', 0 FROM questions WHERE public_id = 'q_0096';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'אייאקס', 1 FROM questions WHERE public_id = 'q_0096';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'יובנטוס', 2 FROM questions WHERE public_id = 'q_0096';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'אינטר מילאנו', 3 FROM questions WHERE public_id = 'q_0096';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'ברצלונה', 4 FROM questions WHERE public_id = 'q_0096';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'מילאן', 5 FROM questions WHERE public_id = 'q_0096';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'פריז סן ז''רמן', 6 FROM questions WHERE public_id = 'q_0096';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'מנצ''סטר יונייטד', 7 FROM questions WHERE public_id = 'q_0096';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'לוס אנג''לס גלאקסי', 8 FROM questions WHERE public_id = 'q_0096';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0096';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0097', 'CAREER_PATH', 'CAREER_PATH', 'NORMAL', 'של מי מסלול הקריירה הזה?', 'זהו מסלול הקריירה של ניימאר — מסנטוס ועד אל הילאל הסעודית, דרך ברצלונה ופריז סן ז''רמן.', 1, 1, 'קריירת שחקן');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ניימאר', 1, 0 FROM questions WHERE public_id = 'q_0097';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'רונאלדיניו', 0, 1 FROM questions WHERE public_id = 'q_0097';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'רוברינייו', 0, 2 FROM questions WHERE public_id = 'q_0097';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'הוליק', 0, 3 FROM questions WHERE public_id = 'q_0097';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'סנטוס', 0 FROM questions WHERE public_id = 'q_0097';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'ברצלונה', 1 FROM questions WHERE public_id = 'q_0097';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'פריז סן ז''רמן', 2 FROM questions WHERE public_id = 'q_0097';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'אל הילאל', 3 FROM questions WHERE public_id = 'q_0097';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'SOUTH_AMERICA' FROM questions WHERE public_id = 'q_0097';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0097';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0098', 'CAREER_PATH', 'CAREER_PATH', 'HARD', 'של מי מסלול הקריירה הזה?', 'זהו מסלול הקריירה של רוברט לבנדובסקי — מלך פוזנן הפולנית ועד ברצלונה, דרך דורטמונד ובאיירן מינכן.', 1, 1, 'קריירת שחקן');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'רוברט לבנדובסקי', 1, 0 FROM questions WHERE public_id = 'q_0098';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'יאקוב בלשצ''יקובסקי', 0, 1 FROM questions WHERE public_id = 'q_0098';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ארקדיוש מילק', 0, 2 FROM questions WHERE public_id = 'q_0098';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'קשיישטוף פיונטק', 0, 3 FROM questions WHERE public_id = 'q_0098';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'לך פוזנן', 0 FROM questions WHERE public_id = 'q_0098';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'בורוסיה דורטמונד', 1 FROM questions WHERE public_id = 'q_0098';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'באיירן מינכן', 2 FROM questions WHERE public_id = 'q_0098';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'ברצלונה', 3 FROM questions WHERE public_id = 'q_0098';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0098';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0099', 'CAREER_PATH', 'CAREER_PATH', 'EXPERT', 'של מי מסלול הקריירה הזה?', 'זהו מסלול הקריירה של תיירי אנרי — ממונקו ועד ניו יורק רד בולס, דרך יובנטוס, ארסנל וברצלונה.', 1, 1, 'קריירת שחקן');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'תיירי אנרי', 1, 0 FROM questions WHERE public_id = 'q_0099';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ניקולא אנלקה', 0, 1 FROM questions WHERE public_id = 'q_0099';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'דייוויד טרזגה', 0, 2 FROM questions WHERE public_id = 'q_0099';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'לואי סחא', 0, 3 FROM questions WHERE public_id = 'q_0099';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'מונקו', 0 FROM questions WHERE public_id = 'q_0099';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'יובנטוס', 1 FROM questions WHERE public_id = 'q_0099';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'ארסנל', 2 FROM questions WHERE public_id = 'q_0099';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'ברצלונה', 3 FROM questions WHERE public_id = 'q_0099';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'ניו יורק רד בולס', 4 FROM questions WHERE public_id = 'q_0099';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0099';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'FRA' FROM questions WHERE public_id = 'q_0099';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0100', 'CAREER_PATH', 'CAREER_PATH', 'NORMAL', 'של מי מסלול הקריירה הזה?', 'זהו מסלול הקריירה של דיוויד בקהאם — ממנצ''סטר יונייטד ועד פריז סן ז''רמן, דרך ריאל מדריד ולוס אנג''לס גלאקסי.', 1, 1, 'קריירת שחקן');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'דיוויד בקהאם', 1, 0 FROM questions WHERE public_id = 'q_0100';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מייקל אוון', 0, 1 FROM questions WHERE public_id = 'q_0100';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'סטיבן ג''רארד', 0, 2 FROM questions WHERE public_id = 'q_0100';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'פרנק למפארד', 0, 3 FROM questions WHERE public_id = 'q_0100';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'מנצ''סטר יונייטד', 0 FROM questions WHERE public_id = 'q_0100';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'ריאל מדריד', 1 FROM questions WHERE public_id = 'q_0100';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'לוס אנג''לס גלאקסי', 2 FROM questions WHERE public_id = 'q_0100';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'מילאן (השאלה)', 3 FROM questions WHERE public_id = 'q_0100';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'פריז סן ז''רמן', 4 FROM questions WHERE public_id = 'q_0100';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0100';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ENG' FROM questions WHERE public_id = 'q_0100';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0101', 'CAREER_PATH', 'CAREER_PATH', 'HARD', 'של מי מסלול הקריירה הזה?', 'זהו מסלול הקריירה של רונאלדיניו — מגרמיו הברזילאית ועד פלמנגו, דרך פריז סן ז''רמן, ברצלונה ומילאן.', 1, 1, 'קריירת שחקן');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'רונאלדיניו', 1, 0 FROM questions WHERE public_id = 'q_0101';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'קאקה', 0, 1 FROM questions WHERE public_id = 'q_0101';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'רוביניו', 0, 2 FROM questions WHERE public_id = 'q_0101';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אדריאנו', 0, 3 FROM questions WHERE public_id = 'q_0101';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'גרמיו', 0 FROM questions WHERE public_id = 'q_0101';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'פריז סן ז''רמן', 1 FROM questions WHERE public_id = 'q_0101';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'ברצלונה', 2 FROM questions WHERE public_id = 'q_0101';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'מילאן', 3 FROM questions WHERE public_id = 'q_0101';
-INSERT INTO question_clues (question_id, clue_he, sort_order) SELECT id, 'פלמנגו', 4 FROM questions WHERE public_id = 'q_0101';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'SOUTH_AMERICA' FROM questions WHERE public_id = 'q_0101';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0101';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0102', 'GUESS_THE_CLUB', 'GUESS_THE_CLUB', 'EASY', 'איזו קבוצה זו: מכונה ''השדים האדומים'', משחקת באולד טראפורד, ונחשבת לאחת הקבוצות המצליחות באנגליה?', 'זוהי מנצ''סטר יונייטד — קבוצה מאנגליה שמשחקת באולד טראפורד המכונה ''תיאטרון החלומות''.', 1, 1, 'עובדות מועדונים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מנצ''סטר יונייטד', 1, 0 FROM questions WHERE public_id = 'q_0102';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ליברפול', 0, 1 FROM questions WHERE public_id = 'q_0102';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ארסנל', 0, 2 FROM questions WHERE public_id = 'q_0102';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'צ''לסי', 0, 3 FROM questions WHERE public_id = 'q_0102';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0102';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'PREMIER_LEAGUE' FROM questions WHERE public_id = 'q_0102';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ENG' FROM questions WHERE public_id = 'q_0102';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0103', 'GUESS_THE_CLUB', 'GUESS_THE_CLUB', 'EASY', 'איזו קבוצה זו: מכונה ''הבלאוגרנה'', משחקת בקאמפ נואו, וזכתה בליגת האלופות פעמים רבות?', 'זוהי ברצלונה — הקבוצה הקטלאנית המפורסמת, בעלת אחת האקדמיות הטובות בעולם (לה מסיה).', 1, 1, 'עובדות מועדונים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ברצלונה', 1, 0 FROM questions WHERE public_id = 'q_0103';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אתלטיקו מדריד', 0, 1 FROM questions WHERE public_id = 'q_0103';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'סביליה', 0, 2 FROM questions WHERE public_id = 'q_0103';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ולנסיה', 0, 3 FROM questions WHERE public_id = 'q_0103';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0103';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'LA_LIGA' FROM questions WHERE public_id = 'q_0103';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ESP' FROM questions WHERE public_id = 'q_0103';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0104', 'GUESS_THE_CLUB', 'GUESS_THE_CLUB', 'NORMAL', 'איזו קבוצה זו: מכונה ''הלבנים'', משחקת בסנטיאגו ברנבאו, וזכתה בליגת האלופות יותר מכל קבוצה אחרת?', 'זוהי ריאל מדריד — הקבוצה המצליחה ביותר בהיסטוריית ליגת האלופות עם 15 תארים.', 1, 1, 'עובדות מועדונים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ריאל מדריד', 1, 0 FROM questions WHERE public_id = 'q_0104';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אתלטיקו מדריד', 0, 1 FROM questions WHERE public_id = 'q_0104';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ריאל בטיס', 0, 2 FROM questions WHERE public_id = 'q_0104';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אספניול', 0, 3 FROM questions WHERE public_id = 'q_0104';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0104';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'LA_LIGA' FROM questions WHERE public_id = 'q_0104';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ESP' FROM questions WHERE public_id = 'q_0104';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0105', 'GUESS_THE_CLUB', 'GUESS_THE_CLUB', 'NORMAL', 'איזו קבוצה זו: מכונה ''התותחנים'', משחקת באצטדיון האמירויות בצפון לונדון?', 'זוהי ארסנל — קבוצה מלונדון עם היסטוריה עשירה בפרמיירליג, כולל עונה שלמה ללא הפסד ב-2003-04.', 1, 1, 'עובדות מועדונים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ארסנל', 1, 0 FROM questions WHERE public_id = 'q_0105';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'טוטנהאם', 0, 1 FROM questions WHERE public_id = 'q_0105';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'צ''לסי', 0, 2 FROM questions WHERE public_id = 'q_0105';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'וסטהאם', 0, 3 FROM questions WHERE public_id = 'q_0105';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0105';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'PREMIER_LEAGUE' FROM questions WHERE public_id = 'q_0105';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ENG' FROM questions WHERE public_id = 'q_0105';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0106', 'GUESS_THE_CLUB', 'GUESS_THE_CLUB', 'HARD', 'איזו קבוצה זו: משחקת בסן סירו יחד עם יריבתה העירונית, צבעיה אדום-שחור, וכונה ''הרוסונרי''?', 'זהו מילאן (AC Milan) — הצבעים האדום-שחור נותנים לה את הכינוי ''רוסונרי''.', 1, 1, 'עובדות מועדונים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מילאן', 1, 0 FROM questions WHERE public_id = 'q_0106';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אינטר מילאנו', 0, 1 FROM questions WHERE public_id = 'q_0106';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'יובנטוס', 0, 2 FROM questions WHERE public_id = 'q_0106';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'נאפולי', 0, 3 FROM questions WHERE public_id = 'q_0106';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0106';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'SERIE_A' FROM questions WHERE public_id = 'q_0106';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ITA' FROM questions WHERE public_id = 'q_0106';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0107', 'GUESS_THE_CLUB', 'GUESS_THE_CLUB', 'NORMAL', 'איזו קבוצה זו: מכונה ''האזרחים'', משחקת באיתיהאד סטדיום, ונשלטת על ידי קבוצת השקעות מאבו דאבי מאז 2008?', 'זוהי מנצ''סטר סיטי — קבוצה שהפכה לכוח דומיננטי בכדורגל האנגלי והעולמי מאז רכישתה ב-2008.', 1, 1, 'עובדות מועדונים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מנצ''סטר סיטי', 1, 0 FROM questions WHERE public_id = 'q_0107';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'מנצ''סטר יונייטד', 0, 1 FROM questions WHERE public_id = 'q_0107';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'ניוקאסל יונייטד', 0, 2 FROM questions WHERE public_id = 'q_0107';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'אברטון', 0, 3 FROM questions WHERE public_id = 'q_0107';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0107';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'PREMIER_LEAGUE' FROM questions WHERE public_id = 'q_0107';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'ENG' FROM questions WHERE public_id = 'q_0107';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0108', 'GUESS_THE_CLUB', 'GUESS_THE_CLUB', 'HARD', 'איזו קבוצה זו: אוהדיה מפורסמים ב''קיר הצהוב'' שלהם, וצבעיה צהוב-שחור?', 'זוהי בורוסיה דורטמונד — היציע הדרומי שלה, ''הקיר הצהוב'', הוא יציע העמידה הגדול באירופה.', 1, 1, 'עובדות מועדונים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'בורוסיה דורטמונד', 1, 0 FROM questions WHERE public_id = 'q_0108';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'באיירן מינכן', 0, 1 FROM questions WHERE public_id = 'q_0108';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'שאלקה 04', 0, 2 FROM questions WHERE public_id = 'q_0108';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'באייר לברקוזן', 0, 3 FROM questions WHERE public_id = 'q_0108';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0108';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'BUNDESLIGA' FROM questions WHERE public_id = 'q_0108';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'GER' FROM questions WHERE public_id = 'q_0108';
-
-INSERT INTO questions (public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES ('q_0109', 'GUESS_THE_CLUB', 'GUESS_THE_CLUB', 'EASY', 'איזו קבוצה זו: הקבוצה המצליחה ביותר בגרמניה, משחקת באליאנץ ארנה?', 'זוהי באיירן מינכן — הקבוצה הדומיננטית ביותר בכדורגל הגרמני.', 1, 1, 'עובדות מועדונים');
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'באיירן מינכן', 1, 0 FROM questions WHERE public_id = 'q_0109';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'בורוסיה דורטמונד', 0, 1 FROM questions WHERE public_id = 'q_0109';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'לייפציג', 0, 2 FROM questions WHERE public_id = 'q_0109';
-INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) SELECT id, 'איינטרכט פרנקפורט', 0, 3 FROM questions WHERE public_id = 'q_0109';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'REGION', 'EUROPE' FROM questions WHERE public_id = 'q_0109';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COMPETITION', 'BUNDESLIGA' FROM questions WHERE public_id = 'q_0109';
-INSERT INTO question_scopes (question_id, scope_type, scope_value) SELECT id, 'COUNTRY', 'GER' FROM questions WHERE public_id = 'q_0109';
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (1, 'q_0001', 'CLASSIC', 'WORLD_CUP', 'EASY', 'איזו נבחרת זכתה הכי הרבה פעמים במונדיאל?', 'ברזיל זכתה חמש פעמים: 1958, 1962, 1970, 1994 ו-2002 — יותר מכל נבחרת אחרת.', 1, 1, 'היסטוריית המונדיאל');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (1, 'ברזיל', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (1, 'גרמניה', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (1, 'איטליה', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (1, 'ארגנטינה', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (1, 'REGION', 'WORLD');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (1, 'COMPETITION', 'WORLD_CUP');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (1, 'COUNTRY', 'BRA');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (2, 'q_0002', 'CLASSIC', 'WORLD_CUP', 'EASY', 'איזו מדינה אירחה את מונדיאל 2022?', 'מונדיאל 2022 נערך בקטאר, בפעם הראשונה שהמונדיאל נערך בחורף בשל האקלים באזור.', 1, 1, 'היסטוריית המונדיאל');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (2, 'קטאר', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (2, 'איחוד האמירויות', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (2, 'סעודיה', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (2, 'ירדן', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (2, 'REGION', 'WORLD');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (2, 'COMPETITION', 'WORLD_CUP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (3, 'q_0003', 'CLASSIC', 'WORLD_CUP', 'EASY', 'איזו נבחרת זכתה במונדיאל 2022?', 'ארגנטינה בניצחונו של ליאו מסי, ניצחה את צרפת בגמר דרמטי בנקיטת פנדלים לאחר 3:3.', 1, 1, 'היסטוריית המונדיאל');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (3, 'ארגנטינה', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (3, 'צרפת', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (3, 'ברזיל', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (3, 'קרואטיה', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (3, 'REGION', 'WORLD');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (3, 'COMPETITION', 'WORLD_CUP');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (3, 'COUNTRY', 'ARG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (4, 'q_0004', 'CLASSIC', 'WORLD_CUP', 'EASY', 'איזו נבחרת זכתה במונדיאל 2018 ברוסיה?', 'נבחרת צרפת זכתה במונדיאל השני שלה בגמר נגד קרואטיה, 4:2.', 1, 1, 'היסטוריית המונדיאל');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (4, 'צרפת', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (4, 'קרואטיה', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (4, 'בלגיה', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (4, 'אנגליה', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (4, 'REGION', 'WORLD');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (4, 'COMPETITION', 'WORLD_CUP');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (4, 'COUNTRY', 'FRA');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (5, 'q_0005', 'CLASSIC', 'WORLD_CUP', 'NORMAL', 'מי כבש את שער הניצחון של גרמניה בגמר מונדיאל 2014 מול ארגנטינה?', 'מריו גצה כבש בדקה 113 והעניק לגרמניה את התואר הרביעי שלה, 0:1.', 1, 1, 'היסטוריית המונדיאל');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (5, 'מריו גצה', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (5, 'תומאס מולר', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (5, 'מסוט אוזיל', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (5, 'מירוסלב קלוזה', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (5, 'REGION', 'WORLD');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (5, 'COMPETITION', 'WORLD_CUP');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (5, 'COUNTRY', 'GER');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (6, 'q_0006', 'CLASSIC', 'WORLD_CUP', 'NORMAL', 'איזו נבחרת זכתה במונדיאל 2010 בדרום אפריקה?', 'ספרד זכתה בתואר הראשון שלה בהיסטוריה, לאחר ניצחון 0:1 על הולנד בגמר בשער של איניאסטה.', 1, 1, 'היסטוריית המונדיאל');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (6, 'ספרד', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (6, 'הולנד', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (6, 'גרמניה', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (6, 'אורוגוואי', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (6, 'REGION', 'WORLD');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (6, 'COMPETITION', 'WORLD_CUP');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (6, 'COUNTRY', 'ESP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (7, 'q_0007', 'CLASSIC', 'WORLD_CUP', 'NORMAL', 'איזו נבחרת זכתה במונדיאל 2006 בגרמניה?', 'איטליה זכתה בתואר הרביעי שלה, לאחר ניצחון בנקיטת פנדלים על צרפת בגמר שבו זידאן נפסל על נגיחה במטראצי.', 1, 1, 'היסטוריית המונדיאל');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (7, 'איטליה', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (7, 'צרפת', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (7, 'גרמניה', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (7, 'פורטוגל', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (7, 'REGION', 'WORLD');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (7, 'COMPETITION', 'WORLD_CUP');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (7, 'COUNTRY', 'ITA');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (8, 'q_0008', 'CLASSIC', 'WORLD_CUP', 'HARD', 'מי מלך השערים ההיסטורי של המונדיאל, עם 16 שערים?', 'מירוסלב קלוזה מגרמניה, עם 16 שערים בארבעה מונדיאלים (2002-2014), הוא מלך השערים ההיסטורי.', 1, 1, 'היסטוריית המונדיאל');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (8, 'מירוסלב קלוזה', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (8, 'רונאלדו הברזילאי', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (8, 'פלה', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (8, 'גרד מולר', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (8, 'REGION', 'WORLD');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (8, 'COMPETITION', 'WORLD_CUP');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (8, 'COUNTRY', 'GER');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (9, 'q_0009', 'CLASSIC', 'WORLD_CUP', 'HARD', 'מי היה מלך השערים של מונדיאל 2022, עם 8 שערים?', 'קיליאן אמבפה כבש 8 שערים במונדיאל 2022, כולל שלישייה בגמר מול ארגנטינה, וזכה בנעל הזהב.', 1, 1, 'היסטוריית המונדיאל');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (9, 'קיליאן אמבפה', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (9, 'ליאו מסי', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (9, 'אוליבייה ז''ירו', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (9, 'חוליאן אלווארס', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (9, 'REGION', 'WORLD');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (9, 'COMPETITION', 'WORLD_CUP');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (9, 'COUNTRY', 'FRA');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (10, 'q_0010', 'CLASSIC', 'WORLD_CUP', 'HARD', 'איזו נבחרת אירחה וזכתה במונדיאל הראשון בהיסטוריה ב-1930?', 'אורוגוואי אירחה וזכתה במונדיאל הראשון ב-1930, בניצחון על ארגנטינה בגמר.', 1, 1, 'היסטוריית המונדיאל');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (10, 'אורוגוואי', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (10, 'ארגנטינה', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (10, 'ברזיל', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (10, 'איטליה', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (10, 'REGION', 'WORLD');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (10, 'COMPETITION', 'WORLD_CUP');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (10, 'REGION', 'SOUTH_AMERICA');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (11, 'q_0011', 'CLASSIC', 'WORLD_CUP', 'NORMAL', 'מי היה קפטן נבחרת ארגנטינה שהרים את גביע המונדיאל ב-2022?', 'ליאו מסי הרים את גביע העולם כקפטן ארגנטינה, בהישג שהשלים את הקריירה הבינלאומית שלו.', 1, 1, 'היסטוריית המונדיאל');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (11, 'ליאו מסי', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (11, 'אנחל די מריה', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (11, 'פאולו דיבאלה', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (11, 'רודריגו דה פאול', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (11, 'REGION', 'WORLD');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (11, 'COMPETITION', 'WORLD_CUP');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (11, 'COUNTRY', 'ARG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (12, 'q_0012', 'CLASSIC', 'WORLD_CUP', 'NORMAL', 'כל כמה שנים מתקיים המונדיאל?', 'המונדיאל מתקיים אחת לארבע שנים מאז 1930 (למעט הפסקה בשנות מלחמת העולם השנייה).', 1, 1, 'היסטוריית המונדיאל');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (12, '4 שנים', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (12, '2 שנים', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (12, '3 שנים', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (12, '5 שנים', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (12, 'REGION', 'WORLD');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (12, 'COMPETITION', 'WORLD_CUP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (13, 'q_0013', 'CLASSIC', 'WORLD_CUP', 'NORMAL', 'איזה שחקן כינויו ''יד האלוהים'' ו''שער המאה'' באותו משחק במונדיאל 1986?', 'דייגו מראדונה כבש את שני השערים הידועים במשחק רבע הגמר של ארגנטינה מול אנגליה במונדיאל 1986.', 1, 1, 'היסטוריית המונדיאל');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (13, 'דייגו מראדונה', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (13, 'מריו קמפוס', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (13, 'חורחה בורוצ''אגה', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (13, 'דניאל פסארלה', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (13, 'REGION', 'WORLD');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (13, 'COMPETITION', 'WORLD_CUP');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (13, 'COUNTRY', 'ARG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (14, 'q_0014', 'CLASSIC', 'WORLD_CUP', 'NORMAL', 'באיזו מדינה נערך מונדיאל 1994?', 'מונדיאל 1994 נערך בארצות הברית, וברזיל זכתה בתואר לאחר ניצחון בפנדלים על איטליה.', 1, 1, 'היסטוריית המונדיאל');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (14, 'ארצות הברית', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (14, 'מקסיקו', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (14, 'קנדה', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (14, 'ברזיל', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (14, 'REGION', 'WORLD');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (14, 'COMPETITION', 'WORLD_CUP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (15, 'q_0015', 'CLASSIC', 'WORLD_CUP', 'HARD', 'איזו נבחרת זכתה במונדיאל 1990 באיטליה?', 'מערב גרמניה זכתה בתואר השלישי שלה, בניצחון 0:1 על ארגנטינה בגמר.', 1, 1, 'היסטוריית המונדיאל');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (15, 'מערב גרמניה', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (15, 'ארגנטינה', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (15, 'איטליה', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (15, 'אנגליה', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (15, 'REGION', 'WORLD');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (15, 'COMPETITION', 'WORLD_CUP');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (15, 'COUNTRY', 'GER');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (16, 'q_0016', 'CLASSIC', 'WORLD_CUP', 'NORMAL', 'כמה מונדיאלים זכה פלה במהלך הקריירה שלו?', 'פלה זכה בשלושה מונדיאלים עם ברזיל: 1958, 1962 ו-1970 — היחיד בהיסטוריה שהשיג זאת.', 1, 1, 'היסטוריית המונדיאל');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (16, '3', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (16, '2', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (16, '4', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (16, '1', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (16, 'REGION', 'WORLD');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (16, 'COMPETITION', 'WORLD_CUP');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (16, 'COUNTRY', 'BRA');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (17, 'q_0017', 'CLASSIC', 'WORLD_CUP', 'IMPOSSIBLE', 'בגיל כמה זכה פלה במונדיאל הראשון שלו ב-1958, כשהיה לצעיר הזוכים בהיסטוריה?', 'פלה היה בן 17 בלבד כשזכה במונדיאל 1958 בשוודיה, ונותר לשחקן הצעיר ביותר שזכה במונדיאל.', 1, 1, 'היסטוריית המונדיאל');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (17, '17', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (17, '19', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (17, '16', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (17, '21', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (17, 'REGION', 'WORLD');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (17, 'COMPETITION', 'WORLD_CUP');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (17, 'COUNTRY', 'BRA');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (18, 'q_0018', 'CLASSIC', 'WORLD_CUP', 'NORMAL', 'באיזו מדינה משותפת נערך מונדיאל 2002?', 'מונדיאל 2002 היה הראשון שנערך באסיה, בארגון משותף של דרום קוריאה ויפן. ברזיל זכתה בתואר.', 1, 1, 'היסטוריית המונדיאל');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (18, 'דרום קוריאה ויפן', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (18, 'סין ויפן', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (18, 'תאילנד ווייטנאם', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (18, 'יפן והפיליפינים', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (18, 'REGION', 'WORLD');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (18, 'COMPETITION', 'WORLD_CUP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (19, 'q_0019', 'CLASSIC', 'WORLD_CUP', 'EXPERT', 'מי החמיץ את הפנדל המכריע עבור איטליה בגמר מונדיאל 1994 מול ברזיל?', 'רוברטו באג''ו החמיץ את הפנדל המכריע בגמר 1994, ומאפשר לברזיל לזכות בתואר.', 1, 1, 'היסטוריית המונדיאל');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (19, 'רוברטו באג''ו', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (19, 'פרנקו בארזי', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (19, 'דמטריו אלברטיני', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (19, 'דניאלה מאסארו', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (19, 'REGION', 'WORLD');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (19, 'COMPETITION', 'WORLD_CUP');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (19, 'COUNTRY', 'ITA');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (20, 'q_0020', 'CLASSIC', 'WORLD_CUP', 'EASY', 'אילו שלוש מדינות יארחו יחד את מונדיאל 2026?', 'מונדיאל 2026 יהיה הראשון עם 48 נבחרות, ויתקיים במשותף בארצות הברית, קנדה ומקסיקו.', 1, 1, 'היסטוריית המונדיאל');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (20, 'ארה"ב, קנדה ומקסיקו', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (20, 'ארה"ב, ברזיל וקנדה', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (20, 'מקסיקו, ספרד ופורטוגל', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (20, 'קנדה, יפן וקוריאה', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (20, 'REGION', 'WORLD');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (20, 'COMPETITION', 'WORLD_CUP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (21, 'q_0021', 'CLASSIC', 'CHAMPIONS_LEAGUE', 'EASY', 'איזו קבוצה זכתה הכי הרבה פעמים בליגת האלופות?', 'ריאל מדריד זכתה בליגת האלופות 15 פעמים, יותר מכל קבוצה אחרת בהיסטוריה.', 1, 1, 'היסטוריית ליגת האלופות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (21, 'ריאל מדריד', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (21, 'מילאן', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (21, 'ליברפול', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (21, 'ברצלונה', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (21, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (21, 'COMPETITION', 'UCL');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (21, 'COUNTRY', 'ESP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (22, 'q_0022', 'CLASSIC', 'CHAMPIONS_LEAGUE', 'EASY', 'מי מלך השערים ההיסטורי של ליגת האלופות?', 'כריסטיאנו רונאלדו הוא מלך השערים ההיסטורי של ליגת האלופות, עם למעלה מ-140 שערים.', 1, 1, 'היסטוריית ליגת האלופות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (22, 'כריסטיאנו רונאלדו', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (22, 'ליאו מסי', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (22, 'רוברט לבנדובסקי', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (22, 'קרים בנזמה', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (22, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (22, 'COMPETITION', 'UCL');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (23, 'q_0023', 'CLASSIC', 'CHAMPIONS_LEAGUE', 'NORMAL', 'איזו קבוצה זכתה בליגת האלופות 2023, והשלימה טרפל היסטורי?', 'מנצ''סטר סיטי ניצחה את אינטר מילאנו 0:1 בגמר 2023, והשלימה טרפל (ליגה, גביע וליגת האלופות).', 1, 1, 'היסטוריית ליגת האלופות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (23, 'מנצ''סטר סיטי', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (23, 'אינטר מילאנו', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (23, 'ריאל מדריד', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (23, 'באיירן מינכן', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (23, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (23, 'COMPETITION', 'UCL');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (23, 'COUNTRY', 'ENG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (24, 'q_0024', 'CLASSIC', 'CHAMPIONS_LEAGUE', 'NORMAL', 'איזו קבוצה זכתה בליגת האלופות 2019, בגמר אנגלי כולו מול טוטנהאם?', 'ליברפול ניצחה את טוטנהאם 0:2 בגמר 2019 במדריד, וזכתה בתואר השישי שלה.', 1, 1, 'היסטוריית ליגת האלופות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (24, 'ליברפול', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (24, 'טוטנהאם', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (24, 'צ''לסי', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (24, 'ארסנל', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (24, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (24, 'COMPETITION', 'UCL');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (24, 'COUNTRY', 'ENG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (25, 'q_0025', 'CLASSIC', 'CHAMPIONS_LEAGUE', 'HARD', 'איזו קבוצה ביצעה את ''הנס איסטנבול'' ב-2005, כשהשלימה מפנה מ-0:3 לניצחון בפנדלים?', 'ליברפול פיגרה 0:3 למילאן במחצית הגמר ב-2005, השוותה ל-3:3 וניצחה בפנדלים.', 1, 1, 'היסטוריית ליגת האלופות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (25, 'ליברפול', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (25, 'ניוקאסל יונייטד', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (25, 'צ''לסי', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (25, 'אברטון', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (25, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (25, 'COMPETITION', 'UCL');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (25, 'COUNTRY', 'ENG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (26, 'q_0026', 'CLASSIC', 'CHAMPIONS_LEAGUE', 'HARD', 'איזו קבוצה זכתה בליגת האלופות 2012, לאחר ניצחון בפנדלים על באיירן מינכן במינכן עצמה?', 'צ''לסי ניצחה את באיירן מינכן בפנדלים על מגרשה של באיירן, ה-Allianz Arena, וזכתה בתואר הראשון שלה.', 1, 1, 'היסטוריית ליגת האלופות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (26, 'צ''לסי', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (26, 'באיירן מינכן', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (26, 'ריאל מדריד', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (26, 'ברצלונה', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (26, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (26, 'COMPETITION', 'UCL');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (26, 'COUNTRY', 'ENG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (27, 'q_0027', 'CLASSIC', 'CHAMPIONS_LEAGUE', 'HARD', 'בגמר ליגת האלופות 2014, ריאל מדריד ניצחה את אתלטיקו מדריד והשלימה את ה''עשירית'' שלה. מה היתה התוצאה?', 'ריאל מדריד ניצחה 1:4 אחרי הארכה, לאחר שאתלטיקו הובילה עד דקה 93 (שער השוואה של רמוס).', 1, 1, 'היסטוריית ליגת האלופות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (27, '1:4 אחרי הארכה', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (27, '0:1', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (27, '2:3', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (27, '0:2', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (27, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (27, 'COMPETITION', 'UCL');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (27, 'COUNTRY', 'ESP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (28, 'q_0028', 'CLASSIC', 'CHAMPIONS_LEAGUE', 'NORMAL', 'איזו קבוצה ניצחה את יובנטוס 1:4 בגמר ליגת האלופות 2017 בקרדיף?', 'ריאל מדריד ניצחה את יובנטוס בגמר 2017, עם שני שערים של כריסטיאנו רונאלדו.', 1, 1, 'היסטוריית ליגת האלופות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (28, 'ריאל מדריד', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (28, 'ברצלונה', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (28, 'באיירן מינכן', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (28, 'מנצ''סטר סיטי', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (28, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (28, 'COMPETITION', 'UCL');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (28, 'COUNTRY', 'ESP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (29, 'q_0029', 'CLASSIC', 'CHAMPIONS_LEAGUE', 'EXPERT', 'מי כבש את שער הניצחון של באיירן מינכן בגמר 2020 מול פריז סן ז''רמן, קבוצתו לשעבר?', 'קינגסלי קומאן, בוגר אקדמיית פריז סן ז''רמן, כבש את שער הניצחון עבור באיירן מינכן נגד קבוצתו הישנה.', 1, 1, 'היסטוריית ליגת האלופות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (29, 'קינגסלי קומאן', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (29, 'תומאס מולר', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (29, 'רוברט לבנדובסקי', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (29, 'סרג'' גנאברי', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (29, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (29, 'COMPETITION', 'UCL');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (29, 'COUNTRY', 'GER');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (30, 'q_0030', 'CLASSIC', 'CHAMPIONS_LEAGUE', 'EXPERT', 'כמה פעמים זכה ליאו מסי בליגת האלופות עם ברצלונה?', 'מסי זכה בליגת האלופות ארבע פעמים עם ברצלונה: 2006, 2009, 2011 ו-2015.', 1, 1, 'היסטוריית ליגת האלופות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (30, '4', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (30, '3', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (30, '5', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (30, '2', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (30, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (30, 'COMPETITION', 'UCL');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (30, 'COUNTRY', 'ESP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (31, 'q_0031', 'CLASSIC', 'CHAMPIONS_LEAGUE', 'NORMAL', 'איזו קבוצה זכתה בליגת האלופות 2016, בגמר מדריד''ני כולו מול אתלטיקו?', 'ריאל מדריד ניצחה את אתלטיקו מדריד בפנדלים בגמר 2016 בסן סירו, מילאנו.', 1, 1, 'היסטוריית ליגת האלופות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (31, 'ריאל מדריד', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (31, 'אתלטיקו מדריד', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (31, 'ברצלונה', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (31, 'ולנסיה', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (31, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (31, 'COMPETITION', 'UCL');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (31, 'COUNTRY', 'ESP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (32, 'q_0032', 'CLASSIC', 'CHAMPIONS_LEAGUE', 'IMPOSSIBLE', 'איזו קבוצה צרפתית זכתה בגביע האלופות האירופי ב-1993, בעונה הראשונה תחת השם ''ליגת האלופות''?', 'מארסיי זכתה בתואר האירופי היחיד שלה ב-1993, בעונה הראשונה שבה התחרות שונתה למתכונת ''ליגת האלופות''.', 1, 1, 'היסטוריית ליגת האלופות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (32, 'מארסיי', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (32, 'פריז סן ז''רמן', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (32, 'מונקו', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (32, 'בורדו', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (32, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (32, 'COMPETITION', 'UCL');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (32, 'COUNTRY', 'FRA');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (33, 'q_0033', 'CLASSIC', 'CHAMPIONS_LEAGUE', 'HARD', 'מי המאמן היחיד שזכה בליגת האלופות עם שלוש קבוצות שונות?', 'חוזה מוריניו זכה בליגת האלופות עם פורטו (2004) ואינטר מילאנו (2010); קרלו אנצ''לוטי זכה עם מילאן וריאל מדריד. אך המאמן שזכה עם שלוש קבוצות שונות הוא ארנסט האפל.', 1, 1, 'היסטוריית ליגת האלופות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (33, 'ארנסט האפל', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (33, 'חוזה מוריניו', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (33, 'קרלו אנצ''לוטי', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (33, 'פפ גווארדיולה', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (33, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (33, 'COMPETITION', 'UCL');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (34, 'q_0034', 'CLASSIC', 'STADIUMS', 'EASY', 'באיזה אצטדיון משחקת ריאל מדריד את משחקי הבית שלה?', 'ריאל מדריד משחקת בסנטיאגו ברנבאו שבמדריד, אחד האצטדיונים המפורסמים בעולם.', 1, 1, 'עובדות מועדונים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (34, 'סנטיאגו ברנבאו', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (34, 'קאמפ נואו', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (34, 'וונדה מטרופוליטנו', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (34, 'סן מאמס', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (34, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (34, 'COMPETITION', 'LA_LIGA');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (34, 'COUNTRY', 'ESP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (35, 'q_0035', 'CLASSIC', 'STADIUMS', 'EASY', 'באיזה אצטדיון משחקת ברצלונה את משחקי הבית שלה?', 'ברצלונה משחקת בקאמפ נואו, אחד האצטדיונים הגדולים באירופה.', 1, 1, 'עובדות מועדונים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (35, 'קאמפ נואו', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (35, 'סנטיאגו ברנבאו', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (35, 'מסטאייה', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (35, 'סן סירו', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (35, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (35, 'COMPETITION', 'LA_LIGA');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (35, 'COUNTRY', 'ESP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (36, 'q_0036', 'CLASSIC', 'STADIUMS', 'EASY', 'מהו הכינוי של אצטדיון הבית של מנצ''סטר יונייטד, אולד טראפורד?', 'אולד טראפורד מכונה ''תיאטרון החלומות'' (Theatre of Dreams).', 1, 1, 'עובדות מועדונים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (36, 'תיאטרון החלומות', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (36, 'בית האריות', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (36, 'המבצר האדום', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (36, 'קן הנשרים', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (36, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (36, 'COMPETITION', 'PREMIER_LEAGUE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (36, 'COUNTRY', 'ENG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (37, 'q_0037', 'CLASSIC', 'STADIUMS', 'NORMAL', 'אילו שתי קבוצות מילאנזיות חולקות את אצטדיון סן סירו?', 'מילאן ואינטר מילאנו, יריבות עירוניות, חולקות יחד את אצטדיון סן סירו (סטדיו ג''וזפה מאצה).', 1, 1, 'עובדות מועדונים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (37, 'מילאן ואינטר מילאנו', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (37, 'יובנטוס ומילאן', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (37, 'רומא ולאציו', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (37, 'נאפולי ואינטר', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (37, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (37, 'COMPETITION', 'SERIE_A');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (37, 'COUNTRY', 'ITA');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (38, 'q_0038', 'CLASSIC', 'STADIUMS', 'NORMAL', 'איזה אצטדיון ידוע ב''קיר הצהוב'' המפורסם שלו, היציע הגדול באירופה?', 'היציע הדרומי של בורוסיה דורטמונד באצטדיון זיגנל איידונה פארק מכונה ''הקיר הצהוב'', והוא יציע העמידה הגדול באירופה.', 1, 1, 'עובדות מועדונים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (38, 'זיגנל איידונה פארק (דורטמונד)', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (38, 'אליאנץ ארנה (באיירן)', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (38, 'פולקספארקשטדיון (המבורג)', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (38, 'אולימפיאשטדיון (ברלין)', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (38, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (38, 'COMPETITION', 'BUNDESLIGA');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (38, 'COUNTRY', 'GER');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (39, 'q_0039', 'CLASSIC', 'TITLES', 'NORMAL', 'איזו קבוצה זכתה הכי הרבה פעמים באליפות הפרמיירליג (מאז 1992)?', 'מנצ''סטר יונייטד זכתה 13 פעמים באליפות הפרמיירליג, יותר מכל קבוצה אחרת מאז שהתחרות שונתה לשמה הנוכחי ב-1992.', 1, 1, 'עובדות מועדונים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (39, 'מנצ''סטר יונייטד', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (39, 'מנצ''סטר סיטי', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (39, 'ארסנל', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (39, 'צ''לסי', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (39, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (39, 'COMPETITION', 'PREMIER_LEAGUE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (39, 'COUNTRY', 'ENG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (40, 'q_0040', 'CLASSIC', 'TITLES', 'EASY', 'איזו קבוצה זכתה הכי הרבה פעמים באליפות לה ליגה הספרדית?', 'ריאל מדריד היא הקבוצה המצליחה ביותר בהיסטוריית לה ליגה, עם יותר תארים מכל קבוצה אחרת.', 1, 1, 'עובדות מועדונים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (40, 'ריאל מדריד', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (40, 'ברצלונה', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (40, 'אתלטיקו מדריד', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (40, 'ולנסיה', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (40, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (40, 'COMPETITION', 'LA_LIGA');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (40, 'COUNTRY', 'ESP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (41, 'q_0041', 'CLASSIC', 'TITLES', 'EASY', 'איזו קבוצה זכתה הכי הרבה פעמים באליפות איטליה (סרייה א'')?', 'יובנטוס היא הקבוצה המצליחה ביותר בהיסטוריית הסקודטו האיטלקי.', 1, 1, 'עובדות מועדונים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (41, 'יובנטוס', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (41, 'מילאן', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (41, 'אינטר מילאנו', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (41, 'רומא', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (41, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (41, 'COMPETITION', 'SERIE_A');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (41, 'COUNTRY', 'ITA');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (42, 'q_0042', 'CLASSIC', 'TITLES', 'EASY', 'איזו קבוצה שולטת באליפות גרמניה (בונדסליגה) בעשור האחרון?', 'באיירן מינכן זכתה באליפות הבונדסליגה 11 פעמים ברציפות בין 2013 ל-2023.', 1, 1, 'עובדות מועדונים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (42, 'באיירן מינכן', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (42, 'בורוסיה דורטמונד', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (42, 'לייפציג', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (42, 'באייר לברקוזן', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (42, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (42, 'COMPETITION', 'BUNDESLIGA');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (42, 'COUNTRY', 'GER');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (43, 'q_0043', 'CLASSIC', 'CLUBS', 'EASY', 'מה הכינוי של מועדון מנצ''סטר יונייטד?', 'מנצ''סטר יונייטד מכונה ''השדים האדומים'' (Red Devils).', 1, 1, 'עובדות מועדונים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (43, 'השדים האדומים', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (43, 'האזרחים', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (43, 'התותחנים', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (43, 'האריות', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (43, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (43, 'COMPETITION', 'PREMIER_LEAGUE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (43, 'COUNTRY', 'ENG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (44, 'q_0044', 'CLASSIC', 'CLUBS', 'EASY', 'מה הכינוי של מועדון ליברפול?', 'ליברפול מכונה ''האדומים'' (The Reds), על שם צבעי האצטדיון והמדים.', 1, 1, 'עובדות מועדונים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (44, 'האדומים', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (44, 'הכחולים', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (44, 'התותחנים', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (44, 'הזאבים', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (44, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (44, 'COMPETITION', 'PREMIER_LEAGUE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (44, 'COUNTRY', 'ENG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (45, 'q_0045', 'CLASSIC', 'CLUBS', 'EASY', 'מה הכינוי של מועדון ארסנל?', 'ארסנל מכונה ''התותחנים'' (The Gunners), בשל שורשי המועדון כקבוצת פועלי תעשיית נשק.', 1, 1, 'עובדות מועדונים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (45, 'התותחנים', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (45, 'האזרחים', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (45, 'הפטישים', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (45, 'הענקים', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (45, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (45, 'COMPETITION', 'PREMIER_LEAGUE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (45, 'COUNTRY', 'ENG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (46, 'q_0046', 'CLASSIC', 'CLUBS', 'NORMAL', 'מה הכינוי הנפוץ לאוהדי ולשחקני ברצלונה?', 'ברצלונה מכונה ''בלאוגרנה'' (Blaugrana) על שם צבעי הכחול-בורדו, ואוהדיה מכונים ''קולה'' (Culés).', 1, 1, 'עובדות מועדונים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (46, 'בלאוגרנה', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (46, 'רוחינגרוס', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (46, 'ביאנקונרי', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (46, 'נראצורי', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (46, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (46, 'COMPETITION', 'LA_LIGA');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (46, 'COUNTRY', 'ESP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (47, 'q_0047', 'CLASSIC', 'CLUBS', 'NORMAL', 'בין אילו שתי קבוצות מתקיים ''אל קלאסיקו'' הספרדי המפורסם?', 'אל קלאסיקו הוא הדרבי בין ריאל מדריד לברצלונה, אחד המשחקים הצפויים ביותר בעולם הכדורגל.', 1, 1, 'עובדות מועדונים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (47, 'ריאל מדריד וברצלונה', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (47, 'ריאל מדריד ואתלטיקו מדריד', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (47, 'ברצלונה וסביליה', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (47, 'אתלטיקו וולנסיה', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (47, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (47, 'COMPETITION', 'LA_LIGA');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (47, 'COUNTRY', 'ESP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (48, 'q_0048', 'CLASSIC', 'CLUBS', 'NORMAL', 'בין אילו שתי קבוצות מתקיים ה''סופרקלאסיקו'' הארגנטינאי?', 'הסופרקלאסיקו הוא הדרבי הגדול בכדורגל הארגנטינאי, בין בוקה ג''וניורס לריבר פלייט.', 1, 1, 'עובדות מועדונים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (48, 'בוקה ג''וניורס וריבר פלייט', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (48, 'אינדפנדיינטה וראסינג', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (48, 'סן לורנסו וולז סארספילד', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (48, 'אסטודיאנטס וג''ימנסיה', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (48, 'REGION', 'SOUTH_AMERICA');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (48, 'COUNTRY', 'ARG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (49, 'q_0049', 'CLASSIC', 'CLUBS', 'HARD', 'בין אילו שתי קבוצות מתקיים ה''אולד פירם'' הסקוטי?', 'האולד פירם הוא הדרבי בין סלטיק לריינג''רס בגלזגו, אחד הדרבים העתיקים והנטענים בעולם.', 1, 1, 'עובדות מועדונים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (49, 'סלטיק וריינג''רס', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (49, 'הרטס והייברניאן', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (49, 'אברדין ודנדי יונייטד', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (49, 'קילמרנוק ומות''רוול', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (49, 'REGION', 'EUROPE');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (50, 'q_0050', 'CLASSIC', 'CLUBS', 'EXPERT', 'איזה מועדון אנגלי נחשב, לפי תיעוד היסטורי נפוץ, לוותיק בעולם שעדיין פעיל, שנוסד ב-1857?', 'שפילד FC, שנוסדה ב-1857, נחשבת למועדון הכדורגל הוותיק ביותר בעולם שעדיין פעיל כיום.', 1, 1, 'עובדות מועדונים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (50, 'שפילד FC', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (50, 'נוטס קאונטי', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (50, 'סטוק סיטי', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (50, 'עיריית ברמינגהאם', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (50, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (50, 'COUNTRY', 'ENG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (51, 'q_0051', 'CLASSIC', 'STATS', 'NORMAL', 'מי מלך השערים ההיסטורי של ריאל מדריד?', 'כריסטיאנו רונאלדו כבש 450 שערים עבור ריאל מדריד בין 2009-2018, ועקף את ראול לתואר מלך השערים ההיסטורי.', 1, 1, 'עובדות סטטיסטיות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (51, 'כריסטיאנו רונאלדו', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (51, 'ראול גונזלס', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (51, 'אלפרדו די סטפנו', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (51, 'קרים בנזמה', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (51, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (51, 'COMPETITION', 'LA_LIGA');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (51, 'COUNTRY', 'ESP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (52, 'q_0052', 'CLASSIC', 'STATS', 'HARD', 'מי מלך השערים ההיסטורי של הפרמיירליג האנגלית?', 'אלן שירר כבש 260 שערים בפרמיירליג, שיא שעדיין עומד.', 1, 1, 'עובדות סטטיסטיות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (52, 'אלן שירר', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (52, 'וויין רוני', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (52, 'האריי קיין', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (52, 'תיירי אנרי', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (52, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (52, 'COMPETITION', 'PREMIER_LEAGUE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (52, 'COUNTRY', 'ENG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (53, 'q_0053', 'CLASSIC', 'STATS', 'EXPERT', 'מי מלך הבישולים (אסיסטים) ההיסטורי של הפרמיירליג?', 'ראיין גיגס, אגדת מנצ''סטר יונייטד, הוא בעל שיא האסיסטים ההיסטורי בפרמיירליג.', 1, 1, 'עובדות סטטיסטיות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (53, 'ראיין גיגס', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (53, 'סטיבן ג''רארד', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (53, 'סזאר אזפיליקואטה', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (53, 'קווין דה בריינה', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (53, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (53, 'COMPETITION', 'PREMIER_LEAGUE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (53, 'COUNTRY', 'ENG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (54, 'q_0054', 'CLASSIC', 'STATS', 'NORMAL', 'מי זכה בכדורגל הזהב הכי הרבה פעמים בהיסטוריה?', 'ליאו מסי זכה בכדורגל הזהב שמונה פעמים, שיא היסטורי, כשכריסטיאנו רונאלדו במקום השני עם חמש זכיות.', 1, 1, 'עובדות סטטיסטיות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (54, 'ליאו מסי', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (54, 'כריסטיאנו רונאלדו', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (54, 'מישל פלטיני', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (54, 'יוהאן קרויף', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (54, 'REGION', 'WORLD');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (55, 'q_0055', 'CLASSIC', 'TRANSFERS', 'NORMAL', 'לאיזו קבוצה עבר ניימאר ב-2017 בעסקה ששברה את שיא סכום ההעברה העולמי?', 'ניימאר עבר מברצלונה לפריז סן ז''רמן תמורת כ-222 מיליון אירו, שיא עולמי שעדיין לא נשבר.', 1, 1, 'היסטוריית העברות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (55, 'פריז סן ז''רמן', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (55, 'ריאל מדריד', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (55, 'מנצ''סטר סיטי', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (55, 'יובנטוס', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (55, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (55, 'COMPETITION', 'LIGUE_1');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (55, 'COUNTRY', 'FRA');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (56, 'q_0056', 'CLASSIC', 'TRANSFERS', 'NORMAL', 'לאיזו קבוצה עבר קיליאן אמבפה ב-2024, בתום החוזה שלו בפריז סן ז''רמן?', 'אמבפה עבר לריאל מדריד ב-2024 בהעברה חופשית, לאחר שנים של שמועות על המעבר.', 1, 1, 'היסטוריית העברות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (56, 'ריאל מדריד', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (56, 'ליברפול', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (56, 'מנצ''סטר סיטי', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (56, 'ברצלונה', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (56, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (56, 'COMPETITION', 'LA_LIGA');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (56, 'COUNTRY', 'ESP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (57, 'q_0057', 'CLASSIC', 'TRANSFERS', 'NORMAL', 'לאיזו קבוצה עבר ארלינג הולנד ב-2022 מבורוסיה דורטמונד?', 'הולנד עבר למנצ''סטר סיטי ב-2022, ושבר שיאי כבישה כבר בעונת הבכורה שלו.', 1, 1, 'היסטוריית העברות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (57, 'מנצ''סטר סיטי', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (57, 'ריאל מדריד', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (57, 'באיירן מינכן', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (57, 'צ''לסי', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (57, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (57, 'COMPETITION', 'PREMIER_LEAGUE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (57, 'COUNTRY', 'ENG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (58, 'q_0058', 'CLASSIC', 'TRANSFERS', 'HARD', 'מאיזו קבוצה עבר לואיס פיגו לריאל מדריד ב-2000, בעסקה שהפכה אותו לשנוא ביותר בקאמפ נואו?', 'פיגו עבר מברצלונה לריאל מדריד היריבה ב-2000, מעבר שנחשב לאחד השנויים במחלוקת בהיסטוריה.', 1, 1, 'היסטוריית העברות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (58, 'ברצלונה', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (58, 'פורטו', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (58, 'ספורטינג ליסבון', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (58, 'אינטר מילאנו', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (58, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (58, 'COMPETITION', 'LA_LIGA');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (58, 'COUNTRY', 'ESP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (59, 'q_0059', 'CLASSIC', 'TRANSFERS', 'NORMAL', 'באיזו עונה עזב ליאו מסי את ברצלונה, המועדון בו גדל, לאחר קשיים כלכליים של המועדון?', 'מסי עזב את ברצלונה ב-2021 עקב אילוצי שכר לפי תקנות הליגה, ועבר לפריז סן ז''רמן.', 1, 1, 'היסטוריית העברות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (59, '2021', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (59, '2019', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (59, '2023', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (59, '2017', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (59, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (59, 'COMPETITION', 'LA_LIGA');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (59, 'COUNTRY', 'ESP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (60, 'q_0060', 'CLASSIC', 'TRANSFERS', 'EASY', 'לאיזו קבוצה אמריקאית עבר ליאו מסי ב-2023 מפריז סן ז''רמן?', 'מסי עבר לאינטר מיאמי בליגת ה-MLS האמריקאית ב-2023.', 1, 1, 'היסטוריית העברות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (60, 'אינטר מיאמי', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (60, 'לוס אנג''לס גלאקסי', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (60, 'ניו יורק סיטי', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (60, 'אטלנטה יונייטד', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (60, 'REGION', 'WORLD');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (61, 'q_0061', 'CLASSIC', 'NATIONAL_TEAMS', 'EASY', 'איזו נבחרת זכתה באליפות אירופה (יורו) 2024?', 'ספרד זכתה ביורו 2024 בגרמניה, לאחר ניצחון 1:2 על אנגליה בגמר, ובכך השלימה שיא של ארבעה תארי יורו.', 1, 1, 'היסטוריית נבחרות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (61, 'ספרד', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (61, 'אנגליה', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (61, 'הולנד', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (61, 'צרפת', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (61, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (61, 'COMPETITION', 'EURO');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (61, 'COUNTRY', 'ESP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (62, 'q_0062', 'CLASSIC', 'NATIONAL_TEAMS', 'NORMAL', 'כמה פעמים הגיעה נבחרת הולנד לגמר המונדיאל מבלי לזכות בו מעולם?', 'הולנד הגיעה לגמר המונדיאל שלוש פעמים (1974, 1978, 2010) ומעולם לא זכתה בתואר.', 1, 1, 'היסטוריית נבחרות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (62, '3 פעמים', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (62, '2 פעמים', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (62, '4 פעמים', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (62, 'פעם אחת', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (62, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (62, 'COUNTRY', 'NED');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (63, 'q_0063', 'CLASSIC', 'NATIONAL_TEAMS', 'EXPERT', 'באיזה מונדיאל היחיד השתתפה אי פעם נבחרת ישראל?', 'נבחרת ישראל השתתפה במונדיאל פעם אחת בלבד, ב-1970 במקסיקו.', 1, 1, 'היסטוריית נבחרת ישראל');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (63, 'מונדיאל 1970', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (63, 'מונדיאל 1978', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (63, 'מונדיאל 1986', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (63, 'מונדיאל 1994', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (63, 'COMPETITION', 'WORLD_CUP');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (63, 'COUNTRY', 'ISR');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (64, 'q_0064', 'CLASSIC', 'NATIONAL_TEAMS', 'NORMAL', 'מהו הכינוי הנפוץ לנבחרת גרמניה בכדורגל?', 'נבחרת גרמניה מכונה ''די מנשאפט'' (Die Mannschaft), שפירושו ''הקבוצה''.', 1, 1, 'היסטוריית נבחרות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (64, 'די מנשאפט', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (64, 'לה סלסאו', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (64, 'אצוררי', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (64, 'לה רוחה', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (64, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (64, 'COUNTRY', 'GER');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (65, 'q_0065', 'CLASSIC', 'NATIONAL_TEAMS', 'NORMAL', 'מהו הכינוי הנפוץ לנבחרת ברזיל בכדורגל?', 'נבחרת ברזיל מכונה ''הסלסאו'' (A Seleção), ולעיתים גם ''הקנריות'' בשל צבע החולצה הצהוב.', 1, 1, 'היסטוריית נבחרות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (65, 'הסלסאו', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (65, 'לה טרי', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (65, 'האורים והתומים', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (65, 'הפומס', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (65, 'REGION', 'SOUTH_AMERICA');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (65, 'COUNTRY', 'BRA');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (66, 'q_0066', 'CLASSIC', 'COACHES', 'NORMAL', 'אילו שלוש קבוצות אימן פפ גווארדיולה במהלך הקריירה שלו כמאמן ראשי?', 'גווארדיולה אימן את ברצלונה, באיירן מינכן ומנצ''סטר סיטי, וזכה בתארים גדולים בכל אחת מהן.', 1, 1, 'עובדות מאמנים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (66, 'ברצלונה, באיירן מינכן ומנצ''סטר סיטי', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (66, 'ריאל מדריד, באיירן ומנצ''סטר יונייטד', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (66, 'ברצלונה, יובנטוס וצ''לסי', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (66, 'אתלטיק בילבאו, באיירן וארסנל', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (66, 'REGION', 'EUROPE');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (67, 'q_0067', 'CLASSIC', 'COACHES', 'NORMAL', 'איזה מאמן הוביל את לסטר סיטי לזכייה המפתיעה בפרמיירליג 2015-16?', 'קלאודיו רניירי הוביל את לסטר סיטי לאחת ההפתעות הגדולות בהיסטוריית הספורט, זכייה באליפות אנגליה.', 1, 1, 'עובדות מאמנים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (67, 'קלאודיו רניירי', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (67, 'ברנדן רודג''רס', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (67, 'נייג''ל פירסון', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (67, 'רוברטו מרטינז', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (67, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (67, 'COMPETITION', 'PREMIER_LEAGUE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (67, 'COUNTRY', 'ENG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (68, 'q_0068', 'CLASSIC', 'COACHES', 'HARD', 'איזה מאמן זכה בליגת האלופות שלוש פעמים ברציפות עם ריאל מדריד (2016-2018)?', 'זינדין זידאן הוביל את ריאל מדריד לשלושה תארי ליגת אלופות רצופים, הישג נדיר בעידן המודרני.', 1, 1, 'עובדות מאמנים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (68, 'זינדין זידאן', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (68, 'רפאל בניטס', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (68, 'קרלו אנצ''לוטי', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (68, 'חוזה מוריניו', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (68, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (68, 'COMPETITION', 'UCL');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (68, 'COUNTRY', 'ESP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (69, 'q_0069', 'CLASSIC', 'COACHES', 'HARD', 'איזה מאמן זכה בליגת האלופות עם שתי קבוצות שונות — מילאן וריאל מדריד — יותר מכל מאמן אחר (4 תארים)?', 'קרלו אנצ''לוטי זכה בליגת האלופות ארבע פעמים: פעמיים עם מילאן ופעמיים עם ריאל מדריד (ולאחר מכן תואר חמישי ב-2024).', 1, 1, 'עובדות מאמנים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (69, 'קרלו אנצ''לוטי', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (69, 'אלכס פרגוסון', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (69, 'בוב פייזלי', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (69, 'חוזה מוריניו', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (69, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (69, 'COMPETITION', 'UCL');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (70, 'q_0070', 'CLASSIC', 'COACHES', 'NORMAL', 'כמה שנים אימן סר אלכס פרגוסון את מנצ''סטר יונייטד (1986-2013)?', 'פרגוסון אימן את מנצ''סטר יונייטד במשך כ-27 שנים, והפך למאמן המעוטר ביותר בכדורגל האנגלי.', 1, 1, 'עובדות מאמנים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (70, 'כ-27 שנים', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (70, 'כ-15 שנים', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (70, 'כ-20 שנים', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (70, 'כ-35 שנים', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (70, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (70, 'COMPETITION', 'PREMIER_LEAGUE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (70, 'COUNTRY', 'ENG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (71, 'q_0071', 'CLASSIC', 'COACHES', 'NORMAL', 'איזה מאמן הוביל את ליברפול משנת 2015 ועד 2024, וזכה איתה בליגת האלופות ובפרמיירליג?', 'יורגן קלופ אימן את ליברפול תשע שנים, וזכה בליגת האלופות 2019 ובפרמיירליג 2020.', 1, 1, 'עובדות מאמנים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (71, 'יורגן קלופ', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (71, 'רפאל בניטס', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (71, 'ברנדן רודג''רס', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (71, 'ארנה סלוט', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (71, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (71, 'COMPETITION', 'PREMIER_LEAGUE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (71, 'COUNTRY', 'ENG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (72, 'q_0072', 'CLASSIC', 'PLAYERS', 'EASY', 'איזה שחקן ידוע בכינוי ''המלך פלה'' וזכה בשלושה מונדיאלים עם ברזיל?', 'פלה, ששמו האמיתי אדסון אריאנטס דו נסימנטו, נחשב לאחד השחקנים הגדולים בהיסטוריה.', 1, 1, 'עובדות שחקנים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (72, 'פלה', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (72, 'גרינקו', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (72, 'זיקו', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (72, 'רומאריו', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (72, 'REGION', 'SOUTH_AMERICA');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (72, 'COUNTRY', 'BRA');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (73, 'q_0073', 'CLASSIC', 'PLAYERS', 'NORMAL', 'מהו כינויו הנפוץ של דייגו מראדונה?', 'מראדונה כונה ''אל פיבה דה אורו'' (הילד הזהוב) ונחשב לאחת האגדות הגדולות בהיסטוריית הספורט.', 1, 1, 'עובדות שחקנים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (73, 'אל פיבה דה אורו', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (73, 'אל פנומנו', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (73, 'הפיה הכחולה', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (73, 'הנשר הלבן', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (73, 'REGION', 'SOUTH_AMERICA');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (73, 'COUNTRY', 'ARG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (74, 'q_0074', 'CLASSIC', 'PLAYERS', 'EASY', 'מי כבש את שער הניצחון של ספרד בגמר מונדיאל 2010 מול הולנד?', 'אנדרס איניאסטה כבש בדקות הסיום של ההארכה, והעניק לספרד את המונדיאל הראשון בתולדותיה.', 1, 1, 'עובדות שחקנים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (74, 'אנדרס איניאסטה', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (74, 'דיוויד וייה', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (74, 'צ''אבי הרננדס', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (74, 'פרננדו טורס', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (74, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (74, 'COMPETITION', 'WORLD_CUP');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (74, 'COUNTRY', 'ESP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (75, 'q_0075', 'CLASSIC', 'PLAYERS', 'HARD', 'על שם מי נקראת בעיטת הפנדל המכונה ''פאנצ''קה'', שבה כדור מוגלש במרכז השער?', 'הבעיטה נקראת על שמו של אנטונין פאנצ''קה, שביצע אותה בגמר יורו 1976 עבור צ''כוסלובקיה.', 1, 1, 'עובדות שחקנים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (75, 'אנטונין פאנצ''קה', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (75, 'זינדין זידאן', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (75, 'פרנצ'' פוסקאש', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (75, 'מישל פלטיני', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (75, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (75, 'COMPETITION', 'EURO');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (76, 'q_0076', 'CLASSIC', 'PLAYERS', 'NORMAL', 'איזה שחקן כבש שלושער (הט-טריק) בגמר מונדיאל 2022 ועדיין הפסיד בגמר?', 'קיליאן אמבפה כבש שלושער בגמר 2022, אך צרפת הפסידה לארגנטינה בפנדלים.', 1, 1, 'עובדות שחקנים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (76, 'קיליאן אמבפה', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (76, 'ליאו מסי', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (76, 'אנטואן גריזמן', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (76, 'אוסמאן דמבלה', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (76, 'REGION', 'WORLD');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (76, 'COMPETITION', 'WORLD_CUP');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (76, 'COUNTRY', 'FRA');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (77, 'q_0077', 'CLASSIC', 'PLAYERS', 'EXPERT', 'איזה שחקן כבש את שני השערים של מנצ''סטר יונייטד בדקות הסיום של גמר ליגת האלופות 1999 מול באיירן מינכן?', 'טדי שרינגהאם השווה ואולה גונאר סולשייר כבש את שער הניצחון בתוספת הזמן, והשלים את ה''טרפל'' ההיסטורי של יונייטד.', 1, 1, 'עובדות שחקנים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (77, 'טדי שרינגהאם ואולה גונאר סולשייר', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (77, 'רויקי גיגס ופול סקולס', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (77, 'אנדי קול ודווייט יורק', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (77, 'דיוויד בקהאם ורוי קין', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (77, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (77, 'COMPETITION', 'UCL');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (77, 'COUNTRY', 'ENG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (78, 'q_0078', 'CLUB_CONNECTION', 'TRANSFERS', 'NORMAL', 'איזה שחקן שיחק גם בברצלונה וגם בפריז סן ז''רמן?', 'ניימאר שיחק בברצלונה בין 2013-2017 ולאחר מכן עבר לפריז סן ז''רמן בהעברה שיא עולמי.', 1, 1, 'היסטוריית העברות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (78, 'ניימאר', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (78, 'אנטואן גריזמן', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (78, 'לואיס סוארס', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (78, 'עוסמאן דמבלה', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (78, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (78, 'COUNTRY', 'ESP');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (78, 'COUNTRY', 'FRA');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (79, 'q_0079', 'CLUB_CONNECTION', 'TRANSFERS', 'NORMAL', 'איזה שחקן שיחק גם בריאל מדריד וגם ביובנטוס?', 'כריסטיאנו רונאלדו שיחק בריאל מדריד 2009-2018 ולאחר מכן עבר ליובנטוס 2018-2021.', 1, 1, 'היסטוריית העברות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (79, 'כריסטיאנו רונאלדו', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (79, 'קאקה', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (79, 'אנחל די מריה', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (79, 'פאולו דיבאלה', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (79, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (79, 'COUNTRY', 'ESP');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (79, 'COUNTRY', 'ITA');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (80, 'q_0080', 'CLUB_CONNECTION', 'TRANSFERS', 'HARD', 'איזה שוער שיחק גם בצ''לסי וגם בריאל מדריד?', 'טיבו קורטואה שיחק בצ''לסי 2014-2018 (לאחר השאלה באתלטיקו) ולאחר מכן עבר לריאל מדריד ב-2018.', 1, 1, 'היסטוריית העברות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (80, 'טיבו קורטואה', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (80, 'פטר צ''ך', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (80, 'קפא ארריזבלגה', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (80, 'אדוארד מנדי', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (80, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (80, 'COUNTRY', 'ENG');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (80, 'COUNTRY', 'ESP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (81, 'q_0081', 'CLUB_CONNECTION', 'TRANSFERS', 'HARD', 'איזה שחקן ברזילאי שיחק גם בפריז סן ז''רמן, גם בברצלונה וגם במילאן?', 'רונאלדיניו שיחק בפריז סן ז''רמן (2001-2003), ברצלונה (2003-2008) ומילאן (2008-2011).', 1, 1, 'היסטוריית העברות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (81, 'רונאלדיניו', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (81, 'קאקה', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (81, 'רוברטו קרלוס', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (81, 'ריבאלדו', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (81, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (81, 'REGION', 'SOUTH_AMERICA');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (82, 'q_0082', 'CLUB_CONNECTION', 'TRANSFERS', 'NORMAL', 'איזה שחקן שיחק גם בליברפול וגם בברצלונה?', 'לואיס סוארס שיחק בליברפול 2011-2014 ולאחר מכן עבר לברצלונה 2014-2020, שם היה חלק מ''הטרio המערכתי'' עם מסי ונימאר.', 1, 1, 'היסטוריית העברות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (82, 'לואיס סוארס', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (82, 'פיליפה קוטיניו', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (82, 'פרננדו טורס', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (82, 'מייקל אוון', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (82, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (82, 'COUNTRY', 'ENG');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (82, 'COUNTRY', 'ESP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (83, 'q_0083', 'CLUB_CONNECTION', 'TRANSFERS', 'EXPERT', 'איזה מגן שיחק גם באקדמיית מנצ''סטר יונייטד וגם בברצלונה, שם הפך לאגדה?', 'ג''רארד פיקה שיחק במנצ''סטר יונייטד 2004-2008 (כולל הופעות בקבוצה הבוגרת) ולאחר מכן חזר לברצלונה, מועדון ילדותו, ושיחק שם עד 2022.', 1, 1, 'היסטוריית העברות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (83, 'ג''רארד פיקה', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (83, 'מרק-אנדרה טר שטגן', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (83, 'ז''ורדי אלבה', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (83, 'סרחיו בוסקטס', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (83, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (83, 'COUNTRY', 'ENG');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (83, 'COUNTRY', 'ESP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (84, 'q_0084', 'CLUB_CONNECTION', 'TRANSFERS', 'HARD', 'איזה שחקן ברזילאי, המכונה ''הפנומנו'', שיחק גם באינטר מילאנו וגם במילאן היריבה?', 'רונאלדו הברזילאי שיחק באינטר מילאנו 1997-2002, ולאחר תקופה בריאל מדריד, סיים את הקריירה שלו באיטליה דווקא במילאן היריבה (2007-2008).', 1, 1, 'היסטוריית העברות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (84, 'רונאלדו (הפנומנו)', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (84, 'אדריאנו', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (84, 'רונאלדיניו', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (84, 'פאביו קנאבארו', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (84, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (84, 'COUNTRY', 'ITA');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (85, 'q_0085', 'CLUB_CONNECTION', 'TRANSFERS', 'NORMAL', 'איזה חלוץ פולני שיחק גם בבאיירן מינכן וגם בברצלונה?', 'רוברט לבנדובסקי שיחק בבאיירן מינכן 2014-2022 ולאחר מכן עבר לברצלונה ב-2022.', 1, 1, 'היסטוריית העברות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (85, 'רוברט לבנדובסקי', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (85, 'ארקדיוש מילק', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (85, 'קשיישטוף פיונטק', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (85, 'יאקוב בלשצ''יקובסקי', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (85, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (85, 'COUNTRY', 'GER');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (85, 'COUNTRY', 'ESP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (86, 'q_0086', 'WHO_AM_I', 'WHO_AM_I', 'NORMAL', 'מי אני?', 'מדובר בזלאטן איברהימוביץ'', חלוץ שוודי שסחף כמעט את כל המועדונים הגדולים באירופה.', 1, 1, 'קריירת שחקן');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (86, 'זלאטן איברהימוביץ''', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (86, 'רוד ואן ניסטלרוי', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (86, 'אדין דז''קו', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (86, 'פרננדו טורס', 0, 3);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (86, 'שיחקתי באיאקס', 0);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (86, 'שיחקתי ביובנטוס', 1);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (86, 'שיחקתי בברצלונה', 2);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (86, 'שיחקתי במילאן', 3);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (86, 'שיחקתי בפריז סן ז''רמן', 4);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (86, 'REGION', 'EUROPE');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (87, 'q_0087', 'WHO_AM_I', 'WHO_AM_I', 'EASY', 'מי אני?', 'מדובר בכריסטיאנו רונאלדו, שחקן פורטוגזי שזכה בכדורגל הזהב חמש פעמים.', 1, 1, 'קריירת שחקן');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (87, 'כריסטיאנו רונאלדו', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (87, 'לואיס פיגו', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (87, 'פפה', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (87, 'ננו', 0, 3);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (87, 'נולדתי במדיירה, פורטוגל', 0);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (87, 'התחלתי את הקריירה שלי בספורטינג ליסבון', 1);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (87, 'זכיתי בכדורגל הזהב חמש פעמים', 2);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (87, 'שיחקתי בריאל מדריד ובמנצ''סטר יונייטד', 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (87, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (87, 'COUNTRY', 'POR');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (88, 'q_0088', 'WHO_AM_I', 'WHO_AM_I', 'EASY', 'מי אני?', 'מדובר בליאו מסי, שחקן ארגנטינאי שזכה בכדורגל הזהב פעמים רבות יותר מכל שחקן אחר.', 1, 1, 'קריירת שחקן');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (88, 'ליאו מסי', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (88, 'סרחיו אגואירו', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (88, 'אנחל די מריה', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (88, 'פאולו דיבאלה', 0, 3);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (88, 'נולדתי ברוסאריו, ארגנטינה', 0);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (88, 'עברתי לברצלונה כשהייתי ילד', 1);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (88, 'זכיתי במונדיאל 2022 עם ארגנטינה', 2);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (88, 'זכיתי בכדורגל הזהב שמונה פעמים', 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (88, 'REGION', 'SOUTH_AMERICA');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (88, 'COUNTRY', 'ARG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (89, 'q_0089', 'WHO_AM_I', 'WHO_AM_I', 'HARD', 'מי אני?', 'מדובר בדייגו מראדונה, שכבש את ''יד האלוהים'' ו''שער המאה'' באותו משחק במונדיאל 1986.', 1, 1, 'קריירת שחקן');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (89, 'דייגו מראדונה', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (89, 'מריו קמפוס', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (89, 'גבריאל באטיסטוטה', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (89, 'חואן רומן ריקלמה', 0, 3);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (89, 'נולדתי בארגנטינה בשכונה ענייה', 0);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (89, 'כבשתי שני שערים מפורסמים באותו משחק במונדיאל 1986', 1);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (89, 'שיחקתי בנאפולי ועזרתי לה לזכות באליפות איטליה', 2);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (89, 'כונתי ''אל פיבה דה אורו''', 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (89, 'REGION', 'SOUTH_AMERICA');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (89, 'COUNTRY', 'ARG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (90, 'q_0090', 'WHO_AM_I', 'WHO_AM_I', 'NORMAL', 'מי אני?', 'מדובר בפלה, שזכה בשלושה מונדיאלים ונחשב לאחת האגדות הגדולות בהיסטוריה.', 1, 1, 'קריירת שחקן');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (90, 'פלה', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (90, 'גרינקו', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (90, 'רומאריו', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (90, 'זיקו', 0, 3);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (90, 'שמי האמיתי הוא אדסון אריאנטס דו נסימנטו', 0);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (90, 'זכיתי בשלושה מונדיאלים עם ברזיל', 1);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (90, 'שיחקתי כמעט את כל הקריירה שלי בסנטוס', 2);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (90, 'כונו אותי ''המלך''', 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (90, 'REGION', 'SOUTH_AMERICA');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (90, 'COUNTRY', 'BRA');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (91, 'q_0091', 'WHO_AM_I', 'WHO_AM_I', 'NORMAL', 'מי אני?', 'מדובר בניימאר, כוכב ברזילאי שעבר בהעברת שיא עולמי מברצלונה לפריז סן ז''רמן.', 1, 1, 'קריירת שחקן');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (91, 'ניימאר', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (91, 'פיליפה קוטיניו', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (91, 'וויניציוס ז''וניור', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (91, 'רודריגו', 0, 3);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (91, 'נולדתי בברזיל', 0);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (91, 'שיחקתי בסנטוס לפני שעברתי לאירופה', 1);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (91, 'שיחקתי בברצלונה ולאחר מכן בפריז סן ז''רמן', 2);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (91, 'העברה שלי ב-2017 שברה שיא עולמי', 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (91, 'REGION', 'SOUTH_AMERICA');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (91, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (91, 'COUNTRY', 'BRA');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (92, 'q_0092', 'WHO_AM_I', 'WHO_AM_I', 'HARD', 'מי אני?', 'מדובר בלוקה מודריץ'', קפטן נבחרת קרואטיה שזכה בכדורגל הזהב ב-2018.', 1, 1, 'קריירת שחקן');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (92, 'לוקה מודריץ''', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (92, 'איבן ראקיטיץ''', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (92, 'מריו מנג''וקיץ''', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (92, 'איבן פריסיץ''', 0, 3);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (92, 'נולדתי בקרואטיה בתקופת מלחמה', 0);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (92, 'שיחקתי בטוטנהאם לפני שעברתי לריאל מדריד', 1);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (92, 'זכיתי בכדורגל הזהב ב-2018', 2);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (92, 'הובלתי את נבחרת קרואטיה לגמר המונדיאל 2018', 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (92, 'REGION', 'EUROPE');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (93, 'q_0093', 'WHO_AM_I', 'WHO_AM_I', 'NORMAL', 'מי אני?', 'מדובר בקיליאן אמבפה, כוכב צרפתי שכבש שלושער בגמר מונדיאל 2022.', 1, 1, 'קריירת שחקן');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (93, 'קיליאן אמבפה', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (93, 'אנטואן גריזמן', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (93, 'אוסמאן דמבלה', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (93, 'ראפאל ורן', 0, 3);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (93, 'נולדתי בצרפת ליד פריז', 0);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (93, 'התחלתי את הקריירה שלי במונקו', 1);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (93, 'כבשתי שלושער בגמר מונדיאל 2022', 2);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (93, 'עברתי מפריז סן ז''רמן לריאל מדריד ב-2024', 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (93, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (93, 'COUNTRY', 'FRA');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (94, 'q_0094', 'CAREER_PATH', 'CAREER_PATH', 'NORMAL', 'של מי מסלול הקריירה הזה?', 'זהו מסלול הקריירה של כריסטיאנו רונאלדו — מספורטינג ליסבון ועד אל נאסר הסעודית, דרך שתי תקופות במנצ''סטר יונייטד.', 1, 1, 'קריירת שחקן');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (94, 'כריסטיאנו רונאלדו', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (94, 'וויין רוני', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (94, 'קרים בנזמה', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (94, 'אנחל די מריה', 0, 3);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (94, 'ספורטינג ליסבון', 0);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (94, 'מנצ''סטר יונייטד', 1);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (94, 'ריאל מדריד', 2);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (94, 'יובנטוס', 3);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (94, 'מנצ''סטר יונייטד', 4);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (94, 'אל נאסר', 5);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (94, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (94, 'COUNTRY', 'POR');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (95, 'q_0095', 'CAREER_PATH', 'CAREER_PATH', 'HARD', 'של מי מסלול הקריירה הזה?', 'זהו מסלול הקריירה של לואיס סוארס — מנסיונל אורוגוואי ועד אתלטיקו מדריד, דרך ברצלונה וליברפול.', 1, 1, 'קריירת שחקן');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (95, 'לואיס סוארס', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (95, 'אדינסון קוואני', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (95, 'דייגו פורלאן', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (95, 'דארווין נונייז', 0, 3);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (95, 'נסיונל (אורוגוואי)', 0);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (95, 'כרונינגן', 1);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (95, 'אייאקס', 2);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (95, 'ליברפול', 3);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (95, 'ברצלונה', 4);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (95, 'אתלטיקו מדריד', 5);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (95, 'REGION', 'SOUTH_AMERICA');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (95, 'REGION', 'EUROPE');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (96, 'q_0096', 'CAREER_PATH', 'CAREER_PATH', 'EXPERT', 'של מי מסלול הקריירה הזה?', 'זהו מסלול הקריירה של זלאטן איברהימוביץ'' — ממאלמה השוודית ועד לוס אנג''לס גלאקסי, דרך כמעט כל מועדון גדול באירופה.', 1, 1, 'קריירת שחקן');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (96, 'זלאטן איברהימוביץ''', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (96, 'אדין דז''קו', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (96, 'רוד ואן ניסטלרוי', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (96, 'מריו באלוטלי', 0, 3);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (96, 'מאלמה', 0);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (96, 'אייאקס', 1);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (96, 'יובנטוס', 2);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (96, 'אינטר מילאנו', 3);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (96, 'ברצלונה', 4);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (96, 'מילאן', 5);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (96, 'פריז סן ז''רמן', 6);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (96, 'מנצ''סטר יונייטד', 7);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (96, 'לוס אנג''לס גלאקסי', 8);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (96, 'REGION', 'EUROPE');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (97, 'q_0097', 'CAREER_PATH', 'CAREER_PATH', 'NORMAL', 'של מי מסלול הקריירה הזה?', 'זהו מסלול הקריירה של ניימאר — מסנטוס ועד אל הילאל הסעודית, דרך ברצלונה ופריז סן ז''רמן.', 1, 1, 'קריירת שחקן');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (97, 'ניימאר', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (97, 'רונאלדיניו', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (97, 'רוברינייו', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (97, 'הוליק', 0, 3);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (97, 'סנטוס', 0);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (97, 'ברצלונה', 1);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (97, 'פריז סן ז''רמן', 2);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (97, 'אל הילאל', 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (97, 'REGION', 'SOUTH_AMERICA');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (97, 'REGION', 'EUROPE');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (98, 'q_0098', 'CAREER_PATH', 'CAREER_PATH', 'HARD', 'של מי מסלול הקריירה הזה?', 'זהו מסלול הקריירה של רוברט לבנדובסקי — מלך פוזנן הפולנית ועד ברצלונה, דרך דורטמונד ובאיירן מינכן.', 1, 1, 'קריירת שחקן');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (98, 'רוברט לבנדובסקי', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (98, 'יאקוב בלשצ''יקובסקי', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (98, 'ארקדיוש מילק', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (98, 'קשיישטוף פיונטק', 0, 3);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (98, 'לך פוזנן', 0);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (98, 'בורוסיה דורטמונד', 1);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (98, 'באיירן מינכן', 2);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (98, 'ברצלונה', 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (98, 'REGION', 'EUROPE');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (99, 'q_0099', 'CAREER_PATH', 'CAREER_PATH', 'EXPERT', 'של מי מסלול הקריירה הזה?', 'זהו מסלול הקריירה של תיירי אנרי — ממונקו ועד ניו יורק רד בולס, דרך יובנטוס, ארסנל וברצלונה.', 1, 1, 'קריירת שחקן');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (99, 'תיירי אנרי', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (99, 'ניקולא אנלקה', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (99, 'דייוויד טרזגה', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (99, 'לואי סחא', 0, 3);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (99, 'מונקו', 0);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (99, 'יובנטוס', 1);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (99, 'ארסנל', 2);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (99, 'ברצלונה', 3);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (99, 'ניו יורק רד בולס', 4);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (99, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (99, 'COUNTRY', 'FRA');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (100, 'q_0100', 'CAREER_PATH', 'CAREER_PATH', 'NORMAL', 'של מי מסלול הקריירה הזה?', 'זהו מסלול הקריירה של דיוויד בקהאם — ממנצ''סטר יונייטד ועד פריז סן ז''רמן, דרך ריאל מדריד ולוס אנג''לס גלאקסי.', 1, 1, 'קריירת שחקן');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (100, 'דיוויד בקהאם', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (100, 'מייקל אוון', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (100, 'סטיבן ג''רארד', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (100, 'פרנק למפארד', 0, 3);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (100, 'מנצ''סטר יונייטד', 0);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (100, 'ריאל מדריד', 1);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (100, 'לוס אנג''לס גלאקסי', 2);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (100, 'מילאן (השאלה)', 3);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (100, 'פריז סן ז''רמן', 4);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (100, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (100, 'COUNTRY', 'ENG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (101, 'q_0101', 'CAREER_PATH', 'CAREER_PATH', 'HARD', 'של מי מסלול הקריירה הזה?', 'זהו מסלול הקריירה של רונאלדיניו — מגרמיו הברזילאית ועד פלמנגו, דרך פריז סן ז''רמן, ברצלונה ומילאן.', 1, 1, 'קריירת שחקן');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101, 'רונאלדיניו', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101, 'קאקה', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101, 'רוביניו', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101, 'אדריאנו', 0, 3);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (101, 'גרמיו', 0);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (101, 'פריז סן ז''רמן', 1);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (101, 'ברצלונה', 2);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (101, 'מילאן', 3);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (101, 'פלמנגו', 4);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (101, 'REGION', 'SOUTH_AMERICA');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (101, 'REGION', 'EUROPE');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (102, 'q_0102', 'GUESS_THE_CLUB', 'GUESS_THE_CLUB', 'EASY', 'איזו קבוצה זו: מכונה ''השדים האדומים'', משחקת באולד טראפורד, ונחשבת לאחת הקבוצות המצליחות באנגליה?', 'זוהי מנצ''סטר יונייטד — קבוצה מאנגליה שמשחקת באולד טראפורד המכונה ''תיאטרון החלומות''.', 1, 1, 'עובדות מועדונים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (102, 'מנצ''סטר יונייטד', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (102, 'ליברפול', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (102, 'ארסנל', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (102, 'צ''לסי', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (102, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (102, 'COMPETITION', 'PREMIER_LEAGUE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (102, 'COUNTRY', 'ENG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (103, 'q_0103', 'GUESS_THE_CLUB', 'GUESS_THE_CLUB', 'EASY', 'איזו קבוצה זו: מכונה ''הבלאוגרנה'', משחקת בקאמפ נואו, וזכתה בליגת האלופות פעמים רבות?', 'זוהי ברצלונה — הקבוצה הקטלאנית המפורסמת, בעלת אחת האקדמיות הטובות בעולם (לה מסיה).', 1, 1, 'עובדות מועדונים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (103, 'ברצלונה', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (103, 'אתלטיקו מדריד', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (103, 'סביליה', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (103, 'ולנסיה', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (103, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (103, 'COMPETITION', 'LA_LIGA');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (103, 'COUNTRY', 'ESP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (104, 'q_0104', 'GUESS_THE_CLUB', 'GUESS_THE_CLUB', 'NORMAL', 'איזו קבוצה זו: מכונה ''הלבנים'', משחקת בסנטיאגו ברנבאו, וזכתה בליגת האלופות יותר מכל קבוצה אחרת?', 'זוהי ריאל מדריד — הקבוצה המצליחה ביותר בהיסטוריית ליגת האלופות עם 15 תארים.', 1, 1, 'עובדות מועדונים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (104, 'ריאל מדריד', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (104, 'אתלטיקו מדריד', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (104, 'ריאל בטיס', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (104, 'אספניול', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (104, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (104, 'COMPETITION', 'LA_LIGA');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (104, 'COUNTRY', 'ESP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (105, 'q_0105', 'GUESS_THE_CLUB', 'GUESS_THE_CLUB', 'NORMAL', 'איזו קבוצה זו: מכונה ''התותחנים'', משחקת באצטדיון האמירויות בצפון לונדון?', 'זוהי ארסנל — קבוצה מלונדון עם היסטוריה עשירה בפרמיירליג, כולל עונה שלמה ללא הפסד ב-2003-04.', 1, 1, 'עובדות מועדונים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (105, 'ארסנל', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (105, 'טוטנהאם', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (105, 'צ''לסי', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (105, 'וסטהאם', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (105, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (105, 'COMPETITION', 'PREMIER_LEAGUE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (105, 'COUNTRY', 'ENG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (106, 'q_0106', 'GUESS_THE_CLUB', 'GUESS_THE_CLUB', 'HARD', 'איזו קבוצה זו: משחקת בסן סירו יחד עם יריבתה העירונית, צבעיה אדום-שחור, וכונה ''הרוסונרי''?', 'זהו מילאן (AC Milan) — הצבעים האדום-שחור נותנים לה את הכינוי ''רוסונרי''.', 1, 1, 'עובדות מועדונים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (106, 'מילאן', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (106, 'אינטר מילאנו', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (106, 'יובנטוס', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (106, 'נאפולי', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (106, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (106, 'COMPETITION', 'SERIE_A');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (106, 'COUNTRY', 'ITA');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (107, 'q_0107', 'GUESS_THE_CLUB', 'GUESS_THE_CLUB', 'NORMAL', 'איזו קבוצה זו: מכונה ''האזרחים'', משחקת באיתיהאד סטדיום, ונשלטת על ידי קבוצת השקעות מאבו דאבי מאז 2008?', 'זוהי מנצ''סטר סיטי — קבוצה שהפכה לכוח דומיננטי בכדורגל האנגלי והעולמי מאז רכישתה ב-2008.', 1, 1, 'עובדות מועדונים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (107, 'מנצ''סטר סיטי', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (107, 'מנצ''סטר יונייטד', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (107, 'ניוקאסל יונייטד', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (107, 'אברטון', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (107, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (107, 'COMPETITION', 'PREMIER_LEAGUE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (107, 'COUNTRY', 'ENG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (108, 'q_0108', 'GUESS_THE_CLUB', 'GUESS_THE_CLUB', 'HARD', 'איזו קבוצה זו: אוהדיה מפורסמים ב''קיר הצהוב'' שלהם, וצבעיה צהוב-שחור?', 'זוהי בורוסיה דורטמונד — היציע הדרומי שלה, ''הקיר הצהוב'', הוא יציע העמידה הגדול באירופה.', 1, 1, 'עובדות מועדונים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (108, 'בורוסיה דורטמונד', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (108, 'באיירן מינכן', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (108, 'שאלקה 04', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (108, 'באייר לברקוזן', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (108, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (108, 'COMPETITION', 'BUNDESLIGA');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (108, 'COUNTRY', 'GER');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (109, 'q_0109', 'GUESS_THE_CLUB', 'GUESS_THE_CLUB', 'EASY', 'איזו קבוצה זו: הקבוצה המצליחה ביותר בגרמניה, משחקת באליאנץ ארנה?', 'זוהי באיירן מינכן — הקבוצה הדומיננטית ביותר בכדורגל הגרמני.', 1, 1, 'עובדות מועדונים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (109, 'באיירן מינכן', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (109, 'בורוסיה דורטמונד', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (109, 'לייפציג', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (109, 'איינטרכט פרנקפורט', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (109, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (109, 'COMPETITION', 'BUNDESLIGA');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (109, 'COUNTRY', 'GER');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (110, 'q_0110', 'CLASSIC', 'CHAMPIONS_LEAGUE', 'EXPERT', 'איזו קבוצה זכתה בגביע אלופות אירופה הראשון בהיסטוריה, ב-1956?', 'ריאל מדריד זכתה בגביע האלופות הראשון ב-1956, והמשיכה לזכות בחמשת הראשונים ברציפות עד 1960.', 1, 1, 'היסטוריית ליגת האלופות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (110, 'ריאל מדריד', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (110, 'בנפיקה', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (110, 'מילאן', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (110, 'אינטר מילאנו', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (110, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (110, 'COMPETITION', 'UCL');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (110, 'COUNTRY', 'ESP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (111, 'q_0111', 'CLASSIC', 'CHAMPIONS_LEAGUE', 'EXPERT', 'איזו קבוצה הולנדית זכתה בשלושה גביעי אלופות רצופים בין 1971 ל-1973?', 'אייאקס אמסטרדם, בהובלת יוהאן קרויף ותפיסת ''הכדורגל הטוטאלי'', זכתה בשלושה תארים רצופים.', 1, 1, 'היסטוריית ליגת האלופות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (111, 'אייאקס', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (111, 'פיינורד', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (111, 'PSV איינדהובן', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (111, 'AZ אלקמאר', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (111, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (111, 'COMPETITION', 'UCL');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (111, 'COMPETITION', 'EREDIVISIE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (111, 'COUNTRY', 'NED');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (112, 'q_0112', 'CLASSIC', 'PLAYERS', 'IMPOSSIBLE', 'מי השוער היחיד בהיסטוריה שזכה בכדורגל הזהב?', 'לב יאשין, השוער הסובייטי המכונה ''העכביש השחור'', זכה בכדורגל הזהב ב-1963 — היחיד בתפקידו שהשיג זאת.', 1, 1, 'היסטוריית כדורגל הזהב');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (112, 'לב יאשין', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (112, 'דינו זוף', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (112, 'ג''אנלואיג''י בופון', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (112, 'אוליבר קאהן', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (112, 'REGION', 'EUROPE');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (113, 'q_0113', 'CLASSIC', 'PLAYERS', 'IMPOSSIBLE', 'מי היה הזוכה הראשון בכדורגל הזהב, ב-1956?', 'סטנלי מת''יוס האנגלי היה הזוכה הראשון בפרס כדורגל הזהב, בגיל 41.', 1, 1, 'היסטוריית כדורגל הזהב');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (113, 'סטנלי מת''יוס', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (113, 'אלפרדו די סטפנו', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (113, 'פרנץ פושקאש', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (113, 'ריימון קופה', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (113, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (113, 'COUNTRY', 'ENG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (114, 'q_0114', 'CLASSIC', 'NATIONAL_TEAMS', 'IMPOSSIBLE', 'איזו נבחרת זכתה באליפות אירופה הראשונה, ב-1960?', 'ברית המועצות זכתה ביורו הראשון ב-1960, עם לב יאשין בשער, לאחר ניצחון על יוגוסלביה בגמר.', 1, 1, 'היסטוריית היורו');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (114, 'ברית המועצות', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (114, 'יוגוסלביה', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (114, 'ספרד', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (114, 'צ''כוסלובקיה', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (114, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (114, 'COMPETITION', 'EURO');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (115, 'q_0115', 'CLASSIC', 'WORLD_CUP', 'HARD', 'מה היתה התוצאה במשחק חצי הגמר בין גרמניה לברזיל במונדיאל 2014?', 'גרמניה ניצחה 1:7 בבלו הוריזונטה — תבוסה היסטורית לברזיל המארחת שכונתה ''המינראסו''.', 1, 1, 'היסטוריית המונדיאל');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (115, '1:7 לגרמניה', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (115, '0:4 לגרמניה', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (115, '2:5 לגרמניה', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (115, '1:3 לגרמניה', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (115, 'REGION', 'WORLD');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (115, 'COMPETITION', 'WORLD_CUP');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (115, 'COUNTRY', 'BRA');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (115, 'COUNTRY', 'GER');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (116, 'q_0116', 'CLASSIC', 'WORLD_CUP', 'EXPERT', 'מהו ה''מאראקאנאסו'' של 1950?', 'אורוגוואי ניצחה את ברזיל המארחת 1:2 במשחק המכריע באצטדיון המאראקנה, מול קהל עצום, וזכתה במונדיאל.', 1, 1, 'היסטוריית המונדיאל');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (116, 'ניצחון אורוגוואי על ברזיל במשחק המכריע במאראקנה', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (116, 'ניצחון ברזיל על אורוגוואי בגמר', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (116, 'ביטול המונדיאל בשל מזג אוויר', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (116, 'פלישת אוהדים למגרש בגמר', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (116, 'REGION', 'SOUTH_AMERICA');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (116, 'COMPETITION', 'WORLD_CUP');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (116, 'COUNTRY', 'BRA');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (117, 'q_0117', 'CLASSIC', 'WORLD_CUP', 'IMPOSSIBLE', 'מי כבש את השער המהיר ביותר בהיסטוריית המונדיאל, לאחר 11 שניות בלבד?', 'האקאן שוקור מטורקיה כבש אחרי 11 שניות במשחק על המקום השלישי במונדיאל 2002 מול דרום קוריאה.', 1, 1, 'היסטוריית המונדיאל');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (117, 'האקאן שוקור', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (117, 'קלאודיו קניחה', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (117, 'ברייאן רובסון', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (117, 'ואצלב מאשק', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (117, 'REGION', 'WORLD');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (117, 'COMPETITION', 'WORLD_CUP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (118, 'q_0118', 'CLASSIC', 'WORLD_CUP', 'EXPERT', 'איזו נבחרת אפריקאית היתה הראשונה שהעפילה לרבע גמר מונדיאל?', 'קמרון הגיעה לרבע הגמר במונדיאל 1990, בהובלת רוז''ה מילה, והפסידה לאנגליה בהארכה.', 1, 1, 'היסטוריית המונדיאל');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (118, 'קמרון', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (118, 'ניגריה', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (118, 'גאנה', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (118, 'סנגל', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (118, 'REGION', 'WORLD');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (118, 'COMPETITION', 'WORLD_CUP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (119, 'q_0119', 'CLASSIC', 'WORLD_CUP', 'EXPERT', 'מי כבש שלושער בגמר המונדיאל של 1966?', 'ג''ף הרסט כבש שלושער בניצחון אנגליה 2:4 על מערב גרמניה בגמר בוומבלי — השלושער היחיד אי פעם בגמר מונדיאל.', 1, 1, 'היסטוריית המונדיאל');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (119, 'ג''ף הרסט', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (119, 'בובי צ''ארלטון', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (119, 'מרטין פיטרס', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (119, 'רוג''ר האנט', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (119, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (119, 'COMPETITION', 'WORLD_CUP');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (119, 'COUNTRY', 'ENG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (120, 'q_0120', 'CLASSIC', 'COACHES', 'EXPERT', 'איזה מאמן הולנדי נחשב לאבי תפיסת ''הכדורגל הטוטאלי''?', 'רינוס מיכלס פיתח את הכדורגל הטוטאלי באייאקס ובנבחרת הולנד של שנות ה-70.', 1, 1, 'עובדות מאמנים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (120, 'רינוס מיכלס', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (120, 'לואי ואן חאל', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (120, 'גוס היטינק', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (120, 'דיק אדבוקאט', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (120, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (120, 'COUNTRY', 'NED');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (121, 'q_0121', 'CLASSIC', 'TITLES', 'HARD', 'איזו קבוצה סיימה את עונת 2003-04 בפרמיירליג ללא הפסד וכונתה ''האל-מנוצחים''?', 'ארסנל בהנהגת ארסן ונגר סיימה את העונה ללא הפסד — הישג יחיד במינו בעידן הפרמיירליג.', 1, 1, 'היסטוריית הפרמיירליג');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (121, 'ארסנל', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (121, 'מנצ''סטר יונייטד', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (121, 'צ''לסי', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (121, 'ליברפול', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (121, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (121, 'COMPETITION', 'PREMIER_LEAGUE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (121, 'COUNTRY', 'ENG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (122, 'q_0122', 'CLASSIC', 'TITLES', 'HARD', 'איזו קבוצה גרמנית זכתה בטרפל ב-2013 (ליגה, גביע וליגת האלופות)?', 'באיירן מינכן, בהובלת המאמן יופ הייקנס, זכתה בשלושת התארים בעונת 2012-13.', 1, 1, 'עובדות מועדונים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (122, 'באיירן מינכן', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (122, 'בורוסיה דורטמונד', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (122, 'שאלקה 04', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (122, 'וולפסבורג', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (122, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (122, 'COMPETITION', 'BUNDESLIGA');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (122, 'COMPETITION', 'UCL');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (122, 'COUNTRY', 'GER');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (123, 'q_0123', 'CLASSIC', 'TITLES', 'IMPOSSIBLE', 'איזו קבוצה זכתה בעונת הבונדסליגה הראשונה, ב-1963-64?', 'קלן (1. FC Köln) זכתה באליפות בעונה הראשונה של הבונדסליגה המאוחדת.', 1, 1, 'היסטוריית הבונדסליגה');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (123, 'קלן', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (123, 'באיירן מינכן', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (123, 'בורוסיה מנשנגלדבך', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (123, 'המבורג', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (123, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (123, 'COMPETITION', 'BUNDESLIGA');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (123, 'COUNTRY', 'GER');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (124, 'q_0124', 'CLASSIC', 'TITLES', 'IMPOSSIBLE', 'איזו קבוצה ארגנטינאית זכתה הכי הרבה פעמים בקופה ליברטדורס?', 'אינדפנדיינטה זכתה שבע פעמים בקופה ליברטדורס, יותר מכל קבוצה אחרת ביבשת.', 1, 1, 'היסטוריית קופה ליברטדורס');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (124, 'אינדפנדיינטה', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (124, 'בוקה ג''וניורס', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (124, 'ריבר פלייט', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (124, 'פנרול', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (124, 'REGION', 'SOUTH_AMERICA');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (124, 'COUNTRY', 'ARG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (125, 'q_0125', 'CLASSIC', 'CLUBS', 'HARD', 'איזו קבוצה איטלקית מכונה ''הגברת הזקנה'' (La Vecchia Signora)?', 'יובנטוס מכונה ''הגברת הזקנה'', כינוי שדבק בה עוד מתחילת המאה ה-20.', 1, 1, 'עובדות מועדונים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (125, 'יובנטוס', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (125, 'מילאן', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (125, 'רומא', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (125, 'לאציו', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (125, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (125, 'COMPETITION', 'SERIE_A');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (125, 'COUNTRY', 'ITA');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (126, 'q_0126', 'CLASSIC', 'CLUBS', 'NORMAL', 'מה שמה של אקדמיית הנוער המפורסמת של ברצלונה?', '''לה מסיה'' היא אקדמיית הנוער של ברצלונה, שממנה יצאו מסי, צ''אבי, איניאסטה ופוייול.', 1, 1, 'עובדות מועדונים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (126, 'לה מסיה', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (126, 'לה פבריקה', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (126, 'קנטרה', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (126, 'לה קסה', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (126, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (126, 'COMPETITION', 'LA_LIGA');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (126, 'COUNTRY', 'ESP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (127, 'q_0127', 'CLASSIC', 'TITLES', 'HARD', 'איזו קבוצה זכתה הכי הרבה פעמים באליפות הולנד (אירדיוויזי)?', 'אייאקס אמסטרדם היא הקבוצה המעוטרת ביותר בהיסטוריית האירדיוויזי.', 1, 1, 'עובדות מועדונים');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (127, 'אייאקס', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (127, 'PSV איינדהובן', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (127, 'פיינורד', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (127, 'AZ אלקמאר', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (127, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (127, 'COMPETITION', 'EREDIVISIE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (127, 'COUNTRY', 'NED');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (128, 'q_0128', 'CLASSIC', 'STATS', 'IMPOSSIBLE', 'מה היו היחסים שהוצעו בתחילת העונה לזכיית לסטר סיטי באליפות הפרמיירליג 2015-16?', 'הסיכויים שהוצעו היו 5000-1 — אחת ההפתעות הגדולות בתולדות הספורט המקצועני.', 1, 1, 'היסטוריית הפרמיירליג');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (128, '5000-1', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (128, '500-1', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (128, '100-1', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (128, '50000-1', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (128, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (128, 'COMPETITION', 'PREMIER_LEAGUE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (128, 'COUNTRY', 'ENG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (129, 'q_0129', 'CLASSIC', 'PLAYERS', 'EXPERT', 'מי זכה בכדור הזהב (השחקן המצטיין) של מונדיאל 2018?', 'לוקה מודריץ'' נבחר לשחקן המצטיין של מונדיאל 2018, לאחר שהוביל את קרואטיה לגמר.', 1, 1, 'היסטוריית המונדיאל');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (129, 'לוקה מודריץ''', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (129, 'קיליאן אמבפה', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (129, 'אדן אזאר', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (129, 'אנטואן גריזמן', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (129, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (129, 'COMPETITION', 'WORLD_CUP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (130, 'q_0130', 'CLASSIC', 'CHAMPIONS_LEAGUE', 'IMPOSSIBLE', 'איזה שחקן זכה בשישה גביעי אלופות עם ריאל מדריד בשנות ה-50 וה-60?', 'פרנסיסקו חנטו זכה בשישה גביעי אלופות עם ריאל מדריד, שיא לשחקן יחיד באותה תקופה.', 1, 1, 'היסטוריית ליגת האלופות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (130, 'פרנסיסקו חנטו', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (130, 'אלפרדו די סטפנו', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (130, 'פרנץ פושקאש', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (130, 'ריימון קופה', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (130, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (130, 'COMPETITION', 'UCL');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (130, 'COUNTRY', 'ESP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (131, 'q_0131', 'CLASSIC', 'CAREERS', 'NORMAL', 'באיזו קבוצה ספרדית שיחק יוהאן קרויף?', 'קרויף עבר מאייאקס לברצלונה ב-1973, ולימים גם אימן אותה והניח את יסודות הסגנון שלה.', 1, 1, 'קריירת שחקן');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (131, 'ברצלונה', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (131, 'ריאל מדריד', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (131, 'ולנסיה', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (131, 'אתלטיקו מדריד', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (131, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (131, 'COMPETITION', 'LA_LIGA');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (131, 'COUNTRY', 'ESP');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (131, 'COUNTRY', 'NED');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (132, 'q_0132', 'CLASSIC', 'WORLD_CUP', 'EXPERT', 'איזו מדינה תהיה הראשונה לארח משחקי מונדיאל בשלוש מהדורות שונות?', 'מקסיקו אירחה את מונדיאל 1970 ו-1986, ותארח משחקים גם במונדיאל 2026 המשותף.', 1, 1, 'היסטוריית המונדיאל');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (132, 'מקסיקו', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (132, 'איטליה', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (132, 'ברזיל', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (132, 'גרמניה', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (132, 'REGION', 'WORLD');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (132, 'COMPETITION', 'WORLD_CUP');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (133, 'q_0133', 'CLASSIC', 'CLUBS', 'EXPERT', 'איזו קבוצה ישראלית היתה הראשונה להעפיל לשלב הבתים של ליגת האלופות?', 'מכבי חיפה העפילה לשלב הבתים של ליגת האלופות בעונת 2002-03, הישג ישראלי ראשון מסוגו.', 1, 1, 'היסטוריית הכדורגל הישראלי');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (133, 'מכבי חיפה', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (133, 'מכבי תל אביב', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (133, 'הפועל תל אביב', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (133, 'בית"ר ירושלים', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (133, 'COMPETITION', 'ISRAELI_PREMIER_LEAGUE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (133, 'COMPETITION', 'UCL');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (133, 'COUNTRY', 'ISR');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (134, 'q_0134', 'CLASSIC', 'CAREERS', 'HARD', 'איזה שחקן ישראלי שיחק גם בליברפול וגם בצ''לסי?', 'יוסי בניון שיחק בווסטהאם, ליברפול, צ''לסי וארסנל — הקריירה האנגלית המפוארת ביותר של ישראלי.', 1, 1, 'היסטוריית הכדורגל הישראלי');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (134, 'יוסי בניון', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (134, 'אייל ברקוביץ''', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (134, 'תאל בן חיים', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (134, 'דודו דהן', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (134, 'COMPETITION', 'PREMIER_LEAGUE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (134, 'COUNTRY', 'ISR');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (134, 'COUNTRY', 'ENG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (135, 'q_0135', 'WHO_AM_I', 'WHO_AM_I', 'EXPERT', 'מי אני?', 'מדובר ביוהאן קרויף — שחקן ומאמן שעיצב את הכדורגל המודרני באייאקס ובברצלונה.', 1, 1, 'קריירת שחקן');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (135, 'יוהאן קרויף', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (135, 'מארקו ואן באסטן', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (135, 'רוד חוליט', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (135, 'פרנק רייקארד', 0, 3);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (135, 'נולדתי באמסטרדם', 0);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (135, 'שיחקתי באייאקס וזכיתי איתה בשלושה גביעי אלופות רצופים', 1);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (135, 'עברתי לברצלונה ב-1973', 2);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (135, 'לימים אימנתי את ברצלונה והנחתי את יסודות הסגנון שלה', 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (135, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (135, 'COUNTRY', 'NED');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (136, 'q_0136', 'WHO_AM_I', 'WHO_AM_I', 'HARD', 'מי אני?', 'מדובר ברוברט לבנדובסקי — חלוץ פולני שכבש בשיעור יוצא דופן בבונדסליגה ובליגת האלופות.', 1, 1, 'קריירת שחקן');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (136, 'רוברט לבנדובסקי', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (136, 'מירוסלב קלוזה', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (136, 'ארקדיוש מילק', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (136, 'זלאטן איברהימוביץ''', 0, 3);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (136, 'נולדתי בפולין', 0);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (136, 'פרצתי בבורוסיה דורטמונד', 1);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (136, 'עברתי ליריבה באיירן מינכן בהעברה חופשית', 2);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (136, 'ב-2022 עברתי לברצלונה', 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (136, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (136, 'COMPETITION', 'BUNDESLIGA');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (137, 'q_0137', 'CAREER_PATH', 'CAREER_PATH', 'EXPERT', 'של מי מסלול הקריירה הזה?', 'זהו מסלול הקריירה של קאקה — מסאו פאולו ועד אורלנדו סיטי, עם שתי תקופות במילאן.', 1, 1, 'קריירת שחקן');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (137, 'קאקה', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (137, 'רונאלדיניו', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (137, 'רוביניו', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (137, 'אלכסנדרה פאטו', 0, 3);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (137, 'סאו פאולו', 0);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (137, 'מילאן', 1);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (137, 'ריאל מדריד', 2);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (137, 'מילאן', 3);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (137, 'אורלנדו סיטי', 4);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (137, 'REGION', 'SOUTH_AMERICA');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (137, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (137, 'COUNTRY', 'BRA');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (138, 'q_0138', 'CAREER_PATH', 'CAREER_PATH', 'HARD', 'של מי מסלול הקריירה הזה?', 'זהו מסלול הקריירה של פרננדו טורס — מאתלטיקו מדריד וחזרה אליה, דרך ליברפול וצ''לסי.', 1, 1, 'קריירת שחקן');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (138, 'פרננדו טורס', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (138, 'דיוויד וייה', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (138, 'דייגו קוסטה', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (138, 'ראול גונזלס', 0, 3);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (138, 'אתלטיקו מדריד', 0);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (138, 'ליברפול', 1);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (138, 'צ''לסי', 2);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (138, 'מילאן (השאלה)', 3);
+INSERT INTO question_clues (question_id, clue_he, sort_order) VALUES (138, 'אתלטיקו מדריד', 4);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (138, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (138, 'COUNTRY', 'ESP');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (138, 'COUNTRY', 'ENG');
+
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label) VALUES (139, 'q_0139', 'CLUB_CONNECTION', 'TRANSFERS', 'EXPERT', 'איזה שחקן שיחק גם באייאקס, גם במילאן וגם באינטר מילאנו?', 'זלאטן איברהימוביץ'' שיחק באייאקס, ולאחר מכן גם באינטר מילאנו (2006-2009) וגם במילאן (2010-2012, ושוב 2020-2023).', 1, 1, 'היסטוריית העברות');
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (139, 'זלאטן איברהימוביץ''', 1, 0);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (139, 'קלארנס סיידורף', 0, 1);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (139, 'אדגר דאוויס', 0, 2);
+INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (139, 'פטריק קלוויר', 0, 3);
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (139, 'REGION', 'EUROPE');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (139, 'COMPETITION', 'SERIE_A');
+INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (139, 'COMPETITION', 'EREDIVISIE');
