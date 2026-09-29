@@ -1,0 +1,24 @@
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(10, 15, 12, 0.78);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+
+.brand {
+  align-items: center;
+  font-weight: 800;
+  font-size: 19px;
+  letter-spacing: 0.2px;
+}
+
+.brand-mark {
+  font-size: 22px;
+  filter: drop-shadow(0 0 6px rgba(29, 185, 84, 0.5));
+}
+
+.brand-name {
+  color: var(--text);
+}

@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "football-iq",
+  "main": "src/worker/index.ts",
+  "account_id": "367bed473a2c48604d27f2e668162c49",
+  "compatibility_date": "2026-09-29",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "not_found_handling": "single-page-application",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "football-iq-db",
+      "database_id": "f9fccac0-e41e-49d8-ab11-2493b4047130",
+      "migrations_dir": "migrations"
+    }
+  ]
+}

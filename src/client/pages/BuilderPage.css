@@ -1,0 +1,52 @@
+.builder {
+  padding-top: 32px;
+  padding-bottom: 140px;
+}
+
+.builder-title {
+  font-size: 28px;
+  font-weight: 900;
+  margin-bottom: 6px;
+}
+
+.builder-section {
+  margin-top: 28px;
+}
+
+.builder-section h2 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+}
+
+.pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.builder-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(180deg, transparent, var(--bg) 30%);
+  padding: 24px 20px calc(20px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: stretch;
+  max-width: var(--container-max);
+  margin-inline: auto;
+}
+
+.availability {
+  text-align: center;
+  font-size: 13.5px;
+  min-height: 18px;
+}
+
+.text-danger {
+  color: var(--danger);
+}

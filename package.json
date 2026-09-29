@@ -1,0 +1,48 @@
+{
+  "name": "football-trivia",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "tsc --noEmit && vite build",
+    "preview": "wrangler dev",
+    "typecheck": "tsc --noEmit",
+    "seed:build": "node scripts/build-seed.mjs",
+    "db:migrate:local": "wrangler d1 migrations apply football-iq-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply football-iq-db --remote",
+    "db:seed:local": "wrangler d1 execute football-iq-db --local --file=seed/seed.sql",
+    "db:seed:remote": "wrangler d1 execute football-iq-db --remote --file=seed/seed.sql",
+    "deploy": "npm run build && wrangler deploy",
+    "cf-typegen": "wrangler types"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Naorl98/football-trivia.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/Naorl98/football-trivia/issues"
+  },
+  "homepage": "https://github.com/Naorl98/football-trivia#readme",
+  "dependencies": {
+    "hono": "^4.13.11",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-router-dom": "^7.18.4"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.62.1",
+    "@types/node": "^26.6.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "playwright": "^1.63.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.1",
+    "wrangler": "^4.143.1"
+  }
+}
