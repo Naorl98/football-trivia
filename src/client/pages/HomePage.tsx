@@ -70,10 +70,16 @@ export function HomePage() {
           <Icon name="arrow" size={19} />
         </button>
 
-        {/* The three ways into a game, all on the surface. Random Game in
+        {/* The three ways into a game, all on the surface. Matchmaking in
             particular is not tucked inside the multiplayer menu: "find me
             somebody to play against right now" is its own intent, and burying it
-            one level down is the difference between it being used and not. */}
+            one level down is the difference between it being used and not.
+
+            Its label says what it does rather than what it is. "משחק אקראי"
+            described the mechanism — a random game — and left the player to guess
+            whether that meant random questions, a random room, or a stranger.
+            Naming the outcome instead, an opponent and a duel, is what makes it
+            obvious there is a real person on the other end. */}
         <button
           className="btn btn-ghost btn-lg home-cta-mp"
           onClick={() => {
@@ -93,7 +99,7 @@ export function HomePage() {
           }}
         >
           <Icon name="target" size={18} />
-          משחק אקראי
+          מצא יריב לדו־קרב
         </button>
       </div>
 
