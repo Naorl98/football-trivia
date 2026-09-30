@@ -127,3 +127,72 @@
     white-space: nowrap;
   }
 }
+
+/* ============================================================
+   Daily challenge
+   ============================================================ */
+
+/*
+ * The one destination in the bar, so it is allowed to look like something —
+ * but it shares the row with the sound and accessibility controls and sits above
+ * every screen in the product, so "noticeable" has to stay compact. A tinted pill
+ * and a small live dot, not a banner.
+ */
+.topbar-daily {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid color-mix(in oklab, var(--green) 45%, var(--line));
+  border-radius: var(--r-pill);
+  background: color-mix(in oklab, var(--green) 12%, transparent);
+  color: var(--text);
+  font-size: 0.84rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 160ms var(--ease), border-color 160ms var(--ease);
+}
+
+.topbar-daily:hover,
+.topbar-daily:focus-visible {
+  background: color-mix(in oklab, var(--green) 20%, transparent);
+  border-color: var(--green);
+}
+
+.topbar-daily svg {
+  color: var(--green);
+  flex: none;
+}
+
+/* A quiet "there is something here today". */
+.topbar-daily-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: daily-pulse 2.4s var(--ease) infinite;
+}
+
+@keyframes daily-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.45; transform: scale(0.72); }
+}
+
+/* On a narrow phone the label would crowd the mark, so the pill keeps the icon
+   and the dot and drops the words. The aria-label still carries the full name. */
+@media (max-width: 380px) {
+  .topbar-daily span:not(.topbar-daily-dot) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .topbar-daily-dot {
+    animation: none;
+  }
+}

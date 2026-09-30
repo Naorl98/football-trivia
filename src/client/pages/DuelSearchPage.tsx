@@ -159,7 +159,7 @@ export function DuelSearchPage() {
           {snapshot.state === "CANCELLED" && <p className="tiny mp-duel-cancelled">החיפוש בוטל.</p>}
 
           <Link to="/multiplayer" className="btn btn-quiet btn-sm">
-            חזרה למולטיפלייר
+            חזרה לרב משתתפים
           </Link>
         </div>
       )}

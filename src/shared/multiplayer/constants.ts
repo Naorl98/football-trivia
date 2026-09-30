@@ -14,6 +14,14 @@ export interface ModeMeta {
   taglineHe: string;
   /** One line of "how this actually plays", shown under the tagline. */
   blurbHe: string;
+  /**
+   * The rules in plain words, for the ⓘ popover in the lobby.
+   *
+   * Deliberately not `blurbHe`: that is a playful line written to sell a mode,
+   * and a player opening an info button wants to know how the thing is played,
+   * not to be sold it again.
+   */
+  explainHe: string;
   minPlayers: number;
   maxPlayers: number;
   /** Rooms are made by hand for these; RANDOM_DUEL is made by the matchmaker. */
@@ -23,6 +31,7 @@ export interface ModeMeta {
 export const MODES: ModeMeta[] = [
   {
     code: "CLASSIC_BATTLE",
+    explainHe: "כולם עונים על אותה שאלה. צוברים נקודות על תשובה נכונה ועל מהירות.",
     labelHe: "קרב רגיל",
     taglineHe: "כולם נגד כולם",
     blurbHe: "אותה שאלה לכולם. מי שצודק מהר, וברצף, לוקח יותר.",
@@ -32,6 +41,7 @@ export const MODES: ModeMeta[] = [
   },
   {
     code: "TURN_BASED",
+    explainHe: "רק שחקן אחד עונה בכל תור. התור עובר בין המשתתפים.",
     labelHe: "תורות",
     taglineHe: "כל פעם שחקן אחר",
     blurbHe: "כל שאלה שייכת לשחקן אחד. השאר צופים ומתפללים שיפספס.",
@@ -41,6 +51,7 @@ export const MODES: ModeMeta[] = [
   },
   {
     code: "EVERYONE_ANSWERS",
+    explainHe: "כולם עונים בכל שאלה. התוצאה מתעדכנת אחרי כל סיבוב.",
     labelHe: "כולם עונים",
     taglineHe: "כל שאלה, כל השחקנים",
     blurbHe: "בלי בונוס רצף — רק מי שיודע, ומי שמהיר.",
@@ -50,6 +61,7 @@ export const MODES: ModeMeta[] = [
   },
   {
     code: "DUEL",
+    explainHe: "מצב אחד על אחד. שני השחקנים מקבלים את אותן שאלות.",
     labelHe: "דו קרב",
     taglineHe: "אחד על אחד",
     blurbHe: "שניים, אותן שאלות, אותו סדר. סיבוב אחרי סיבוב.",
@@ -59,6 +71,7 @@ export const MODES: ModeMeta[] = [
   },
   {
     code: "TEAM_BATTLE",
+    explainHe: "השחקנים מתחלקים לקבוצות. הניקוד של חברי הקבוצה מצטבר.",
     labelHe: "קרב קבוצות",
     taglineHe: "קבוצה נגד קבוצה",
     blurbHe: "שתי קבוצות, ניקוד מצטבר, ו-MVP אחד בסוף.",
@@ -68,6 +81,7 @@ export const MODES: ModeMeta[] = [
   },
   {
     code: "RANDOM_DUEL",
+    explainHe: "נכנסים לתור ומחכים ליריב אמיתי. ברגע שנמצא, מתחיל דו קרב אחד על אחד.",
     labelHe: "דו קרב אקראי",
     taglineHe: "מצא יריב עכשיו",
     blurbHe: "בלי קוד, בלי הזמנות. נכנסים לתור ומשחקים.",

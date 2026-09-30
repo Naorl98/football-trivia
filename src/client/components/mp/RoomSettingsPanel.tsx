@@ -10,7 +10,7 @@
 // deciding "ten questions, twenty seconds, go" should never have to scroll past
 // a competition picker to find the start button.
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   CATEGORIES,
   COMPETITIONS,
@@ -23,6 +23,7 @@ import { DIFFICULTIES } from "../../../shared/types";
 import type { Category, Difficulty } from "../../../shared/types";
 import {
   MODES,
+  type ModeMeta,
   QUESTION_COUNT_CHOICES,
   SECONDS_PER_QUESTION_CHOICES,
 } from "../../../shared/multiplayer/constants";
@@ -39,6 +40,8 @@ interface Props {
 
 export function RoomSettingsPanel({ settings, playerCount, onChange }: Props) {
   const [advanced, setAdvanced] = useState(false);
+  /** Which mode's explanation is open, if any. */
+  const [explaining, setExplaining] = useState<ModeMeta | null>(null);
 
   function patch(next: Partial<RoomSettings>) {
     sound.play("click");
@@ -67,15 +70,30 @@ export function RoomSettingsPanel({ settings, playerCount, onChange }: Props) {
   return (
     <div className="mp-settings">
       <Group label="סוג משחק">
-        <div className="mp-seg">
+        {/* Each mode is a choice plus its own ⓘ, rather than a card carrying a
+            paragraph nobody reads while four other options wait below it. The
+            two are separate buttons so asking what a mode is never selects it. */}
+        <div className="mp-modes-pick">
           {MODES.filter((m) => m.hostSelectable).map((mode) => (
-            <SegButton
-              key={mode.code}
-              on={settings.mode === mode.code}
-              onClick={() => patch({ mode: mode.code as MultiplayerMode })}
-            >
-              {mode.labelHe}
-            </SegButton>
+            <div key={mode.code} className="mp-mode-pick">
+              <SegButton
+                on={settings.mode === mode.code}
+                onClick={() => patch({ mode: mode.code as MultiplayerMode })}
+              >
+                {mode.labelHe}
+              </SegButton>
+              <button
+                type="button"
+                className="mp-mode-info"
+                aria-label={`הסבר על ${mode.labelHe}`}
+                onClick={() => {
+                  sound.play("click");
+                  setExplaining(mode);
+                }}
+              >
+                <span aria-hidden="true">ⓘ</span>
+              </button>
+            </div>
           ))}
         </div>
         {(tooFewForMode || tooManyForMode) && (
@@ -87,6 +105,8 @@ export function RoomSettingsPanel({ settings, playerCount, onChange }: Props) {
           </p>
         )}
       </Group>
+
+      {explaining && <ModeExplainer mode={explaining} onClose={() => setExplaining(null)} />}
 
       <Group label="כמה שאלות">
         <div className="mp-seg">
@@ -257,5 +277,68 @@ function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; chi
       </span>
       {children}
     </button>
+  );
+}
+
+/**
+ * The ⓘ explanation for one mode.
+ *
+ * A dialog rather than a tooltip because this is reached by tap as often as by
+ * pointer, and a tooltip on a phone is a thing you cannot dismiss. It closes on
+ * Escape, on the backdrop and on its own button, and returns focus to the ⓘ that
+ * opened it so a host tabbing through the modes does not lose their place.
+ *
+ * Nothing here touches room state: opening it is a local question about a mode,
+ * not a change to the lobby, so the room carries on underneath.
+ */
+function ModeExplainer({ mode, onClose }: { mode: ModeMeta; onClose: () => void }) {
+  const closeRef = useRef<HTMLButtonElement | null>(null);
+  const openerRef = useRef<Element | null>(null);
+
+  useEffect(() => {
+    openerRef.current = document.activeElement;
+    closeRef.current?.focus();
+
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.stopPropagation();
+        onClose();
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      // Focus goes back where it came from, not to the top of the document.
+      if (openerRef.current instanceof HTMLElement) openerRef.current.focus();
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      className="mp-mode-explain-backdrop"
+      onClick={onClose}
+      role="presentation"
+    >
+      <div
+        className="mp-mode-explain"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="mp-mode-explain-title"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <h3 id="mp-mode-explain-title" className="mp-mode-explain-title">
+          {mode.labelHe}
+        </h3>
+        <p className="mp-mode-explain-body">{mode.explainHe}</p>
+        <p className="mp-mode-explain-meta">
+          {mode.minPlayers === mode.maxPlayers
+            ? `${mode.minPlayers} שחקנים`
+            : `${mode.minPlayers}–${mode.maxPlayers} שחקנים`}
+        </p>
+        <button ref={closeRef} type="button" className="btn btn-sm mp-mode-explain-close" onClick={onClose}>
+          הבנתי
+        </button>
+      </div>
+    </div>
   );
 }

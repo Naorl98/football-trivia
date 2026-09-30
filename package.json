@@ -28,7 +28,8 @@
     "questions:generate:incremental": "node scripts/questions-generate.mjs",
     "questions:stats": "node scripts/questions-stats.mjs",
     "db:report": "node scripts/d1-report.mjs",
-    "db:report:remote": "node scripts/d1-report.mjs --remote"
+    "db:report:remote": "node scripts/d1-report.mjs --remote",
+    "test:mp:entry": "node scripts/mp-entry-qa.mjs"
   },
   "repository": {
     "type": "git",

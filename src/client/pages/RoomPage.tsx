@@ -685,7 +685,7 @@ function RoomError({ title, body }: { title: string; body: string }) {
         <p className="mp-error-body">{body}</p>
         <div className="mp-error-actions">
           <Link to="/multiplayer" className="btn btn-primary">
-            למולטיפלייר
+            לרב משתתפים
           </Link>
           <Link to="/" className="btn btn-ghost">
             לעמוד הבית

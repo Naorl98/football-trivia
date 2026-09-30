@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { BallMark } from "./BallMark";
 import { SoundToggle } from "./SoundToggle";
 import { A11yMenu } from "./A11yMenu";
+import { Icon } from "./Icon";
 import "./Header.css";
 
 /**
@@ -27,15 +28,17 @@ export function Header() {
 
         <div className="row g2">
           {/* Hidden mid-quiz: these are trap doors out of a run. */}
+          {/* One destination, not two.
+              Multiplayer was a second link competing with this one and reaching
+              the same place the homepage already offers; the daily challenge is
+              the thing worth coming back for, and it is the only one here now so
+              it can actually be seen. */}
           {!playing && (
-            <>
-              <Link to="/multiplayer" className="topbar-link">
-                מולטיפלייר
-              </Link>
-              <Link to="/daily" className="topbar-link">
-                אתגר יומי
-              </Link>
-            </>
+            <Link to="/daily" className="topbar-daily" aria-label="האתגר היומי — שאלה חדשה כל יום">
+              <Icon name="trophy" size={16} />
+              <span>האתגר היומי</span>
+              <span className="topbar-daily-dot" aria-hidden="true" />
+            </Link>
           )}
           <SoundToggle />
           <A11yMenu />

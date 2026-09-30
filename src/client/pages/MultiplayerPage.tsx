@@ -23,21 +23,25 @@ import "./MultiplayerPage.css";
 
 export function MultiplayerPage() {
   const navigate = useNavigate();
-  const [selected, setSelected] = useState<MultiplayerMode>("CLASSIC_BATTLE");
+  /**
+   * A room opens as a plain battle and the host changes it in the lobby.
+   * Not a preference the entry screen collects any more — just the setting the
+   * room starts life with.
+   */
+  const DEFAULT_MODE: MultiplayerMode = "CLASSIC_BATTLE";
   const [creating, setCreating] = useState(false);
   const [joinCode, setJoinCode] = useState("");
   const [joining, setJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const stats = readLocalStats();
 
-  const hostModes = MODES.filter((m) => m.hostSelectable);
 
   async function create() {
     setError(null);
     setCreating(true);
     sound.play("select");
     try {
-      const { code } = await createRoom(selected);
+      const { code } = await createRoom(DEFAULT_MODE);
       navigate(`/room/${code}`);
     } catch {
       setError("לא הצלחנו לפתוח חדר כרגע. נסו שוב.");
@@ -77,29 +81,18 @@ export function MultiplayerPage() {
   return (
     <div className="page mp-home">
       <header className="mp-home-head">
-        <p className="tiny">מולטיפלייר</p>
-        <h1 className="mp-home-title">משחק עם חברים</h1>
-        <p className="mp-home-sub">קוד אחד, כמה טלפונים, ומי שחושב שהוא מבין הכי הרבה.</p>
+        <p className="tiny">רב משתתפים</p>
+        <h1 className="mp-home-title">שחקו יחד בזמן אמת</h1>
+        <p className="mp-home-sub">צרו חדר, הצטרפו עם קוד או מצאו יריב לדו־קרב.</p>
       </header>
 
-      <section className="mp-home-section" aria-labelledby="mp-modes-head">
-        <h2 id="mp-modes-head" className="mp-home-h2">
-          איך משחקים
-        </h2>
-        <div className="mp-modes" role="radiogroup" aria-label="בחירת סוג משחק">
-          {hostModes.map((mode) => (
-            <ModeCard
-              key={mode.code}
-              mode={mode}
-              selected={selected === mode.code}
-              onSelect={() => {
-                sound.play("click");
-                setSelected(mode.code);
-              }}
-            />
-          ))}
-        </div>
-
+      {/* No mode picker here any more.
+          Choosing between five game types before there is anybody in the room is
+          a decision taken with none of the information it depends on — how many
+          turned up, and whether they want teams. It belongs in the lobby, where
+          the host can see the players and change their mind without rebuilding
+          the room. This screen is now three doors and nothing else. */}
+      <section className="mp-home-section">
         <button className="btn btn-primary btn-lg btn-block mp-create" onClick={create} disabled={creating}>
           {creating ? "פותח חדר…" : "צור חדר"}
           {!creating && <Icon name="arrow" size={18} />}
@@ -108,7 +101,7 @@ export function MultiplayerPage() {
 
       <section className="mp-home-section" aria-labelledby="mp-join-head">
         <h2 id="mp-join-head" className="mp-home-h2">
-          יש לכם קוד?
+          הצטרף עם קוד
         </h2>
         <form className="mp-join" onSubmit={join}>
           <label className="sr-only" htmlFor="mp-join-code">
@@ -133,7 +126,7 @@ export function MultiplayerPage() {
 
       <section className="mp-home-section" aria-labelledby="mp-random-head">
         <h2 id="mp-random-head" className="mp-home-h2">
-          אין עם מי?
+          אין עם מי לשחק?
         </h2>
         <button
           className="mp-random"
@@ -146,8 +139,8 @@ export function MultiplayerPage() {
             <ModeGlyph mode="RANDOM_DUEL" />
           </span>
           <span className="mp-random-text">
-            <span className="mp-random-title">דו קרב אקראי</span>
-            <span className="mp-random-sub">מצא יריב עכשיו — בלי קוד, בלי הזמנות</span>
+            <span className="mp-random-title">מצא יריב לדו־קרב</span>
+            <span className="mp-random-sub">שחקן אמיתי, בלי קוד ובלי הזמנות</span>
           </span>
           <Icon name="arrow" size={18} />
         </button>
@@ -169,39 +162,6 @@ export function MultiplayerPage() {
   );
 }
 
-function ModeCard({
-  mode,
-  selected,
-  onSelect,
-}: {
-  mode: ModeMeta;
-  selected: boolean;
-  onSelect: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={selected}
-      className={`mp-mode ${selected ? "is-on" : ""}`}
-      onClick={onSelect}
-    >
-      <span className="mp-mode-glyph" aria-hidden="true">
-        <ModeGlyph mode={mode.code} />
-      </span>
-      <span className="mp-mode-body">
-        <span className="mp-mode-title">{mode.labelHe}</span>
-        <span className="mp-mode-tag">{mode.taglineHe}</span>
-        <span className="mp-mode-blurb">{mode.blurbHe}</span>
-      </span>
-      {selected && (
-        <span className="mp-mode-check" aria-hidden="true">
-          <Icon name="check" size={15} strokeWidth={2.6} />
-        </span>
-      )}
-    </button>
-  );
-}
 
 /**
  * A tactical diagram per mode, drawn on the same 40-unit grid with the icon set's
