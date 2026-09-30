@@ -45,8 +45,8 @@ export function upsertCountries(countries: NormalizedCountry[]): string[] {
     .map(
       (c) => `INSERT INTO countries (provider, external_id, code, name)
               VALUES (${sqlValue(c.provider)}, ${sqlValue(c.externalId)}, ${sqlValue(c.code)}, ${sqlValue(c.name)})
-              ON CONFLICT(provider, external_id) DO UPDATE SET
-                code = excluded.code, name = excluded.name, updated_at = datetime('now');`
+              ON CONFLICT(provider, external_id) DO UPDATE SET code = excluded.code, name = excluded.name, updated_at = datetime('now')
+                WHERE code IS NOT excluded.code OR name IS NOT excluded.name;`
     );
 }
 
@@ -54,10 +54,10 @@ export function upsertVenue(venue: NormalizedVenue): string {
   return `INSERT INTO venues (provider, external_id, name, city, country_name, capacity)
           VALUES (${sqlValue(venue.provider)}, ${sqlValue(venue.externalId)}, ${sqlValue(venue.name)},
                   ${sqlValue(venue.city)}, ${sqlValue(venue.countryName)}, ${sqlValue(venue.capacity)})
-          ON CONFLICT(provider, external_id) DO UPDATE SET
-            name = excluded.name, city = excluded.city,
+          ON CONFLICT(provider, external_id) DO UPDATE SET name = excluded.name, city = excluded.city,
             country_name = excluded.country_name, capacity = excluded.capacity,
-            updated_at = datetime('now');`;
+            updated_at = datetime('now')
+                WHERE name IS NOT excluded.name OR city IS NOT excluded.city OR country_name IS NOT excluded.country_name OR capacity IS NOT excluded.capacity;`;
 }
 
 export function upsertCompetitions(
@@ -73,10 +73,10 @@ export function upsertCompetitions(
        VALUES (${sqlValue(comp.provider)}, ${sqlValue(comp.externalId)}, ${sqlValue(comp.name)},
                ${sqlValue(comp.type)}, ${sqlValue(comp.countryName)}, ${sqlValue(comp.countryCode)},
                ${sqlValue(localCodeFor(comp))}, ${sqlValue(priorityFor(comp))})
-       ON CONFLICT(provider, external_id) DO UPDATE SET
-         name = excluded.name, type = excluded.type, country_name = excluded.country_name,
+       ON CONFLICT(provider, external_id) DO UPDATE SET name = excluded.name, type = excluded.type, country_name = excluded.country_name,
          country_code = excluded.country_code, local_code = excluded.local_code,
-         priority = excluded.priority, updated_at = datetime('now');`
+         priority = excluded.priority, updated_at = datetime('now')
+                WHERE name IS NOT excluded.name OR type IS NOT excluded.type OR country_name IS NOT excluded.country_name OR country_code IS NOT excluded.country_code OR local_code IS NOT excluded.local_code OR priority IS NOT excluded.priority;`
     );
 
     for (const season of comp.seasons) {
@@ -86,9 +86,9 @@ export function upsertCompetitions(
          VALUES (${competitionRef(comp.provider, comp.externalId)}, ${sqlValue(season.season)},
                  ${sqlValue(season.startDate)}, ${sqlValue(season.endDate)}, ${sqlValue(season.isCurrent)},
                  ${sqlValue(season.coverage ? JSON.stringify(season.coverage) : null)})
-         ON CONFLICT(competition_id, season) DO UPDATE SET
-           start_date = excluded.start_date, end_date = excluded.end_date,
-           is_current = excluded.is_current, coverage_json = excluded.coverage_json;`
+         ON CONFLICT(competition_id, season) DO UPDATE SET start_date = excluded.start_date, end_date = excluded.end_date,
+           is_current = excluded.is_current, coverage_json = excluded.coverage_json
+                WHERE start_date IS NOT excluded.start_date OR end_date IS NOT excluded.end_date OR is_current IS NOT excluded.is_current OR coverage_json IS NOT excluded.coverage_json;`
       );
     }
   }
@@ -109,10 +109,10 @@ export function upsertTeams(
        VALUES (${sqlValue(team.provider)}, ${sqlValue(team.externalId)}, ${sqlValue(team.name)},
                ${sqlValue(team.code)}, ${sqlValue(team.countryName)}, ${sqlValue(team.founded)},
                ${sqlValue(team.isNational)}, ${venueRef(team.provider, team.venue?.externalId)})
-       ON CONFLICT(provider, external_id) DO UPDATE SET
-         name = excluded.name, code = excluded.code, country_name = excluded.country_name,
+       ON CONFLICT(provider, external_id) DO UPDATE SET name = excluded.name, code = excluded.code, country_name = excluded.country_name,
          founded = excluded.founded, is_national = excluded.is_national,
-         venue_id = COALESCE(excluded.venue_id, teams.venue_id), updated_at = datetime('now');`
+         venue_id = COALESCE(excluded.venue_id, teams.venue_id), updated_at = datetime('now')
+                WHERE name IS NOT excluded.name OR code IS NOT excluded.code OR country_name IS NOT excluded.country_name OR founded IS NOT excluded.founded OR is_national IS NOT excluded.is_national;`
     );
 
     if (context?.competitionExternalId && context.season != null) {
@@ -134,12 +134,12 @@ export function upsertPlayers(players: NormalizedPlayer[]): string[] {
               VALUES (${sqlValue(p.provider)}, ${sqlValue(p.externalId)}, ${sqlValue(p.name)},
                       ${sqlValue(p.firstname)}, ${sqlValue(p.lastname)}, ${sqlValue(p.nationality)},
                       ${sqlValue(p.birthDate)}, ${sqlValue(p.position)})
-              ON CONFLICT(provider, external_id) DO UPDATE SET
-                name = excluded.name, firstname = excluded.firstname, lastname = excluded.lastname,
+              ON CONFLICT(provider, external_id) DO UPDATE SET name = excluded.name, firstname = excluded.firstname, lastname = excluded.lastname,
                 nationality = COALESCE(excluded.nationality, players.nationality),
                 birth_date = COALESCE(excluded.birth_date, players.birth_date),
                 position = COALESCE(excluded.position, players.position),
-                updated_at = datetime('now');`
+                updated_at = datetime('now')
+                WHERE name IS NOT excluded.name OR firstname IS NOT excluded.firstname OR lastname IS NOT excluded.lastname;`
     );
 }
 
@@ -175,8 +175,8 @@ export function upsertTransfers(provider: string, transfers: NormalizedTransfer[
        VALUES (${playerRef(provider, t.playerExternalId)}, ${teamRef(provider, t.fromTeamExternalId)},
                ${teamRef(provider, t.toTeamExternalId)}, ${sqlValue(t.date)}, ${sqlValue(t.type)},
                ${sqlValue(t.feeText)}, ${sqlValue(provider)}, ${sqlValue(key)})
-       ON CONFLICT(transfer_key) DO UPDATE SET
-         transfer_type = excluded.transfer_type, fee_text = excluded.fee_text;`
+       ON CONFLICT(transfer_key) DO UPDATE SET transfer_type = excluded.transfer_type, fee_text = excluded.fee_text
+                WHERE transfer_type IS NOT excluded.transfer_type OR fee_text IS NOT excluded.fee_text;`
     );
 
     if (t.toTeamExternalId) {
@@ -211,8 +211,8 @@ export function upsertCoaches(coaches: NormalizedCoach[]): string[] {
       `INSERT INTO coaches (provider, external_id, name, nationality, birth_date)
        VALUES (${sqlValue(coach.provider)}, ${sqlValue(coach.externalId)}, ${sqlValue(coach.name)},
                ${sqlValue(coach.nationality)}, ${sqlValue(coach.birthDate)})
-       ON CONFLICT(provider, external_id) DO UPDATE SET
-         name = excluded.name, nationality = excluded.nationality, birth_date = excluded.birth_date;`
+       ON CONFLICT(provider, external_id) DO UPDATE SET name = excluded.name, nationality = excluded.nationality, birth_date = excluded.birth_date
+                WHERE name IS NOT excluded.name OR nationality IS NOT excluded.nationality OR birth_date IS NOT excluded.birth_date;`
     );
     for (const career of coach.careers) {
       if (!career.teamExternalId) continue;
@@ -240,9 +240,9 @@ export function upsertFixtures(fixtures: NormalizedFixture[]): string[] {
                ${venueRef(f.provider, f.venue?.externalId)}, ${teamRef(f.provider, f.homeTeamExternalId)},
                ${teamRef(f.provider, f.awayTeamExternalId)}, ${sqlValue(f.homeGoals)}, ${sqlValue(f.awayGoals)},
                ${sqlValue(f.status)})
-       ON CONFLICT(provider, external_id) DO UPDATE SET
-         home_goals = excluded.home_goals, away_goals = excluded.away_goals,
-         status = excluded.status, round = excluded.round;`
+       ON CONFLICT(provider, external_id) DO UPDATE SET home_goals = excluded.home_goals, away_goals = excluded.away_goals,
+         status = excluded.status, round = excluded.round
+                WHERE home_goals IS NOT excluded.home_goals OR away_goals IS NOT excluded.away_goals OR status IS NOT excluded.status OR round IS NOT excluded.round;`
     );
   }
   return statements;
@@ -262,10 +262,10 @@ export function upsertStandings(
                       ${teamRef(provider, r.teamExternalId)}, ${sqlValue(r.rank)}, ${sqlValue(r.points)},
                       ${sqlValue(r.played)}, ${sqlValue(r.won)}, ${sqlValue(r.drawn)}, ${sqlValue(r.lost)},
                       ${sqlValue(r.goalsFor)}, ${sqlValue(r.goalsAgainst)})
-              ON CONFLICT(competition_id, season, team_id) DO UPDATE SET
-                rank = excluded.rank, points = excluded.points, played = excluded.played,
+              ON CONFLICT(competition_id, season, team_id) DO UPDATE SET rank = excluded.rank, points = excluded.points, played = excluded.played,
                 won = excluded.won, drawn = excluded.drawn, lost = excluded.lost,
-                goals_for = excluded.goals_for, goals_against = excluded.goals_against;`
+                goals_for = excluded.goals_for, goals_against = excluded.goals_against
+                WHERE rank IS NOT excluded.rank OR points IS NOT excluded.points OR played IS NOT excluded.played OR won IS NOT excluded.won OR drawn IS NOT excluded.drawn OR lost IS NOT excluded.lost OR goals_for IS NOT excluded.goals_for OR goals_against IS NOT excluded.goals_against;`
     );
 
   // A finished league season's rank-1 team is the champion — the fact behind
@@ -278,9 +278,9 @@ export function upsertStandings(
        VALUES (${competitionRef(provider, competitionExternalId)}, ${sqlValue(season)},
                ${teamRef(provider, champion.teamExternalId)},
                ${runnerUp ? teamRef(provider, runnerUp.teamExternalId) : "NULL"}, 'standings')
-       ON CONFLICT(competition_id, season) DO UPDATE SET
-         team_id = excluded.team_id, runner_up_team_id = excluded.runner_up_team_id,
-         derived_from = excluded.derived_from;`
+       ON CONFLICT(competition_id, season) DO UPDATE SET team_id = excluded.team_id, runner_up_team_id = excluded.runner_up_team_id,
+         derived_from = excluded.derived_from
+                WHERE team_id IS NOT excluded.team_id OR runner_up_team_id IS NOT excluded.runner_up_team_id OR derived_from IS NOT excluded.derived_from;`
     );
   }
   return statements;
@@ -301,8 +301,8 @@ export function upsertTopScorers(
        VALUES (${playerRef(provider, s.player.externalId)}, ${teamRef(provider, s.teamExternalId)},
                ${competitionRef(provider, competitionExternalId)}, ${sqlValue(season)},
                ${sqlValue(s.appearances)}, ${sqlValue(s.goals)}, ${sqlValue(s.assists)})
-       ON CONFLICT(player_id, team_id, competition_id, season) DO UPDATE SET
-         appearances = excluded.appearances, goals = excluded.goals, assists = excluded.assists;`
+       ON CONFLICT(player_id, team_id, competition_id, season) DO UPDATE SET appearances = excluded.appearances, goals = excluded.goals, assists = excluded.assists
+                WHERE appearances IS NOT excluded.appearances OR goals IS NOT excluded.goals OR assists IS NOT excluded.assists;`
     );
     if (s.teamExternalId) {
       statements.push(

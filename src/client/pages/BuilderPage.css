@@ -11,6 +11,70 @@
   margin-bottom: 20px;
 }
 
+/* ============================================================
+   Game mode — the first and heaviest choice on the page
+   ============================================================ */
+.mode-pick {
+  margin-bottom: 22px;
+}
+
+.mode-pick-label {
+  margin-bottom: 8px;
+}
+
+.seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.seg-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 18px 16px;
+  border: 2px solid var(--line-strong);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--text-2);
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 1.02rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    border-color var(--t-2) var(--ease),
+    background-color var(--t-2) var(--ease),
+    color var(--t-2) var(--ease),
+    transform var(--t-1) var(--ease);
+}
+
+.seg-btn svg { color: var(--text-3); transition: color var(--t-2) var(--ease); }
+
+.seg-btn:hover { color: var(--text); border-color: var(--text-3); }
+.seg-btn:active { transform: scale(0.98); }
+
+/* Selected state carries the green border, wash and a filled icon — obvious at
+   a glance and still obvious in greyscale. */
+.seg-btn.is-on {
+  border-color: var(--green);
+  background: var(--green-wash);
+  color: var(--green-bright);
+  animation: chip-pick var(--t-3) var(--pop);
+}
+
+.seg-btn.is-on svg { color: var(--green); }
+
+/* ============================================================
+   Layout
+   ============================================================ */
+.build-grid {
+  display: block;
+}
+
+.build-side { display: none; }
+
 .build-rows {
   display: flex;
   flex-direction: column;
@@ -110,4 +174,81 @@
     gap: 8px;
   }
   .build-count { text-align: center; }
+}
+
+/* ============================================================
+   Desktop: two columns
+   ============================================================
+
+   Below this width the form is a single centred column with a sticky start
+   bar. Above it, the form would leave most of the screen empty, so the second
+   column takes that space with a live summary and the start button — and the
+   sticky bar is retired, because there is nowhere to scroll away from. */
+@media (min-width: 1024px) {
+  .build {
+    /* The fixed bar is gone up here, so the page no longer reserves room. */
+    padding-block-end: 48px;
+  }
+
+  .build-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: 40px;
+    align-items: start;
+  }
+
+  .build-side {
+    display: block;
+    position: sticky;
+    inset-block-start: calc(var(--header-h) + 18px);
+  }
+
+  .side-card {
+    padding: 18px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+  }
+
+  .side-list { margin: 0 0 14px; }
+
+  .side-item {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding-block: 7px;
+  }
+
+  .side-item + .side-item { border-block-start: 1px solid var(--line); }
+
+  .side-item dt {
+    font-size: 0.78rem;
+    color: var(--text-3);
+  }
+
+  .side-item dd {
+    margin: 0;
+    font-family: var(--font-head);
+    font-weight: 600;
+    font-size: 0.86rem;
+    color: var(--text);
+    text-align: end;
+  }
+
+  .side-count {
+    font-size: 0.85rem;
+    text-align: center;
+    padding-block: 12px 14px;
+    border-block-start: 1px solid var(--line);
+  }
+
+  .side-count b { font-size: 1.1rem; font-weight: 800; }
+
+  .build-bar { display: none; }
+
+  /* With a wider column the label can sit beside its controls comfortably. */
+  .build-row { grid-template-columns: 110px 1fr; }
+
+  .seg-btn { padding: 20px 18px; font-size: 1.08rem; }
 }

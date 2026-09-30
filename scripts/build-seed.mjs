@@ -9,6 +9,7 @@
 // challenge links and stored daily quizzes keep resolving after a re-seed.
 
 import { writeFileSync, readFileSync, existsSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { seedQuestions } from "../seed/questions.ts";
 import { generateAll } from "../seed/generators/index.ts";
 import { CLUBS } from "../seed/data/clubs.ts";
@@ -65,6 +66,41 @@ lines.push("");
 
 const stats = { curated: 0, generated: 0, freeText: 0, byDifficulty: {}, byMode: {}, byCategory: {} };
 
+/** id -> content hash, written alongside the SQL for the incremental applier. */
+const manifest = [];
+
+/**
+ * Fingerprints everything that will land in D1 for one question.
+ *
+ * Hashed from the source data rather than the generated SQL text, so a
+ * formatting change to the emitter does not invalidate the whole bank and
+ * trigger a full rewrite. Anything that changes a stored value changes the
+ * hash; nothing else does.
+ */
+function contentHashFor({ id, q, freeTextSpec, hints, semanticKey }) {
+  return createHash("sha256")
+    .update(
+      JSON.stringify({
+        id,
+        mode: q.mode,
+        category: q.category,
+        difficulty: q.difficulty,
+        questionHe: q.questionHe,
+        explanationHe: q.explanationHe,
+        sourceLabel: q.sourceLabel,
+        options: q.options,
+        correctIndex: q.correctIndex,
+        clues: q.clues ?? [],
+        scopes: q.scopes ?? [],
+        freeText: freeTextSpec ?? null,
+        hints: hints ?? [],
+        semanticKey: semanticKey ?? null,
+      })
+    )
+    .digest("hex")
+    .slice(0, 32);
+}
+
 function emitQuestion({ id, publicId, q, semanticKey, generated, freeTextSpec, hints }) {
   stats.byDifficulty[q.difficulty] = (stats.byDifficulty[q.difficulty] || 0) + 1;
   stats.byMode[q.mode] = (stats.byMode[q.mode] || 0) + 1;
@@ -73,12 +109,18 @@ function emitQuestion({ id, publicId, q, semanticKey, generated, freeTextSpec, h
   const supportsFreeText = freeTextSpec ? 1 : 0;
   if (supportsFreeText) stats.freeText++;
 
+  const hash = contentHashFor({ id, q, freeTextSpec, hints, semanticKey });
+  // A machine-readable header so the incremental applier can split this file
+  // into per-question blocks without parsing SQL.
+  lines.push(`-- @q ${id} ${hash}`);
+  manifest.push({ id, hash });
+
   lines.push(
-    `INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (` +
+    `INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated, content_hash) VALUES (` +
       `${id}, '${publicId}', '${q.mode}', '${q.category}', '${q.difficulty}', '${sqlEscape(q.questionHe)}', ` +
       `'${sqlEscape(q.explanationHe)}', 1, 1, '${sqlEscape(q.sourceLabel)}', ` +
       `${freeTextSpec ? `'${sqlEscape(freeTextSpec.canonical)}'` : "NULL"}, ${supportsFreeText}, ` +
-      `${semanticKey ? `'${sqlEscape(semanticKey)}'` : "NULL"}, ${generated});`
+      `${semanticKey ? `'${sqlEscape(semanticKey)}'` : "NULL"}, ${generated}, '${hash}');`
   );
 
   q.options.forEach((opt, optIdx) => {
@@ -172,6 +214,10 @@ for (const q of generated) {
 
 writeFileSync(LEDGER_PATH, JSON.stringify(ledger, null, 0));
 writeFileSync(new URL("../seed/seed.sql", import.meta.url), lines.join("\n"));
+writeFileSync(
+  new URL("../seed/seed-manifest.json", import.meta.url),
+  JSON.stringify({ builtAt: new Date().toISOString().slice(0, 10), questions: manifest }, null, 0)
+);
 
 const total = stats.curated + stats.generated;
 console.log(`Generated seed/seed.sql`);
