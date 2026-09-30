@@ -6,3 +6,5 @@ screenshots/
 .env
 .env.*
 .DS_Store
+.dev.vars
+screenshots-viewports/

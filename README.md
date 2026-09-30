@@ -216,3 +216,97 @@ keep pointing at the same questions. Treat `seed/questions.ts` as **append-only*
 reordering or deleting entries reassigns ids and would orphan existing challenges. The
 daily quiz additionally self-heals: if its stored question set no longer resolves, it is
 rebuilt once and re-persisted for that date.
+
+## Data ingestion (API-Football)
+
+The knowledge base is populated from an external provider and then served
+entirely from D1. **Gameplay never calls the provider** — starting a quiz issues
+zero external requests.
+
+```
+API-Football -> Provider adapter -> Sync queue + budget -> D1 knowledge base
+                                                                |
+                                          question generators <-+
+                                                                |
+                                            quality gates + dedupe
+                                                                |
+                                                  D1 questions -> quiz engine
+```
+
+### Provider abstraction
+
+`src/server/providers/football/types.ts` defines `FootballDataProvider` plus the
+normalized domain types. `ApiFootballProvider.ts` is the only file that knows
+API-Football's URLs, headers or response shapes, so adding Sportmonks or
+football-data.org means writing one adapter, not touching the import layer.
+`MockProvider.ts` implements the same interface, so the whole pipeline is
+testable without spending quota.
+
+### Configuring the key
+
+`API_FOOTBALL_KEY` is read only by local ingestion scripts. It is never bundled
+into the Worker and never reaches the browser.
+
+```bash
+cp .env.example .dev.vars          # .dev.vars is gitignored
+# edit .dev.vars:  API_FOOTBALL_KEY=your_key_here
+npm run data:harvest
+```
+
+Ingestion deliberately does not run in the Worker, so no Cloudflare secret is
+needed. For a future scheduled server-side sync, add it with
+`npx wrangler secret put API_FOOTBALL_KEY` and put the harvester behind an
+authenticated route.
+
+### Commands
+
+| Command | What it does |
+| --- | --- |
+| `npm run data:harvest` | Import within today's budget, resuming where the last run stopped |
+| `npm run data:harvest -- --remote` | Same, against production D1 |
+| `npm run data:harvest -- --max 20` | Cap this run at 20 requests |
+| `npm run data:harvest -- --historical` | Also queue deeper league history |
+| `npm run data:status` | Real row counts, queue state, recent runs, requests used today |
+| `npm run questions:generate` | Turn stored facts into playable questions |
+| `npm run questions:stats` | Real question-bank breakdown from D1 |
+
+### Living within a 100-request/day plan
+
+The free plan allows ~100 requests/day. The harvester:
+
+- operates at **95/day** by default, keeping ~5 in reserve for retries
+- counts spend from `api_request_log`, so a crash cannot lose track of requests
+- reads `x-ratelimit-requests-remaining` on every response and stops on exhaustion
+- throttles to ~9 requests/minute to respect the per-minute cap
+- **skips any resource already imported**, without spending a request
+- treats completed historical seasons as `ARCHIVED` — immutable, never re-fetched
+- writes every response to D1 *before* the next request, so a crash after
+  request 73 keeps all 73 results
+- queues the next page rather than looping through pagination past the budget
+- re-plans as data lands: season work is only queued for competitions the
+  provider actually returned, so quota is never spent on uncovered competitions
+
+Work is ordered by expected **questions per request** — squads and transfers
+first, fixtures last. Odds, predictions, injuries and live scores are never
+requested: they cost quota and generate no questions.
+
+Daily runs need no manual bookkeeping; the queue and `data_sync_state` carry
+progress across days.
+
+### Generation and quality gates
+
+`src/server/questions/knowledgeGenerators.ts` reads only from D1. A candidate is
+rejected unless it survives every gate: an unambiguous stored answer (never an
+inference), four distinct options, exactly one correct, no distractor that is
+also correct, no alias colliding with a distractor, certain career ordering
+(a chain with an undated move is dropped), and no duplicate semantic key.
+
+Semantic keys — `KB_CAREER_PATH:<playerId>`, `KB_TRANSFER_TO:<playerId>:<teamId>:<year>`,
+`KB_COMPETITION_WINNER:<competitionId>:<season>` — make generation idempotent.
+
+Difficulty is classified by deterministic rules (fact age, competition tier,
+subject prominence, question type), never by an LLM, so a question always lands
+in the same tier.
+
+Auto-derived free-text aliases stay conservative: full name, ASCII-folded form,
+and a distinctive surname. Nicknames like "Vini" are curated, never invented.

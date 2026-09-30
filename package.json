@@ -14,7 +14,12 @@
     "db:seed:local": "wrangler d1 execute football-iq-db --local --file=seed/seed.sql",
     "db:seed:remote": "wrangler d1 execute football-iq-db --remote --file=seed/seed.sql",
     "deploy": "npm run build && wrangler deploy",
-    "cf-typegen": "wrangler types"
+    "cf-typegen": "wrangler types",
+    "test": "node --test \"tests/**/*.test.ts\"",
+    "data:harvest": "node scripts/data-harvest.mjs",
+    "data:status": "node scripts/data-status.mjs",
+    "questions:generate": "node scripts/questions-generate.mjs",
+    "questions:stats": "node scripts/questions-stats.mjs"
   },
   "repository": {
     "type": "git",
