@@ -181,8 +181,8 @@ export const seedQuestions: SeedQuestion[] = [
   },
   {
     mode: "CLASSIC", category: "WORLD_CUP", difficulty: "EASY",
-    questionHe: "אילו שלוש מדינות יארחו יחד את מונדיאל 2026?",
-    explanationHe: "מונדיאל 2026 יהיה הראשון עם 48 נבחרות, ויתקיים במשותף בארצות הברית, קנדה ומקסיקו.",
+    questionHe: "אילו שלוש מדינות אירחו יחד את מונדיאל 2026?",
+    explanationHe: "מונדיאל 2026 היה הראשון עם 48 נבחרות, והתקיים במשותף בארצות הברית, קנדה ומקסיקו. ספרד זכתה בתואר בניצחון על ארגנטינה.",
     options: ["ארה\"ב, קנדה ומקסיקו", "ארה\"ב, ברזיל וקנדה", "מקסיקו, ספרד ופורטוגל", "קנדה, יפן וקוריאה"], correctIndex: 0,
     scopes: [WORLD, comp("WORLD_CUP")], sourceLabel: "היסטוריית המונדיאל",
   },
@@ -1008,8 +1008,8 @@ export const seedQuestions: SeedQuestion[] = [
   },
   {
     mode: "CLASSIC", category: "WORLD_CUP", difficulty: "EXPERT",
-    questionHe: "איזו מדינה תהיה הראשונה לארח משחקי מונדיאל בשלוש מהדורות שונות?",
-    explanationHe: "מקסיקו אירחה את מונדיאל 1970 ו-1986, ותארח משחקים גם במונדיאל 2026 המשותף.",
+    questionHe: "איזו מדינה הפכה לראשונה שאירחה משחקי מונדיאל בשלוש מהדורות שונות?",
+    explanationHe: "מקסיקו אירחה את מונדיאל 1970 ו-1986, ואירחה משחקים גם במונדיאל 2026 המשותף.",
     options: ["מקסיקו", "איטליה", "ברזיל", "גרמניה"], correctIndex: 0,
     scopes: [WORLD, comp("WORLD_CUP")], sourceLabel: "היסטוריית המונדיאל",
   },
