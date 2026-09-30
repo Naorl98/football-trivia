@@ -1,214 +1,306 @@
-.quiz-page {
-  padding-top: 20px;
-  padding-bottom: 120px;
-  flex: 1;
+.quiz {
+  padding-block: 22px 40px;
+  max-width: 760px;
   display: flex;
   flex-direction: column;
+  gap: 20px;
 }
 
-.quiz-header {
-  position: sticky;
-  top: var(--header-h);
-  background: var(--bg);
-  padding-bottom: 12px;
-  z-index: 5;
-}
-
-.quiz-progress-label {
-  font-weight: 700;
-  font-size: 14px;
-  color: var(--text-dim);
-}
-
-.quiz-score {
-  font-weight: 800;
-  font-size: 15px;
-}
-
-.quiz-body {
-  margin-top: 20px;
-}
-
-.clue-box {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 18px;
-  margin-bottom: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.clue-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 6px;
-}
-
-.clue-text {
-  font-weight: 600;
-  font-size: 15px;
-  color: var(--text);
-}
-
-.clue-path .clue-text {
-  font-weight: 800;
-  font-size: 17px;
-  color: var(--pitch-green-bright);
-}
-
-.clue-arrow {
-  color: var(--text-faint);
-  font-size: 16px;
-}
-
-.quiz-question {
-  font-size: 21px;
-  font-weight: 800;
-  line-height: 1.45;
-  margin-bottom: 20px;
-}
-
-.options-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
-}
-
-.option-btn {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  text-align: right;
-  background: var(--surface);
-  border: 1.5px solid var(--border-strong);
-  color: var(--text);
-  border-radius: var(--radius-md);
-  padding: 16px 18px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  min-height: 56px;
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* State is carried by an icon as well as colour, so the correct/incorrect
-   distinction survives colour-blindness and greyscale. */
-.option-mark {
-  flex-shrink: 0;
-  font-weight: 900;
-  font-size: 15px;
-}
-
-.option-btn:not(:disabled):hover {
-  background: var(--surface-hover);
-  border-color: var(--pitch-green);
-}
-
-.option-btn:not(:disabled):active {
-  transform: scale(0.98);
-}
-
-.option-btn.correct {
-  background: rgba(29, 185, 84, 0.16);
-  border-color: var(--pitch-green);
-  color: var(--pitch-green-bright);
-  box-shadow: var(--glow-green);
-}
-
-.option-btn.incorrect {
-  background: rgba(239, 68, 68, 0.14);
-  border-color: var(--danger);
-  color: #ff9b9b;
-}
-
-.option-btn.muted {
-  opacity: 0.45;
-}
-
-.explanation-box {
-  margin-top: 18px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-inline-start: 3px solid var(--gold);
-  border-radius: var(--radius-md);
-  padding: 14px 16px;
-}
-
-.explanation-box p {
-  font-size: 14.5px;
-  line-height: 1.6;
-  color: var(--text-dim);
-}
-
-.quiz-footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: linear-gradient(180deg, transparent, var(--bg) 35%);
-  padding: 20px 20px calc(18px + env(safe-area-inset-bottom));
-  max-width: var(--container-max);
-  margin-inline: auto;
-}
-
-/* ---------- Question entrance transitions ----------
-   Four short variants, cycled by question index so consecutive questions
-   never animate identically. All are 200-500ms and GPU-friendly. */
-
-@keyframes t-slide-in {
-  from { opacity: 0; transform: translateX(28px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-.t-slide { animation: t-slide-in 0.32s cubic-bezier(0.22, 0.85, 0.3, 1) both; }
-
-@keyframes t-flip-in {
-  from { opacity: 0; transform: perspective(900px) rotateX(-12deg) translateY(16px); }
-  to   { opacity: 1; transform: perspective(900px) rotateX(0) translateY(0); }
-}
-.t-flip { animation: t-flip-in 0.42s cubic-bezier(0.22, 0.9, 0.28, 1) both; }
-
-/* Stadium spotlight opening on the question. */
-@keyframes t-spotlight-in {
-  from { opacity: 0; clip-path: circle(22% at 50% 38%); }
-  to   { opacity: 1; clip-path: circle(140% at 50% 38%); }
-}
-.t-spotlight { animation: t-spotlight-in 0.46s ease-out both; }
-
-@keyframes t-rise-in {
-  from { opacity: 0; transform: translateY(22px) scale(0.985); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-.t-rise { animation: t-rise-in 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-
-/* ---------- Answer feedback flash ---------- */
-.answer-flash {
+/* ============================================================
+   Answer flash — a single edge wash, not a full-screen colour bath
+   ============================================================ */
+.flash {
   position: fixed;
   inset: 0;
+  z-index: 40;
   pointer-events: none;
-  z-index: 3;
-  animation: flash-fade 0.6s ease-out forwards;
-}
-
-@keyframes flash-fade {
-  0%   { opacity: 0.85; }
-  100% { opacity: 0; }
+  animation: flash-out 620ms var(--ease) both;
 }
 
 .flash-correct {
-  background: radial-gradient(ellipse 120% 70% at 50% 100%, rgba(29, 185, 84, 0.3), transparent 65%);
+  background: radial-gradient(ellipse 120% 60% at 50% 100%, var(--pitch) 0%, transparent 62%);
 }
 
 .flash-wrong {
-  background: radial-gradient(ellipse 120% 70% at 50% 100%, rgba(239, 68, 68, 0.22), transparent 65%);
+  background: radial-gradient(ellipse 120% 60% at 50% 100%, var(--spot) 0%, transparent 62%);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .t-slide, .t-flip, .t-spotlight, .t-rise { animation: none; }
-  .answer-flash { display: none; }
+@keyframes flash-out {
+  0% { opacity: 0.32; }
+  100% { opacity: 0; }
+}
+
+/* ============================================================
+   The question sheet
+   ============================================================ */
+.sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.quiz-q {
+  font-size: clamp(22px, 4.2vw, 31px);
+  line-height: 1.25;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+/* ---------- Page-turn transitions ---------- */
+@keyframes t-turn {
+  from { opacity: 0; transform: perspective(900px) rotateY(-7deg) translateX(-18px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes t-slide {
+  from { opacity: 0; transform: translateX(-26px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes t-settle {
+  from { opacity: 0; transform: translateY(-14px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+
+.t-turn { animation: t-turn 340ms var(--ease) both; }
+.t-slide { animation: t-slide 300ms var(--ease) both; }
+.t-settle { animation: t-settle 300ms var(--ease-out-back) both; }
+.t-wipe { animation: wipe-in 340ms var(--ease) both; }
+
+/* ============================================================
+   Clues (Who am I? / Career path)
+   ============================================================ */
+.clues {
+  border: var(--border-w) solid var(--ink);
+  border-radius: var(--r-xs);
+  background: var(--card-2);
+  padding: 15px 17px;
+}
+
+.clues-head {
+  color: var(--spot);
+  margin-bottom: 10px;
+}
+
+.clues-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.clue {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  font-size: 15.5px;
+  line-height: 1.5;
+}
+
+.clue-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-block-start: 7px;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--card);
+}
+
+/* Career path reads as a route: the dots are joined by a rule. */
+.clues-path .clues-list {
+  position: relative;
+  gap: 14px;
+}
+
+.clues-path .clue {
+  position: relative;
+}
+
+.clues-path .clue:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 3.5px;
+  inset-block-start: 15px;
+  width: 0;
+  height: calc(100% + 6px);
+  border-inline-start: var(--border-w-thin) dashed var(--ink-4);
+}
+
+.clues-path .clue-dot {
+  background: var(--spot);
+  border-color: var(--ink);
+}
+
+.clue-text {
+  min-width: 0;
+}
+
+/* Who-am-I clues are quoted testimony; set them italic. */
+.clues:not(.clues-path) .clue-text {
+  font-style: italic;
+  color: var(--ink-2);
+}
+
+/* ============================================================
+   Options
+   ============================================================ */
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.option {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  padding: 14px 15px;
+  background: var(--card);
+  border: var(--border-w) solid var(--ink);
+  border-radius: var(--r-xs);
+  box-shadow: 3px 3px 0 var(--ink);
+  text-align: start;
+  font-size: 16.5px;
+  font-weight: 500;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform var(--t-fast) var(--ease),
+    box-shadow var(--t-fast) var(--ease),
+    background-color var(--t-fast) var(--ease),
+    border-color var(--t-fast) var(--ease),
+    opacity var(--t-mid) var(--ease);
+}
+
+.option:hover:not(:disabled) {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0 var(--spot);
+}
+
+.option:active:not(:disabled) {
+  transform: translate(1.5px, 1.5px);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+
+/* The answer letter, boxed like a ballot marker. */
+.option-mark {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border: var(--border-w-thin) solid var(--rule-soft);
+  border-radius: var(--r-xs);
+  font-weight: 900;
+  font-size: 14px;
+  color: var(--ink-3);
+}
+
+.option-text {
+  min-width: 0;
+  line-height: 1.4;
+}
+
+.option-verdict {
+  flex: none;
+  display: grid;
+  place-items: center;
+}
+
+/* ---------- Resolved states ---------- */
+.option:disabled {
+  cursor: default;
+  transform: none;
+}
+
+.option.is-correct {
+  background: var(--pitch-wash);
+  border-color: var(--pitch);
+  box-shadow: 3px 3px 0 var(--pitch);
+  color: var(--ink);
+  font-weight: 700;
+  animation: stamp-in 300ms var(--ease-out-back) both;
+}
+
+.option.is-correct .option-mark {
+  border-color: var(--pitch);
+  color: var(--pitch);
+}
+
+.option.is-correct .option-verdict {
+  color: var(--pitch);
+}
+
+.option.is-wrong {
+  background: var(--wrong-wash);
+  border-color: var(--spot);
+  box-shadow: 3px 3px 0 var(--spot);
+  animation: nudge 300ms var(--ease) both;
+}
+
+.option.is-wrong .option-mark {
+  border-color: var(--spot);
+  color: var(--spot);
+}
+
+.option.is-wrong .option-verdict {
+  color: var(--spot);
+}
+
+/* Eliminated options recede rather than disappear: the player can still read
+   what they were, which is how you learn something from a miss. */
+.option.is-out {
+  opacity: 0.4;
+  box-shadow: none;
+  border-color: var(--rule-soft);
+  background: transparent;
+}
+
+@keyframes nudge {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* ============================================================
+   Explanation note — a marginal annotation
+   ============================================================ */
+.note {
+  border-inline-start: 4px solid var(--spot);
+  background: var(--card-2);
+  padding: 13px 15px;
+  border-radius: 0 var(--r-xs) var(--r-xs) 0;
+}
+
+.note-head {
+  color: var(--spot);
+  margin-bottom: 5px;
+}
+
+.note-text {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+
+/* ============================================================
+   Footer
+   ============================================================ */
+.quiz-foot {
+  position: sticky;
+  inset-block-end: 14px;
+  z-index: 20;
+}
+
+.quiz-hint {
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--ink-4);
+}
+
+/* Touch devices have no number row worth mentioning. */
+@media (pointer: coarse) {
+  .quiz-hint {
+    display: none;
+  }
 }

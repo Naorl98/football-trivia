@@ -20,7 +20,17 @@ export function Confetti({ active }: { active: boolean }) {
     canvas.height = height * dpr;
     ctx.scale(dpr, dpr);
 
-    const colors = ["#1db954", "#22e06b", "#d4af37", "#f0cf5a", "#f5f7f3"];
+    // Pull the live palette rather than hardcoding hexes, so the burst matches
+    // whichever scheme is rendering (and any future token change).
+    const styles = getComputedStyle(document.documentElement);
+    const token = (name: string, fallback: string) => styles.getPropertyValue(name).trim() || fallback;
+    const colors = [
+      token("--spot", "#cf3b22"),
+      token("--pitch", "#12523a"),
+      token("--ink", "#17160f"),
+      token("--stamp", "#1c4f8a"),
+      token("--spot", "#cf3b22"),
+    ];
     const pieces = Array.from({ length: 70 }, () => ({
       x: width / 2 + (Math.random() - 0.5) * width * 0.5,
       y: height * 0.35 + (Math.random() - 0.5) * 40,

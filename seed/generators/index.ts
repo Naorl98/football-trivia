@@ -26,6 +26,8 @@ import {
   type ClubFinal,
 } from "../data/competitions.ts";
 import type { SeedCategory, SeedDifficulty, SeedMode, SeedScope } from "../questions.ts";
+import { difficultyFor, type Distractors, type Fame } from "./difficulty.ts";
+import { numericDistractors } from "./numericOptions.ts";
 
 export interface GeneratedQuestion {
   semanticKey: string;
@@ -85,6 +87,56 @@ function clubAliases(c: ClubRecord): string[] {
   return [c.en, ...c.aliases];
 }
 
+// ---------------------------------------------------------------------------
+// Fame signals feeding the difficulty model (see ./difficulty.ts)
+// ---------------------------------------------------------------------------
+
+/** Player fame maps straight off the curated tier: 1 = global icon. */
+const playerFame = (player: PlayerRecord): Fame => (player.tier === 1 ? 0 : player.tier === 2 ? 1 : 2);
+
+const BIG_FIVE = ["PREMIER_LEAGUE", "LA_LIGA", "SERIE_A", "BUNDESLIGA", "LIGUE_1"];
+
+/**
+ * Titles per club, counted from the competition tables we actually carry.
+ *
+ * This is a prominence proxy derived from data rather than from opinion: a club
+ * that keeps turning up as a European or league winner is one a Hebrew-speaking
+ * fan has heard of. It is not a claim about the club's full honours list.
+ */
+const CLUB_TITLE_COUNT: Map<string, number> = (() => {
+  const counts = new Map<string, number>();
+  const add = (id: string) => counts.set(id, (counts.get(id) ?? 0) + 1);
+  for (const final of UCL_FINALS) add(final.winner);
+  for (const final of UEL_FINALS) add(final.winner);
+  for (const league of LEAGUE_CHAMPIONS) for (const season of league.seasons) add(season.champion);
+  return counts;
+})();
+
+function clubFame(c: ClubRecord): Fame {
+  const titles = CLUB_TITLE_COUNT.get(c.id) ?? 0;
+  const big = BIG_FIVE.includes(c.league ?? "");
+  if (titles >= 5 || (titles >= 1 && big)) return 0;
+  if (big || titles >= 1) return 1;
+  return 2;
+}
+
+/**
+ * How close a set of club distractors sits to the answer.
+ *
+ * The distinction that matters: distractors taken from the player's *own* career
+ * turn "which club" into "which club, in what order", which is a different and
+ * much harder question than picking their club out of three from other
+ * countries. The generators mix both, so this is measured per question rather
+ * than assumed.
+ */
+function clubDistractorCloseness(player: PlayerRecord, distractors: ClubRecord[]): Distractors {
+  const own = new Set(player.clubs);
+  const fromCareer = distractors.filter((d) => own.has(d.id)).length;
+  if (fromCareer >= 2) return "near";
+  if (fromCareer === 1) return "mixed";
+  return "far";
+}
+
 function firstLetterHint(name: string): string {
   return `השם מתחיל באות ${name.trim()[0]}`;
 }
@@ -136,12 +188,6 @@ const COUNTRY_HE: Record<string, string> = {
 };
 const countryHe = (code: string) => COUNTRY_HE[code] ?? code;
 
-function difficultyForPlayer(player: PlayerRecord, bump = 0): SeedDifficulty {
-  const ladder: SeedDifficulty[] = ["EASY", "NORMAL", "HARD", "EXPERT", "IMPOSSIBLE"];
-  const base = player.tier === 1 ? 1 : player.tier === 2 ? 2 : 3;
-  return ladder[Math.min(ladder.length - 1, base + bump)];
-}
-
 function playerScopes(player: PlayerRecord): SeedScope[] {
   const scopes: SeedScope[] = [];
   const countries = new Set(player.clubs.filter(isReal).map((id) => clubOf(id).country));
@@ -185,7 +231,11 @@ function generateFirstClub(): GeneratedQuestion[] {
       semanticKey: key,
       mode: "CLASSIC",
       category: "CAREERS",
-      difficulty: difficultyForPlayer(player, 0),
+      difficulty: difficultyFor({
+        archetype: "first_club",
+        fame: playerFame(player),
+        distractors: clubDistractorCloseness(player, distractors),
+      }),
       questionHe: `באיזו קבוצה התחיל ${player.he} את הקריירה הבוגרת שלו?`,
       explanationHe: `${player.he} פרץ מ${correct.he} לפני שהמשיך הלאה בקריירה.`,
       options: [correct.he, ...distractors.map((d) => d.he)],
@@ -232,7 +282,11 @@ function generateAdjacentClubMoves(): GeneratedQuestion[] {
           semanticKey: nextKey,
           mode: "CLASSIC",
           category: "TRANSFERS",
-          difficulty: difficultyForPlayer(player, 1),
+          difficulty: difficultyFor({
+            archetype: "adjacent_move",
+            fame: playerFame(player),
+            distractors: clubDistractorCloseness(player, nextDistractors),
+          }),
           questionHe: `לאיזו קבוצה עבר ${player.he} אחרי ${from.he}?`,
           explanationHe: `אחרי התקופה ב${from.he}, ${player.he} עבר ל${to.he}.`,
           options: [to.he, ...nextDistractors.map((d) => d.he)],
@@ -259,7 +313,11 @@ function generateAdjacentClubMoves(): GeneratedQuestion[] {
           semanticKey: prevKey,
           mode: "CLASSIC",
           category: "CAREERS",
-          difficulty: difficultyForPlayer(player, 1),
+          difficulty: difficultyFor({
+            archetype: "adjacent_move",
+            fame: playerFame(player),
+            distractors: clubDistractorCloseness(player, prevDistractors),
+          }),
           questionHe: `באיזו קבוצה שיחק ${player.he} לפני ${to.he}?`,
           explanationHe: `${player.he} הגיע ל${to.he} מ${from.he}.`,
           options: [from.he, ...prevDistractors.map((d) => d.he)],
@@ -295,7 +353,13 @@ function generateCareerPaths(): GeneratedQuestion[] {
       semanticKey: `career_path:${player.id}`,
       mode: "CAREER_PATH",
       category: "CAREER_PATH",
-      difficulty: difficultyForPlayer(player, 0),
+      // Distractors are other players in the same position with comparably long
+      // careers, so the four options are genuinely confusable.
+      difficulty: difficultyFor({
+        archetype: "career_path",
+        fame: playerFame(player),
+        distractors: "near",
+      }),
       questionHe: "של מי מסלול הקריירה הזה?",
       explanationHe: `זהו מסלול הקריירה של ${player.he}.`,
       clues: path,
@@ -369,7 +433,11 @@ function generateClubConnections(): GeneratedQuestion[] {
       semanticKey: `connection:${player.id}:${[aId, bId].sort().join("+")}`,
       mode: "CLUB_CONNECTION",
       category: "TRANSFERS",
-      difficulty: difficultyForPlayer(player, 0),
+      difficulty: difficultyFor({
+        archetype: "club_connection",
+        fame: playerFame(player),
+        distractors: "mixed",
+      }),
       questionHe: `איזה שחקן שיחק גם ב${a.he} וגם ב${b.he}?`,
       explanationHe: `${player.he} שיחק גם ב${a.he} וגם ב${b.he} במהלך הקריירה שלו.`,
       options: [player.he, ...distractors.map((d) => d.he)],
@@ -398,7 +466,13 @@ function generateDidNotPlayFor(): GeneratedQuestion[] {
       semanticKey: key,
       mode: "CLASSIC",
       category: "CAREERS",
-      difficulty: difficultyForPlayer(player, 1),
+      // The odd one out is from a country the player never played in, which is a
+      // much softer ask than naming a club unprompted.
+      difficulty: difficultyFor({
+        archetype: "not_played_for",
+        fame: playerFame(player),
+        distractors: "far",
+      }),
       questionHe: `באיזו מהקבוצות הבאות ${player.he} מעולם לא שיחק?`,
       explanationHe: `${player.he} שיחק ב${ownPicks.map((c) => c.he).join(", ")} — אך לא ב${never.he}.`,
       options: [never.he, ...ownPicks.map((c) => c.he)],
@@ -426,7 +500,11 @@ function generateNationalities(): GeneratedQuestion[] {
       semanticKey: `nationality:${player.id}`,
       mode: "CLASSIC",
       category: "PLAYERS",
-      difficulty: difficultyForPlayer(player, -1) === "EASY" ? "EASY" : "NORMAL",
+      difficulty: difficultyFor({
+        archetype: "nationality",
+        fame: playerFame(player),
+        distractors: "far",
+      }),
       questionHe: `מאיזו מדינה ${player.he}?`,
       explanationHe: `${player.he} הוא נציג נבחרת ${nat.he}.`,
       options: [nat.he, ...distractors.map(([, v]) => v.he)],
@@ -445,14 +523,6 @@ function generateNationalities(): GeneratedQuestion[] {
 // ---------------------------------------------------------------------------
 // Competition generators
 // ---------------------------------------------------------------------------
-
-function difficultyForYear(year: number): SeedDifficulty {
-  if (year >= 2018) return "EASY";
-  if (year >= 2004) return "NORMAL";
-  if (year >= 1992) return "HARD";
-  if (year >= 1975) return "EXPERT";
-  return "IMPOSSIBLE";
-}
 
 function generateClubFinals(
   finals: ClubFinal[],
@@ -483,7 +553,12 @@ function generateClubFinals(
         semanticKey: `${keyPrefix}_winner:${final.year}`,
         mode: "CLASSIC",
         category,
-        difficulty: difficultyForYear(final.year),
+        difficulty: difficultyFor({
+          archetype: "final_winner",
+          fame: clubFame(winner),
+          year: final.year,
+          distractors: "mixed",
+        }),
         questionHe: `איזו קבוצה זכתה ${withBe(compHe)} בשנת ${final.year}?`,
         explanationHe: final.runnerUp && isReal(final.runnerUp)
           ? `${winner.he} זכתה ${withBe(compHe)} ${final.year} בגמר מול ${clubOf(final.runnerUp).he}${final.score ? ` (${final.score})` : ""}.`
@@ -512,7 +587,12 @@ function generateClubFinals(
           semanticKey: `${keyPrefix}_runnerup:${final.year}`,
           mode: "CLASSIC",
           category,
-          difficulty: difficultyForYear(final.year) === "EASY" ? "NORMAL" : difficultyForYear(final.year),
+          difficulty: difficultyFor({
+            archetype: "final_runner_up",
+            fame: clubFame(runnerUp),
+            year: final.year,
+            distractors: "mixed",
+          }),
           questionHe: `את מי ניצחה ${winner.he} בגמר ${compHe} ${final.year}?`,
           explanationHe: `${winner.he} ניצחה את ${runnerUp.he} בגמר ${final.year}${final.score ? ` (${final.score})` : ""}.`,
           options: [runnerUp.he, ...ruDistractors.map((c) => c.he)],
@@ -534,15 +614,24 @@ function generateClubFinals(
   for (const [clubId, count] of counts) {
     if (!isReal(clubId) || count < 3) continue;
     const c = clubOf(clubId);
-    const wrong = [count + 1, count - 1, count + 2].filter((n) => n > 0);
+    const wrong = numericDistractors({
+      correct: count,
+      offsets: [1, 2, 3, 4],
+      min: 1,
+      seedKey: `${keyPrefix}_count:${clubId}`,
+    });
     out.push({
       semanticKey: `${keyPrefix}_count:${clubId}`,
       mode: "CLASSIC",
       category,
-      difficulty: count >= 7 ? "NORMAL" : "HARD",
+      difficulty: difficultyFor({
+        archetype: "title_count",
+        fame: clubFame(c),
+        distractors: "near",
+      }),
       questionHe: `כמה פעמים זכתה ${c.he} ${withBe(compHe)}?`,
       explanationHe: `${c.he} זכתה ${withBe(compHe)} ${count} פעמים.`,
-      options: [String(count), ...wrong.slice(0, 3).map(String)],
+      options: [String(count), ...wrong.map(String)],
       correctIndex: 0,
       scopes: [
         { type: "REGION", value: "EUROPE" },
@@ -586,7 +675,13 @@ function generateNationFinals(
         semanticKey: `${keyPrefix}_winner:${final.year}`,
         mode: "CLASSIC",
         category,
-        difficulty: difficultyForYear(final.year),
+        // Nations have no fame tier — every side that reaches a World Cup or
+        // Euro final is a household name, so the era carries the weight.
+        difficulty: difficultyFor({
+          archetype: "final_winner",
+          year: final.year,
+          distractors: "mixed",
+        }),
         questionHe: `איזו נבחרת זכתה ${withBe(compHe)} ${final.year}?`,
         explanationHe: `${winner.he} ניצחה את ${runnerUp.he} בגמר ${final.year} (${final.score}).`,
         options: [winner.he, ...winnerDistractors.map((n) => NATIONS[n].he)],
@@ -610,7 +705,11 @@ function generateNationFinals(
         semanticKey: `${keyPrefix}_runnerup:${final.year}`,
         mode: "CLASSIC",
         category,
-        difficulty: difficultyForYear(final.year) === "EASY" ? "NORMAL" : "HARD",
+        difficulty: difficultyFor({
+          archetype: "final_runner_up",
+          year: final.year,
+          distractors: "mixed",
+        }),
         questionHe: `את מי ניצחה ${winner.he} בגמר ${compHe} ${final.year}?`,
         explanationHe: `${winner.he} ניצחה את ${runnerUp.he} בגמר ${final.year} (${final.score}).`,
         options: [runnerUp.he, ...ruDistractors.map((n) => NATIONS[n].he)],
@@ -641,7 +740,11 @@ function generateWorldCupHosts(): GeneratedQuestion[] {
       semanticKey: `wc_host:${final.year}`,
       mode: "CLASSIC",
       category: "WORLD_CUP",
-      difficulty: difficultyForYear(final.year) === "EASY" ? "NORMAL" : difficultyForYear(final.year),
+      difficulty: difficultyFor({
+        archetype: "wc_host",
+        year: final.year,
+        distractors: "mixed",
+      }),
       questionHe: `היכן נערך מונדיאל ${final.year}?`,
       explanationHe: `מונדיאל ${final.year} נערך ב${final.hostHe}, ו${NATIONS[final.winner]?.he ?? ""} זכתה בתואר.`,
       options: [final.hostHe, ...distractors],
@@ -679,7 +782,14 @@ function generateLeagueChampions(): GeneratedQuestion[] {
         semanticKey: `league_champ:${league.league}:${season.season}`,
         mode: "CLASSIC",
         category: "TITLES",
-        difficulty: difficultyForYear(year + 1),
+        // Distractors are other champions of the same league, so every option is
+        // a club that really has won it — "near" by construction.
+        difficulty: difficultyFor({
+          archetype: "league_champion",
+          fame: clubFame(champion),
+          year: year + 1,
+          distractors: "near",
+        }),
         questionHe: `מי זכתה באליפות ${league.leagueHe} בעונת ${season.season}?`,
         explanationHe: `${champion.he} זכתה באליפות ${league.leagueHe} בעונת ${season.season}.`,
         options: [champion.he, ...distractors.map((c) => c.he)],
@@ -705,14 +815,24 @@ function generateLeagueChampions(): GeneratedQuestion[] {
     for (const [clubId, count] of counts) {
       if (!isReal(clubId) || count < 4) continue;
       const c = clubOf(clubId);
+      const wrong = numericDistractors({
+        correct: count,
+        offsets: [1, 2, 3, 4],
+        min: 1,
+        seedKey: `league_count:${league.league}:${clubId}`,
+      });
       out.push({
         semanticKey: `league_count:${league.league}:${clubId}`,
         mode: "CLASSIC",
         category: "TITLES",
-        difficulty: "EXPERT",
+        difficulty: difficultyFor({
+          archetype: "title_count",
+          fame: clubFame(c),
+          distractors: "near",
+        }),
         questionHe: `כמה אליפויות ${league.leagueHe} זכתה ${c.he} בין העונות ${firstSeason} ל-${lastSeason}?`,
         explanationHe: `בין ${firstSeason} ל-${lastSeason}, ${c.he} זכתה ${count} פעמים באליפות ${league.leagueHe}.`,
-        options: [String(count), String(count + 1), String(count - 1), String(count + 2)],
+        options: [String(count), ...wrong.map(String)],
         correctIndex: 0,
         scopes: [
           { type: "REGION", value: "EUROPE" },
@@ -745,7 +865,11 @@ function generateClubFacts(): GeneratedQuestion[] {
       semanticKey: `stadium:${c.id}`,
       mode: "CLASSIC",
       category: "STADIUMS",
-      difficulty: "NORMAL",
+      difficulty: difficultyFor({
+        archetype: "stadium",
+        fame: clubFame(c),
+        distractors: "mixed",
+      }),
       questionHe: `באיזה אצטדיון משחקת ${c.he} את משחקי הבית שלה?`,
       explanationHe: `${c.he} משחקת ב${c.stadiumHe}.`,
       options: [c.stadiumHe!, ...distractors.map((d) => d.stadiumHe!)],
@@ -776,7 +900,11 @@ function generateClubFacts(): GeneratedQuestion[] {
       semanticKey: `club_country:${c.id}`,
       mode: "CLASSIC",
       category: "CLUBS",
-      difficulty: "EASY",
+      difficulty: difficultyFor({
+        archetype: "club_country",
+        fame: clubFame(c),
+        distractors: "far",
+      }),
       questionHe: `מאיזו מדינה מגיע מועדון ${c.he}?`,
       explanationHe: `${c.he} הוא מועדון מ${countryHe(c.country)}.`,
       options: [countryHe(c.country), ...distractors.map(countryHe)],
@@ -803,7 +931,11 @@ function generateClubFacts(): GeneratedQuestion[] {
       semanticKey: `nickname:${c.id}`,
       mode: "CLASSIC",
       category: "CLUBS",
-      difficulty: "NORMAL",
+      difficulty: difficultyFor({
+        archetype: "nickname",
+        fame: clubFame(c),
+        distractors: "mixed",
+      }),
       questionHe: `מה הכינוי של מועדון ${c.he}?`,
       explanationHe: `${c.he} מכונה "${c.nicknameHe}".`,
       options: [c.nicknameHe!, ...distractors.map((d) => d.nicknameHe!)],
@@ -815,17 +947,32 @@ function generateClubFacts(): GeneratedQuestion[] {
     });
   }
 
-  // Founding years — the hardest tier: numeric multiple choice over every
-  // club whose founding year we hold.
+  // Founding years — the hardest shape in the bank, but no longer a single flat
+  // band. Every club here used to be IMPOSSIBLE, which made that band 59%
+  // founding-year questions; scoring by club prominence spreads them across
+  // HARD / EXPERT / IMPOSSIBLE instead, because Manchester United's founding
+  // year is far more widely known than a mid-table Eredivisie side's.
   for (const c of CLUBS.filter((x) => x.founded)) {
+    const wrong = numericDistractors({
+      correct: c.founded!,
+      offsets: [3, 5, 7, 9, 13],
+      seedKey: `founded:${c.id}`,
+    });
     out.push({
       semanticKey: `founded:${c.id}`,
       mode: "CLASSIC",
       category: "CLUBS",
-      difficulty: "IMPOSSIBLE",
+      // Not "near": a founding year is binary knowledge. Offering 1871 instead
+      // of 1885 does not make 1878 harder to recall the way a same-career club
+      // makes a transfer harder — you either know the year or you guess.
+      difficulty: difficultyFor({
+        archetype: "founded_year",
+        fame: clubFame(c),
+        distractors: "mixed",
+      }),
       questionHe: `באיזו שנה נוסד מועדון ${c.he}?`,
       explanationHe: `${c.he} נוסד בשנת ${c.founded}.`,
-      options: [String(c.founded), String(c.founded! + 7), String(c.founded! - 5), String(c.founded! + 13)],
+      options: [String(c.founded), ...wrong.map(String)],
       correctIndex: 0,
       scopes: [{ type: "COUNTRY", value: c.country }],
       sourceLabel: "נתוני מועדונים",

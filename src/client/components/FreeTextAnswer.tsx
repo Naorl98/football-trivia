@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Question } from "../../shared/types";
 import { matchAnswer } from "../../shared/answerMatching";
 import { sound } from "../lib/sound";
+import { Icon } from "./Icon";
 import "./FreeTextAnswer.css";
 
 export interface FreeTextResult {
@@ -41,6 +42,7 @@ export function FreeTextAnswer({ question, onResolved, resolved }: Props) {
     if (!typed) {
       setShake(true);
       window.setTimeout(() => setShake(false), 400);
+      inputRef.current?.focus();
       return;
     }
     const result = matchAnswer(typed, {
@@ -72,88 +74,91 @@ export function FreeTextAnswer({ question, onResolved, resolved }: Props) {
   return (
     <div className="ft">
       {hintsShown > 0 && (
-        <ul className="ft-hints" aria-live="polite">
+        <ol className="ft-hints">
           {question.hints.slice(0, hintsShown).map((hint, i) => (
-            <li key={i} className="ft-hint animate-in">
-              <span className="ft-hint-index">רמז {i + 1}</span>
-              <span>{hint}</span>
+            <li key={i} className="ft-hint anim-rise">
+              <span className="ft-hint-index label">רמז {i + 1}</span>
+              <span className="ft-hint-text">{hint}</span>
             </li>
           ))}
-        </ul>
+        </ol>
       )}
 
       {!resolved && (
-        <form
-          className={`ft-form ${shake ? "ft-shake" : ""}`}
-          onSubmit={(e) => {
-            e.preventDefault();
-            submit();
-          }}
-        >
-          <input
-            ref={inputRef}
-            className="ft-input"
-            type="text"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            placeholder="הקלידו את התשובה…"
-            aria-label="התשובה שלכם"
-            autoComplete="off"
-            autoCorrect="off"
-            autoCapitalize="off"
-            spellCheck={false}
-            enterKeyHint="send"
-            dir="auto"
-          />
-          <button className="btn btn-primary ft-submit" type="submit">
-            שליחה
-          </button>
-        </form>
-      )}
+        <>
+          <form
+            className={`ft-form ${shake ? "ft-shake" : ""}`}
+            onSubmit={(e) => {
+              e.preventDefault();
+              submit();
+            }}
+          >
+            <label className="sr-only" htmlFor="ft-input">
+              הקלידו את התשובה
+            </label>
+            <input
+              id="ft-input"
+              ref={inputRef}
+              className="ft-input"
+              type="text"
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              placeholder="שם השחקן, המועדון או הנבחרת…"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              enterKeyHint="send"
+              dir="auto"
+            />
+            <button className="btn btn-ink ft-submit" type="submit">
+              שליחה
+            </button>
+          </form>
 
-      {!resolved && (
-        <div className="ft-actions">
-          <button
-            type="button"
-            className="btn btn-ghost btn-sm"
-            onClick={showNextHint}
-            disabled={hintsLeft === 0}
-          >
-            {hintsLeft === 0 ? "אין רמזים נוספים" : `רמז (${hintsLeft})`}
-          </button>
-          <button
-            type="button"
-            className={`btn btn-sm ${confirmingReveal ? "btn-gold" : "btn-ghost"}`}
-            onClick={reveal}
-            onBlur={() => setConfirmingReveal(false)}
-          >
-            {confirmingReveal ? "בטוחים? גלו את התשובה" : "גלה תשובה"}
-          </button>
-        </div>
+          <p className="ft-tolerance">עברית או אנגלית, עם כינויים — ושגיאות הקלדה סבירות מתקבלות.</p>
+
+          <div className="ft-actions">
+            <button type="button" className="btn btn-quiet btn-sm" onClick={showNextHint} disabled={hintsLeft === 0}>
+              <Icon name="bulb" size={16} />
+              {hintsLeft === 0 ? "אין רמזים נוספים" : `רמז (${hintsLeft})`}
+            </button>
+            <button
+              type="button"
+              className={`btn btn-sm ${confirmingReveal ? "btn-spot" : "btn-quiet"}`}
+              onClick={reveal}
+              onBlur={() => setConfirmingReveal(false)}
+            >
+              <Icon name="eye" size={16} />
+              {confirmingReveal ? "בטוחים? חשוף" : "חשוף תשובה"}
+            </button>
+          </div>
+        </>
       )}
 
       {resolved && (
         <div
-          className={`ft-result animate-pop ${
-            resolved.correct ? "ft-correct" : resolved.revealed ? "ft-revealed" : "ft-wrong"
+          className={`ft-result anim-stamp ${
+            resolved.correct ? "is-correct" : resolved.revealed ? "is-revealed" : "is-wrong"
           }`}
-          role="status"
         >
-          <div className="ft-result-head">
-            <span className="ft-result-icon" aria-hidden="true">
-              {resolved.correct ? "✓" : resolved.revealed ? "👁" : "✕"}
+          <p className="ft-result-head">
+            <span className="ft-result-icon">
+              <Icon
+                name={resolved.correct ? "check" : resolved.revealed ? "eye" : "cross"}
+                size={20}
+                strokeWidth={2.4}
+              />
             </span>
-            <span className="ft-result-title">
-              {resolved.correct ? "נכון!" : resolved.revealed ? "גילית את התשובה" : "לא בדיוק"}
-            </span>
-          </div>
+            {resolved.correct ? "נכון" : resolved.revealed ? "נחשף" : "לא נכון"}
+          </p>
           {!resolved.correct && resolved.typed && (
             <p className="ft-typed">
-              כתבתם: <span>{resolved.typed}</span>
+              <span className="label">כתבתם</span> {resolved.typed}
             </p>
           )}
           <p className="ft-canonical">
-            התשובה: <strong>{question.canonicalAnswer}</strong>
+            <span className="label">התשובה</span> <strong>{question.canonicalAnswer}</strong>
           </p>
         </div>
       )}

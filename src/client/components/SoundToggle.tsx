@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { sound } from "../lib/sound";
+import { Icon } from "./Icon";
 
 export function SoundToggle() {
   const [enabled, setEnabled] = useState(sound.isEnabled());
@@ -9,7 +10,7 @@ export function SoundToggle() {
   return (
     <button
       type="button"
-      className="badge sound-toggle"
+      className="icon-btn"
       onClick={() => {
         sound.toggle();
         // Give audible confirmation when turning it back on.
@@ -19,7 +20,7 @@ export function SoundToggle() {
       aria-label={enabled ? "כבה צלילים" : "הפעל צלילים"}
       title={enabled ? "כבה צלילים" : "הפעל צלילים"}
     >
-      <span aria-hidden="true">{enabled ? "🔊" : "🔇"}</span>
+      <Icon name={enabled ? "sound-on" : "sound-off"} size={18} />
     </button>
   );
 }

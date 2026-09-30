@@ -1,0 +1,65 @@
+.colophon {
+  margin-block-start: auto;
+  padding-block-end: 28px;
+}
+
+.colophon-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding-block-start: 16px;
+}
+
+.colophon-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+
+.colophon-mark {
+  font-family: var(--font-ui);
+  font-weight: 900;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+
+.colophon-sep {
+  color: var(--ink-4);
+}
+
+.colophon-nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.colophon-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-2);
+  border-block-end: 1.5px solid transparent;
+  transition: color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
+}
+
+.colophon-link:hover {
+  color: var(--spot);
+  border-block-end-color: var(--spot);
+}
+
+.colophon-btn {
+  background: none;
+  border-inline: 0;
+  border-block-start: 0;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+}

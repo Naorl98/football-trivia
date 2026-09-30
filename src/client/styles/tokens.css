@@ -1,48 +1,136 @@
+/* ============================================================
+   Football IQ — "Matchday Programme" design tokens
+   ============================================================
+
+   The look is a printed Hebrew football programme: newsprint stock,
+   ink rules, one vermillion spot colour and a deep pitch green. It is
+   deliberately NOT the dark-neon-gradient dashboard idiom — there are
+   no glows, no translucent glass, no colour-blur shadows. Depth comes
+   from hard offset shadows the way a two-pass print job makes it.
+
+   Rules for anyone editing this file:
+     * shadows are FLAT and inked — `Npx Npx 0 var(--ink)`, never blurred
+     * one spot colour (--spot) carries emphasis; green is for "correct"
+     * borders are visible (1.5-2px ink), not hairline greys
+     * every colour is redefined under the dark scheme below
+*/
+
 :root {
-  color-scheme: dark;
+  color-scheme: light dark;
 
-  /* Surfaces */
-  --bg: #0a0f0c;
-  --bg-elevated: #101613;
-  --surface: #141b17;
-  --surface-hover: #1a2320;
-  --surface-solid: #182019;
-  --border: #24322a;
-  --border-strong: #34453a;
+  /* ---- Paper (surfaces) ---- */
+  --paper: #efece1;
+  --paper-sunk: #e4e0d1;
+  --card: #fbfaf5;
+  --card-2: #f4f1e7;
 
-  /* Brand */
-  --pitch-green: #1db954;
-  --pitch-green-dim: #14532d;
-  --pitch-green-bright: #22e06b;
-  --gold: #d4af37;
-  --gold-bright: #f0cf5a;
-  --lime: #b6f000;
+  /* ---- Ink (text + rules) ---- */
+  --ink: #17160f;
+  --ink-2: #413d33;
+  --ink-3: #6d6859;
+  --ink-4: #9a9484;
+  --rule: #17160f;
+  --rule-soft: rgba(23, 22, 15, 0.16);
+  --on-ink: #f6f3e9;
 
-  /* Text */
-  --text: #f5f7f3;
-  --text-dim: #a9b5ac;
-  --text-faint: #6d7972;
-  --on-accent: #06120a;
+  /* ---- Spot colours ---- */
+  --spot: #cf3b22;          /* vermillion — the programme's ink #2 */
+  --spot-deep: #9e2a15;
+  --spot-wash: #f7ddd6;
+  --pitch: #12523a;         /* deep grass green — "correct" */
+  --pitch-bright: #1c7a56;
+  --pitch-wash: #dcebe2;
+  --stamp: #1c4f8a;         /* archival blue, for neutral stamps */
 
-  /* Feedback */
-  --danger: #ef4444;
-  --danger-dim: #4c1414;
+  /* ---- Semantic ---- */
+  --correct: var(--pitch);
+  --correct-wash: var(--pitch-wash);
+  --wrong: var(--spot);
+  --wrong-wash: var(--spot-wash);
 
-  /* Radii */
-  --radius-sm: 10px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
-  --radius-full: 999px;
+  /* ---- Type ---- */
+  --font-display: "Frank Ruhl Libre", "Georgia", "Times New Roman", serif;
+  --font-ui: "Heebo", "Segoe UI", system-ui, -apple-system, sans-serif;
 
-  /* Shadows / glow */
-  --shadow-card: 0 6px 24px rgba(0, 0, 0, 0.35);
-  --glow-green: 0 0 0 1px rgba(29, 185, 84, 0.35), 0 8px 28px rgba(29, 185, 84, 0.18);
-  --glow-gold: 0 0 0 1px rgba(212, 175, 55, 0.4), 0 8px 24px rgba(212, 175, 55, 0.15);
+  /* ---- Print geometry ----
+     Small, honest radii. Cards are rectangles with inked corners; only
+     interactive chips get a touch of rounding. */
+  --r-none: 0px;
+  --r-xs: 2px;
+  --r-sm: 3px;
+  --r-chip: 999px;
 
-  /* Type */
-  --font-sans: "Rubik", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --border-w: 2px;
+  --border-w-thin: 1.5px;
 
-  /* Layout */
-  --container-max: 720px;
-  --header-h: 64px;
+  /* ---- Flat inked shadows ---- */
+  --lift-1: 3px 3px 0 var(--ink);
+  --lift-2: 5px 5px 0 var(--ink);
+  --lift-spot: 5px 5px 0 var(--spot);
+  --lift-pitch: 5px 5px 0 var(--pitch);
+
+  /* ---- Layout ---- */
+  --page-max: 1060px;
+  --measure: 640px;         /* comfortable reading width for prose */
+  --gutter: 22px;
+  --masthead-h: 62px;
+
+  /* ---- Motion ----
+     One shared easing so every transition feels like the same hand. */
+  --ease: cubic-bezier(0.2, 0.7, 0.25, 1);
+  --ease-out-back: cubic-bezier(0.25, 1.35, 0.45, 1);
+  --t-fast: 120ms;
+  --t-mid: 240ms;
+}
+
+/* ============================================================
+   Dark scheme — the same programme printed on black newsprint.
+   The spot colour is lifted slightly so it survives on a dark ground.
+   ============================================================ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #13120e;
+    --paper-sunk: #0c0b08;
+    --card: #1d1b15;
+    --card-2: #24211a;
+
+    --ink: #f0ece0;
+    --ink-2: #cdc7b7;
+    --ink-3: #9a9484;
+    --ink-4: #6d6859;
+    --rule: #f0ece0;
+    --rule-soft: rgba(240, 236, 224, 0.2);
+    --on-ink: #13120e;
+
+    --spot: #f0563a;
+    --spot-deep: #ff7256;
+    --spot-wash: #3a1b14;
+    --pitch: #3aa47a;
+    --pitch-bright: #4fc394;
+    --pitch-wash: #12281f;
+    --stamp: #6ea8e0;
+  }
+}
+
+:root[data-theme="dark"] {
+  --paper: #13120e;
+  --paper-sunk: #0c0b08;
+  --card: #1d1b15;
+  --card-2: #24211a;
+
+  --ink: #f0ece0;
+  --ink-2: #cdc7b7;
+  --ink-3: #9a9484;
+  --ink-4: #6d6859;
+  --rule: #f0ece0;
+  --rule-soft: rgba(240, 236, 224, 0.2);
+  --on-ink: #13120e;
+
+  --spot: #f0563a;
+  --spot-deep: #ff7256;
+  --spot-wash: #3a1b14;
+  --pitch: #3aa47a;
+  --pitch-bright: #4fc394;
+  --pitch-wash: #12281f;
+  --stamp: #6ea8e0;
 }

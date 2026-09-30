@@ -1,27 +1,96 @@
-.intro-page {
+/* Shared layout for the three single-purpose screens: daily, shared challenge,
+   and not-found. All three are one plate, centred, with a stamped mark. */
+.gate {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-top: 40px;
-  padding-bottom: 40px;
+  padding-block: 48px;
 }
 
-.intro-card {
-  padding: 36px 26px;
-  text-align: center;
-  max-width: 420px;
+.plate {
+  width: 100%;
+  max-width: 460px;
+  padding: 30px 26px 28px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
+  text-align: center;
+  gap: 13px;
+  box-shadow: var(--lift-2);
+  animation: stamp-in 380ms var(--ease-out-back) both;
 }
 
-.intro-emoji {
-  font-size: 40px;
+.plate-mark {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border: var(--border-w) solid var(--ink);
+  border-radius: var(--r-xs);
+  color: var(--spot);
+  margin-bottom: 4px;
 }
 
-.intro-card h1 {
-  font-size: 22px;
-  font-weight: 800;
+.plate-kicker {
+  color: var(--spot);
+}
+
+.plate-title {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(24px, 5.6vw, 33px);
+  line-height: 1.15;
+}
+
+.plate-text {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+
+.plate-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.plate .btn {
+  width: 100%;
+  margin-block-start: 6px;
+}
+
+/* Loading / error states share the plate's measure so the page does not jump
+   when content arrives. */
+.gate-status {
+  text-align: center;
+  color: var(--ink-3);
+  font-size: 14.5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Three ticking dots, drawn as squares to match the pip language. */
+.dots {
+  display: flex;
+  gap: 5px;
+}
+
+.dots span {
+  width: 8px;
+  height: 8px;
+  background: var(--ink-4);
+  animation: dot-beat 1.05s var(--ease) infinite;
+}
+
+.dots span:nth-child(2) { animation-delay: 0.14s; }
+.dots span:nth-child(3) { animation-delay: 0.28s; }
+
+@keyframes dot-beat {
+  0%, 100% { opacity: 0.25; transform: translateY(0); }
+  40% { opacity: 1; transform: translateY(-4px); }
 }

@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import type { Quiz } from "../../shared/types";
 import { fetchDaily } from "../lib/api";
 import { saveActiveQuiz } from "../lib/quizSession";
+import { Icon } from "../components/Icon";
+import { Loading } from "../components/Loading";
 import "./IntroPage.css";
 
 export function DailyPage() {
@@ -27,18 +29,40 @@ export function DailyPage() {
   }
 
   return (
-    <div className="container intro-page">
-      {error && <p className="text-center text-dim">{error}</p>}
-      {!error && !quiz && <p className="text-center text-dim">טוען אתגר יומי…</p>}
+    <div className="page gate">
+      {error && (
+        <div className="plate card">
+          <span className="plate-mark">
+            <Icon name="calendar" size={26} />
+          </span>
+          <h1 className="plate-title">אתגר היום לא נטען</h1>
+          <p className="plate-text">{error}</p>
+          <button className="btn btn-ink" onClick={() => navigate("/build")}>
+            בנו מבחן משלכם
+          </button>
+        </div>
+      )}
+
+      {!error && !quiz && <Loading label="טוען את אתגר היום" />}
+
       {quiz && (
-        <div className="card intro-card animate-pop">
-          <div className="intro-emoji">🔥</div>
-          <h1>אתגר יומי</h1>
-          <p className="text-dim">
-            {date} · {quiz.questions.length} שאלות זהות לכל השחקנים היום. חוזרים מחר לאתגר חדש!
+        <div className="plate card">
+          <span className="plate-mark">
+            <Icon name="calendar" size={26} />
+          </span>
+          <p className="label plate-kicker">אתגר יומי</p>
+          <h1 className="plate-title">אותן שאלות לכולם, היום</h1>
+          <div className="plate-meta">
+            <span className="stamp stamp-solid">{date}</span>
+            <span className="stamp">{quiz.questions.length} שאלות</span>
+          </div>
+          <p className="plate-text">
+            כל מי שנכנס היום מקבל בדיוק את אותן שאלות, כך שאפשר להשוות ציונים בלי לבנות כלום. מחר
+            נטען סבב חדש.
           </p>
-          <button className="btn btn-primary btn-block" onClick={handleStart}>
-            התחל אתגר יומי
+          <button className="btn btn-ink" onClick={handleStart}>
+            התחילו
+            <Icon name="arrow" size={18} />
           </button>
         </div>
       )}

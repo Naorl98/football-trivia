@@ -1,167 +1,437 @@
 .home {
-  padding-bottom: 64px;
+  padding-block-end: 20px;
 }
 
-.hero {
-  position: relative;
-  padding-top: 56px;
-  padding-bottom: 40px;
-  text-align: center;
+.home-section {
+  padding-block-start: 52px;
+}
+
+/* ============================================================
+   Front page
+   ============================================================ */
+.front {
+  padding-block: clamp(34px, 7vw, 68px) 30px;
+}
+
+.front-kicker {
+  color: var(--spot);
+  margin-bottom: 18px;
+}
+
+/* The headline is the design. Set tight, heavy and flush to the start edge —
+   no centring, because centred display type is the template tell. */
+.front-headline {
+  font-size: clamp(33px, 7.6vw, 72px);
+  line-height: 1.04;
+  max-width: 17ch;
+  margin-bottom: 26px;
+}
+
+/* ---------- Rotating subject line ---------- */
+.front-subject {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 18px;
-}
-
-/* Stadium floodlight wash behind the hero. */
-.hero::before {
-  content: "";
-  position: absolute;
-  inset: -40px 0 auto;
-  height: 320px;
-  background: radial-gradient(ellipse 60% 100% at 50% 0%, rgba(29, 185, 84, 0.18), transparent 70%);
-  pointer-events: none;
-  z-index: -1;
-}
-
-.hero-badge {
-  animation-delay: 0s;
-}
-
-.hero-title {
-  font-size: clamp(34px, 8vw, 56px);
-  font-weight: 900;
-  line-height: 1.1;
-  letter-spacing: -0.5px;
-  animation-delay: 0.05s;
-}
-
-.hero-subtitle {
-  font-size: clamp(15px, 3vw, 18px);
-  max-width: 480px;
-  line-height: 1.6;
-  animation-delay: 0.1s;
-}
-
-.hero-actions {
-  display: flex;
   gap: 12px;
-  flex-wrap: wrap;
-  justify-content: center;
-  margin-top: 8px;
-  animation-delay: 0.15s;
+  border-block: var(--border-w-thin) solid var(--rule-soft);
+  padding-block: 11px;
+  margin-bottom: 24px;
+  max-width: 34rem;
 }
 
-.section-title {
-  font-size: 20px;
-  font-weight: 800;
-  margin-bottom: 16px;
+.front-subject-label {
+  flex: none;
+  color: var(--ink-4);
 }
 
-.quick-section {
-  margin-top: 24px;
-}
-
-.quick-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
-}
-
-.quick-card {
+/* A fixed-height slot with the items stacked, so the line never reflows as
+   words of different widths cycle through. */
+.front-subject-slot {
   position: relative;
-  padding: 20px 16px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-  text-align: right;
-  border: 1px solid var(--border);
-  min-height: 120px;
+  flex: 1;
+  height: 1.5em;
   overflow: hidden;
 }
 
-/* Pitch-line accent that lights up on interaction. */
-.quick-card::after {
-  content: "";
+.front-subject-item {
   position: absolute;
-  inset-inline: 0;
-  top: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--pitch-green), transparent);
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.quick-card:hover::after,
-.quick-card:focus-visible::after {
-  opacity: 1;
-}
-
-.quick-emoji {
-  font-size: 26px;
-  margin-bottom: 4px;
-}
-
-.quick-title {
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  font-family: var(--font-display);
   font-weight: 800;
-  font-size: 16px;
+  font-size: clamp(17px, 2.6vw, 22px);
+  line-height: 1.5;
+  white-space: nowrap;
+  color: var(--ink);
+  opacity: 0;
+  transform: translateY(0.6em);
+  transition: opacity 320ms var(--ease), transform 320ms var(--ease);
 }
 
-.quick-subtitle {
-  font-size: 12.5px;
-  line-height: 1.4;
+.front-subject-item.is-on {
+  opacity: 1;
+  transform: translateY(0);
 }
 
-.quick-loading {
-  position: absolute;
-  inset: 0;
+.front-lede {
+  font-size: clamp(15.5px, 2.1vw, 17.5px);
+  margin-bottom: 28px;
+}
+
+.front-actions {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(10, 15, 12, 0.75);
-  border-radius: var(--radius-lg);
-  font-weight: 700;
-  color: var(--pitch-green-bright);
-}
-
-.how-section {
-  margin-top: 48px;
-}
-
-.how-steps {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
-.how-step {
+.front-error {
+  margin-block-start: 16px;
+  padding: 11px 14px;
+  border: var(--border-w) solid var(--spot);
+  border-radius: var(--r-xs);
+  background: var(--spot-wash);
+  color: var(--spot-deep);
+  font-weight: 700;
+  font-size: 14px;
+  max-width: 44rem;
+}
+
+/* ============================================================
+   Stat strip
+   ============================================================ */
+.figures-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin: 0;
+}
+
+.figure {
+  padding: 16px 14px;
+  text-align: center;
+  animation: rise 420ms var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+
+.figure + .figure {
+  border-inline-start: var(--border-w-thin) solid var(--rule-soft);
+}
+
+.figure-value {
+  font-family: var(--font-ui);
+  font-weight: 900;
+  font-size: clamp(25px, 4.4vw, 38px);
+  line-height: 1;
+  color: var(--ink);
+}
+
+.figure-label {
+  margin: 6px 0 0;
+  font-size: 10.5px;
+  color: var(--ink-3);
+}
+
+@media (max-width: 620px) {
+  .figures-strip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .figure:nth-child(3),
+  .figure:nth-child(4) {
+    border-block-start: var(--border-w-thin) solid var(--rule-soft);
+  }
+  .figure:nth-child(3) {
+    border-inline-start: 0;
+  }
+}
+
+/* ============================================================
+   Fixtures list — the quick starts, set as a results table
+   ============================================================ */
+.fixtures {
+  border-block-start: var(--border-w) solid var(--ink);
+}
+
+.fixtures > li {
+  border-block-end: var(--border-w-thin) solid var(--rule-soft);
+}
+
+.fixtures > li:last-child {
+  border-block-end: var(--border-w) solid var(--ink);
+}
+
+.fixture {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto auto 1fr auto auto;
+  align-items: center;
+  gap: 16px;
+  padding: 17px 10px;
+  background: transparent;
+  border: 0;
+  text-align: start;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--t-fast) var(--ease), padding-inline var(--t-fast) var(--ease);
+}
+
+/* Hover floods the row with ink — a print inversion, not a tint. */
+.fixture:hover:not(:disabled),
+.fixture:focus-visible {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
+.fixture:hover:not(:disabled) .fixture-sub,
+.fixture:hover:not(:disabled) .fixture-index {
+  color: color-mix(in srgb, var(--on-ink) 65%, transparent);
+}
+
+.fixture:hover:not(:disabled) .fixture-mark {
+  border-color: var(--on-ink);
+  color: var(--on-ink);
+}
+
+.fixture:hover:not(:disabled) .fixture-go {
+  transform: translateX(6px);
+}
+
+.fixture:disabled {
+  cursor: progress;
+  opacity: 0.55;
+}
+
+.fixture-index {
+  font-family: var(--font-ui);
+  font-weight: 900;
+  font-size: 13px;
+  color: var(--ink-4);
+  flex: none;
+}
+
+.fixture-mark {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex: none;
+  border: var(--border-w-thin) solid var(--rule-soft);
+  border-radius: var(--r-xs);
+  color: var(--spot);
+  transition: border-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+
+.fixture-body {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  font-weight: 600;
+  gap: 2px;
+  min-width: 0;
 }
 
-.how-num {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  padding: 0;
+.fixture-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(17px, 2.4vw, 20px);
+  line-height: 1.25;
+}
+
+.fixture-sub {
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--ink-3);
+}
+
+.fixture-tag {
+  flex: none;
+}
+
+.fixture-go {
+  flex: none;
+  font-size: 12.5px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  min-width: 24px;
+  transition: transform var(--t-mid) var(--ease);
+}
+
+/* On a phone the row keeps the mark, the copy and the tag. The index and the
+   arrow go: the whole row is the tap target, so the arrow is decoration, and a
+   running number earns nothing at this width. */
+@media (max-width: 620px) {
+  .fixture {
+    grid-template-columns: auto 1fr auto;
+    gap: 12px;
+    padding-block: 14px;
+  }
+  .fixture .fixture-index,
+  .fixture .fixture-go {
+    display: none;
+  }
+  .fixture-sub {
+    font-size: 13px;
+  }
+}
+
+/* ============================================================
+   Free-text spread
+   ============================================================ */
+.spread {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 34px;
+  align-items: start;
+}
+
+.claims {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-block-start: 20px;
+}
+
+.claims li {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+.claims svg {
+  color: var(--pitch);
+  margin-block-start: 2px;
+}
+
+.demo {
+  padding: 20px;
+  box-shadow: var(--lift-2);
+}
+
+.demo-q {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 17px;
+  line-height: 1.35;
+  margin-bottom: 16px;
+}
+
+.demo-field {
+  border: var(--border-w) solid var(--ink);
+  border-radius: var(--r-xs);
+  padding: 12px 14px;
+  background: var(--paper);
+  margin-bottom: 13px;
+}
+
+.demo-typed {
+  font-weight: 700;
+  font-size: 17px;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* A blinking caret sells the field as live without any interactivity. */
+.demo-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  background: var(--spot);
+  margin-inline-start: 3px;
+  animation: caret 1.05s steps(1) infinite;
+}
+
+@keyframes caret {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.demo-verdict {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 15px;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--pitch);
+  border-block-start: var(--border-w-thin) solid var(--rule-soft);
+  padding-block-start: 12px;
 }
 
-.how-arrow {
-  font-size: 20px;
+@media (max-width: 760px) {
+  .spread {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
 }
 
-@media (max-width: 340px) {
-  .quick-grid {
+/* ============================================================
+   Three clauses
+   ============================================================ */
+.clauses {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  border-block-start: var(--border-w) solid var(--ink);
+}
+
+.clause {
+  padding: 22px 20px 26px;
+}
+
+.clause + .clause {
+  border-inline-start: var(--border-w-thin) solid var(--rule-soft);
+}
+
+/* Roman numerals, because an editorial document numbers its clauses. */
+.clause-num {
+  display: block;
+  font-size: 30px;
+  color: var(--spot);
+  line-height: 1;
+  margin-bottom: 12px;
+}
+
+.clause-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 19px;
+  margin-bottom: 7px;
+}
+
+.clause-text {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+
+@media (max-width: 760px) {
+  .clauses {
     grid-template-columns: 1fr;
   }
+  .clause + .clause {
+    border-inline-start: 0;
+    border-block-start: var(--border-w-thin) solid var(--rule-soft);
+  }
+}
+
+/* ============================================================
+   Closing
+   ============================================================ */
+.home-closing {
+  padding-block: 58px 20px;
+}
+
+.closing {
+  padding: 34px 26px;
+  text-align: center;
+  box-shadow: var(--lift-spot);
+}
+
+.closing-title {
+  font-size: clamp(30px, 6vw, 44px);
+  margin-bottom: 6px;
+}
+
+.closing-sub {
+  color: var(--ink-2);
+  font-size: 15px;
+  margin-bottom: 20px;
 }

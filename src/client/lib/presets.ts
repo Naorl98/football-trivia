@@ -1,10 +1,14 @@
+import type { IconName } from "../components/Icon";
 import type { QuizConfiguration } from "../../shared/types";
 
 export interface QuickPreset {
   key: string;
   titleHe: string;
   subtitleHe: string;
-  emoji: string;
+  /** Drawn mark from the shared icon set — never an emoji. */
+  icon: IconName;
+  /** Short running-head label, shown as a stamp in the fixtures list. */
+  tagHe: string;
   config: QuizConfiguration;
 }
 
@@ -20,21 +24,24 @@ export const QUICK_PRESETS: QuickPreset[] = [
     key: "world",
     titleHe: "כל העולם",
     subtitleHe: "תערובת שאלות מכל קצוות עולם הכדורגל",
-    emoji: "🌍",
+    icon: "globe",
+    tagHe: "מעורב",
     config: { ...base, region: "WORLD", competitions: ["ALL"], categories: [], gameMode: "CLASSIC" },
   },
   {
     key: "top6",
     titleHe: "6 הליגות המובילות",
     subtitleHe: "פרמיירליג, לה ליגה, סרייה א׳ ועוד",
-    emoji: "🏆",
+    icon: "shield",
+    tagHe: "אירופה",
     config: { ...base, region: "EUROPE", competitions: ["TOP_6_EUROPE"], categories: [], gameMode: "CLASSIC" },
   },
   {
     key: "ucl",
     titleHe: "ליגת האלופות",
     subtitleHe: "הרגעים הגדולים של הכדורגל האירופי",
-    emoji: "⭐",
+    icon: "trophy",
+    tagHe: "גביע",
     config: {
       ...base,
       region: "EUROPE",
@@ -47,7 +54,8 @@ export const QUICK_PRESETS: QuickPreset[] = [
     key: "worldcup",
     titleHe: "מונדיאל",
     subtitleHe: "היסטוריית גביע העולם מ-1930 ועד היום",
-    emoji: "🌐",
+    icon: "stadium",
+    tagHe: "נבחרות",
     config: {
       ...base,
       region: "WORLD",
@@ -60,14 +68,16 @@ export const QUICK_PRESETS: QuickPreset[] = [
     key: "whoami",
     titleHe: "מי אני?",
     subtitleHe: "נחשו את הכוכב לפי רמזי הקריירה שלו",
-    emoji: "🕵️",
+    icon: "target",
+    tagHe: "רמזים",
     config: { ...base, region: "WORLD", competitions: ["ALL"], categories: ["WHO_AM_I"], gameMode: "WHO_AM_I" },
   },
   {
     key: "career",
     titleHe: "מסלול קריירה",
     subtitleHe: "עקבו אחרי המועדונים ונחשו את השחקן",
-    emoji: "🧭",
+    icon: "route",
+    tagHe: "קריירות",
     config: {
       ...base,
       region: "WORLD",

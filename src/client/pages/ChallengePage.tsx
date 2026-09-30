@@ -4,6 +4,8 @@ import { GAME_MODE_LABELS } from "../../shared/constants";
 import type { Quiz } from "../../shared/types";
 import { fetchChallenge } from "../lib/api";
 import { saveActiveQuiz } from "../lib/quizSession";
+import { Icon } from "../components/Icon";
+import { Loading } from "../components/Loading";
 import "./IntroPage.css";
 
 export function ChallengePage() {
@@ -26,26 +28,39 @@ export function ChallengePage() {
   }
 
   return (
-    <div className="container intro-page">
+    <div className="page gate">
       {error && (
-        <div className="card intro-card text-center">
-          <p>{error}</p>
-          <button className="btn btn-primary" onClick={() => navigate("/build")}>
-            צור חידון חדש
+        <div className="plate card">
+          <span className="plate-mark">
+            <Icon name="target" size={26} />
+          </span>
+          <h1 className="plate-title">האתגר לא נמצא</h1>
+          <p className="plate-text">{error}</p>
+          <button className="btn btn-ink" onClick={() => navigate("/build")}>
+            בנו מבחן משלכם
           </button>
         </div>
       )}
-      {!error && !quiz && <p className="text-center text-dim">טוען אתגר…</p>}
+
+      {!error && !quiz && <Loading label="טוען את האתגר" />}
+
       {quiz && (
-        <div className="card intro-card animate-pop">
-          <div className="intro-emoji">🎯</div>
-          <h1>הוזמנת לאתגר Football IQ!</h1>
-          <p className="text-dim">
-            {quiz.questions.length} שאלות במצב {GAME_MODE_LABELS[quiz.configuration.gameMode]}. אותן שאלות בדיוק —
-            מי יזכה בניקוד הגבוה יותר?
+        <div className="plate card">
+          <span className="plate-mark">
+            <Icon name="target" size={26} />
+          </span>
+          <p className="label plate-kicker">הוזמנתם לאתגר</p>
+          <h1 className="plate-title">אותן שאלות בדיוק. מי ייקח?</h1>
+          <div className="plate-meta">
+            <span className="stamp stamp-solid">{GAME_MODE_LABELS[quiz.configuration.gameMode]}</span>
+            <span className="stamp">{quiz.questions.length} שאלות</span>
+          </div>
+          <p className="plate-text">
+            מי ששלח לכם את הקישור כבר שיחק את הסבב הזה. אתם מקבלים את אותן שאלות, באותו סדר.
           </p>
-          <button className="btn btn-primary btn-block" onClick={handleStart}>
+          <button className="btn btn-ink" onClick={handleStart}>
             קבלו את האתגר
+            <Icon name="arrow" size={18} />
           </button>
         </div>
       )}

@@ -1,39 +1,75 @@
-@import url("https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;800;900&family=Heebo:wght@400;500;700;900&display=swap");
 @import "./tokens.css";
 
-* {
+/* ============================================================
+   Reset + page ground
+   ============================================================ */
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
-html, body {
-  padding: 0;
+html,
+body {
   margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: var(--bg);
-  background-image:
-    radial-gradient(ellipse 900px 500px at 15% -10%, rgba(29, 185, 84, 0.14), transparent 60%),
-    radial-gradient(ellipse 700px 500px at 100% 0%, rgba(212, 175, 55, 0.08), transparent 55%);
-  background-repeat: no-repeat;
-  color: var(--text);
-  font-family: var(--font-sans);
+  min-height: 100dvh;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
-  min-height: 100vh;
+  text-rendering: optimizeLegibility;
+}
+
+/* Newsprint grain: a fixed halftone dot grid, almost subliminal. It is the
+   only "texture" in the system and replaces the old ambient glow layers. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image: radial-gradient(var(--rule-soft) 0.5px, transparent 0.5px);
+  background-size: 4px 4px;
 }
 
 #root {
-  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
+  /* Reserve room for whatever is docked to the bottom edge (the privacy
+     banner), so it never covers the end of the page. */
+  padding-block-end: var(--dock-offset, 0px);
 }
 
-h1, h2, h3, h4, p {
+h1,
+h2,
+h3,
+h4,
+p,
+figure,
+ul,
+ol {
   margin: 0;
 }
 
-button {
-  font-family: inherit;
+ul,
+ol {
+  padding: 0;
+  list-style: none;
 }
 
 a {
@@ -41,261 +77,488 @@ a {
   text-decoration: none;
 }
 
-img, svg {
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+img,
+svg {
   display: block;
   max-width: 100%;
 }
 
 ::selection {
-  background: rgba(29, 185, 84, 0.35);
+  background: var(--spot);
+  color: #fff;
 }
 
-.container {
-  width: 100%;
-  max-width: var(--container-max);
-  margin-inline: auto;
-  padding-inline: 20px;
+/* ============================================================
+   Typography
+   ============================================================ */
+.display {
+  font-family: var(--font-display);
+  font-weight: 900;
+  line-height: 1.02;
+  letter-spacing: -0.015em;
 }
 
-/* ---------- Buttons ---------- */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border: none;
-  border-radius: var(--radius-full);
+/* Small caps-ish label: the programme's running heads and field labels.
+   Hebrew has no small caps, so this leans on weight + tracking + size. */
+.label {
+  font-family: var(--font-ui);
   font-weight: 700;
-  font-size: 16px;
-  padding: 14px 26px;
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, opacity 0.15s ease;
-  white-space: nowrap;
-  -webkit-tap-highlight-color: transparent;
-}
-.btn:active {
-  transform: scale(0.97);
-}
-.btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-  transform: none;
+  font-size: 11.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
 }
 
-.btn-primary {
-  background: linear-gradient(180deg, var(--pitch-green-bright), var(--pitch-green));
-  color: var(--on-accent);
-  box-shadow: var(--glow-green);
-}
-.btn-primary:not(:disabled):hover {
-  box-shadow: 0 0 0 1px rgba(29, 185, 84, 0.5), 0 10px 32px rgba(29, 185, 84, 0.3);
+/* Tabular figures for anything that counts or changes in place. */
+.figures {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  letter-spacing: -0.02em;
 }
 
-.btn-gold {
-  background: linear-gradient(180deg, var(--gold-bright), var(--gold));
-  color: var(--on-accent);
-  box-shadow: var(--glow-gold);
+.prose {
+  max-width: var(--measure);
+  line-height: 1.7;
+  color: var(--ink-2);
 }
 
-.btn-ghost {
-  background: var(--surface);
-  color: var(--text);
-  border: 1px solid var(--border-strong);
-}
-.btn-ghost:not(:disabled):hover {
-  background: var(--surface-hover);
+.prose p + p {
+  margin-top: 1em;
 }
 
-.btn-block {
+.ink-2 { color: var(--ink-2); }
+.ink-3 { color: var(--ink-3); }
+.spot { color: var(--spot); }
+.pitch { color: var(--pitch); }
+
+/* Hand-inked emphasis: a thick spot underline that sits under the baseline
+   rather than a coloured glow. */
+.marked {
+  text-decoration: underline;
+  text-decoration-color: var(--spot);
+  text-decoration-thickness: 0.16em;
+  text-underline-offset: 0.12em;
+  text-decoration-skip-ink: none;
+}
+
+/* ============================================================
+   Layout
+   ============================================================ */
+.page {
   width: 100%;
+  max-width: var(--page-max);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
 }
 
-.btn-sm {
-  padding: 10px 18px;
-  font-size: 14px;
+.app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
-/* ---------- Cards ---------- */
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
+/* The <main> takes focus from the skip link; it must not draw a ring for that. */
+.app-main:focus {
+  outline: none;
 }
-
-.card-interactive {
-  cursor: pointer;
-  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
-}
-.card-interactive:hover {
-  border-color: var(--border-strong);
-  background: var(--surface-hover);
-}
-.card-interactive:active {
-  transform: scale(0.98);
-}
-
-/* ---------- Badges / pills ---------- */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border-radius: var(--radius-full);
-  padding: 5px 12px;
-  font-size: 13px;
-  font-weight: 600;
-  border: 1px solid var(--border-strong);
-  background: var(--bg-elevated);
-  color: var(--text-dim);
-}
-
-.badge-green {
-  border-color: rgba(29, 185, 84, 0.5);
-  background: rgba(29, 185, 84, 0.12);
-  color: var(--pitch-green-bright);
-}
-.badge-gold {
-  border-color: rgba(212, 175, 55, 0.5);
-  background: rgba(212, 175, 55, 0.12);
-  color: var(--gold-bright);
-}
-
-.pill {
-  border-radius: var(--radius-full);
-  border: 1px solid var(--border-strong);
-  background: var(--surface);
-  color: var(--text-dim);
-  padding: 10px 18px;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  -webkit-tap-highlight-color: transparent;
-}
-.pill:hover {
-  background: var(--surface-hover);
-}
-.pill.selected {
-  background: rgba(29, 185, 84, 0.16);
-  border-color: var(--pitch-green);
-  color: var(--pitch-green-bright);
-  box-shadow: 0 0 0 1px rgba(29, 185, 84, 0.25);
-}
-
-/* ---------- Progress bar ---------- */
-.progress-track {
-  width: 100%;
-  height: 8px;
-  border-radius: var(--radius-full);
-  background: var(--bg-elevated);
-  overflow: hidden;
-  border: 1px solid var(--border);
-}
-.progress-fill {
-  height: 100%;
-  border-radius: var(--radius-full);
-  background: linear-gradient(90deg, var(--pitch-green), var(--pitch-green-bright));
-  transition: width 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-/* ---------- Utility ---------- */
-.text-dim { color: var(--text-dim); }
-.text-faint { color: var(--text-faint); }
-.text-gold { color: var(--gold-bright); }
-.text-green { color: var(--pitch-green-bright); }
-.text-center { text-align: center; }
 
 .stack { display: flex; flex-direction: column; }
 .row { display: flex; align-items: center; }
-.gap-2 { gap: 8px; }
-.gap-3 { gap: 12px; }
-.gap-4 { gap: 16px; }
+.wrap { flex-wrap: wrap; }
+.between { justify-content: space-between; }
+.center { justify-content: center; }
+.g1 { gap: 4px; }
+.g2 { gap: 8px; }
+.g3 { gap: 12px; }
+.g4 { gap: 18px; }
+.g5 { gap: 28px; }
 
+/* A full-bleed inked rule, the programme's main separator. */
+.rule {
+  border: 0;
+  border-top: var(--border-w) solid var(--rule);
+  margin: 0;
+}
+
+.rule-thin {
+  border: 0;
+  border-top: var(--border-w-thin) solid var(--rule-soft);
+  margin: 0;
+}
+
+/* Numbered section head: "01 — קטגוריות" with a rule running to the edge.
+   The index is what makes a long settings page read as an edited document. */
+.section-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.section-index {
+  font-family: var(--font-ui);
+  font-weight: 900;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--spot);
+  font-variant-numeric: tabular-nums;
+  flex: none;
+  padding-block-start: 2px;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(19px, 2.4vw, 23px);
+  line-height: 1.2;
+  flex: none;
+}
+
+.section-head::after {
+  content: "";
+  flex: 1;
+  height: 0;
+  border-top: var(--border-w-thin) solid var(--rule-soft);
+  transform: translateY(-4px);
+}
+
+/* ============================================================
+   Cards — inked rectangles with a hard offset shadow
+   ============================================================ */
+.card {
+  background: var(--card);
+  border: var(--border-w) solid var(--ink);
+  border-radius: var(--r-xs);
+  box-shadow: var(--lift-1);
+}
+
+.card-flat {
+  background: var(--card);
+  border: var(--border-w-thin) solid var(--rule-soft);
+  border-radius: var(--r-xs);
+}
+
+.card-pressable {
+  cursor: pointer;
+  text-align: start;
+  transition:
+    transform var(--t-fast) var(--ease),
+    box-shadow var(--t-fast) var(--ease),
+    background-color var(--t-fast) var(--ease);
+}
+
+/* Hover lifts the card off the page; press slams it back down. Because the
+   shadow is solid, the motion reads as physical rather than as a fade. */
+.card-pressable:hover:not(:disabled) {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--lift-2);
+  background: var(--card-2);
+}
+
+.card-pressable:active:not(:disabled) {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+
+.card-pressable:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* ============================================================
+   Buttons
+   ============================================================ */
+.btn {
+  --btn-bg: var(--card);
+  --btn-fg: var(--ink);
+  --btn-shadow: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  border: var(--border-w) solid var(--ink);
+  border-radius: var(--r-xs);
+  box-shadow: 3px 3px 0 var(--btn-shadow);
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1.2;
+  padding: 13px 24px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform var(--t-fast) var(--ease),
+    box-shadow var(--t-fast) var(--ease),
+    background-color var(--t-fast) var(--ease);
+}
+
+.btn:hover:not(:disabled) {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0 var(--btn-shadow);
+}
+
+.btn:active:not(:disabled) {
+  transform: translate(1.5px, 1.5px);
+  box-shadow: 1px 1px 0 var(--btn-shadow);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: 2px 2px 0 var(--btn-shadow);
+  transform: none;
+}
+
+/* Primary: a solid ink block. The most confident thing on the page. */
+.btn-ink {
+  --btn-bg: var(--ink);
+  --btn-fg: var(--on-ink);
+  --btn-shadow: var(--spot);
+}
+
+/* Secondary emphasis: the spot colour, used for share/celebrate moments. */
+.btn-spot {
+  --btn-bg: var(--spot);
+  --btn-fg: #fff;
+  --btn-shadow: var(--ink);
+  border-color: var(--ink);
+}
+
+.btn-outline {
+  --btn-bg: transparent;
+  --btn-fg: var(--ink);
+  --btn-shadow: var(--ink);
+}
+
+.btn-quiet {
+  border-color: var(--rule-soft);
+  box-shadow: none;
+  background: transparent;
+  font-weight: 500;
+}
+
+.btn-quiet:hover:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+  background: var(--card-2);
+  border-color: var(--ink);
+}
+
+.btn-quiet:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+.btn-block { width: 100%; }
+
+.btn-sm {
+  padding: 8px 15px;
+  font-size: 14px;
+  box-shadow: 2px 2px 0 var(--btn-shadow);
+}
+
+.btn-sm:hover:not(:disabled) { box-shadow: 3.5px 3.5px 0 var(--btn-shadow); }
+
+/* ============================================================
+   Chips (filters) — the one place with rounded geometry, because they
+   behave like tags clipped from the page.
+   ============================================================ */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  color: var(--ink-2);
+  border: var(--border-w-thin) solid var(--rule-soft);
+  border-radius: var(--r-chip);
+  padding: 8px 15px;
+  font-weight: 500;
+  font-size: 14.5px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--t-fast) var(--ease),
+    border-color var(--t-fast) var(--ease),
+    color var(--t-fast) var(--ease),
+    transform var(--t-fast) var(--ease);
+}
+
+.chip:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.chip:active { transform: scale(0.97); }
+
+.chip[aria-pressed="true"],
+.chip.on {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--on-ink);
+  font-weight: 700;
+}
+
+/* ============================================================
+   Stamps — inline metadata, set like a rubber stamp rather than a pill
+   ============================================================ */
+.stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: var(--border-w-thin) solid currentColor;
+  border-radius: var(--r-xs);
+  padding: 3px 8px;
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  background: transparent;
+  white-space: nowrap;
+}
+
+.stamp-spot { color: var(--spot); }
+.stamp-pitch { color: var(--pitch); }
+.stamp-blue { color: var(--stamp); }
+
+.stamp-solid {
+  background: var(--ink);
+  color: var(--on-ink);
+  border-color: var(--ink);
+}
+
+/* ============================================================
+   Accessibility
+   ============================================================ */
 .sr-only {
   position: absolute;
-  width: 1px; height: 1px;
-  padding: 0; margin: -1px;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
   overflow: hidden;
-  clip: rect(0,0,0,0);
+  clip-path: inset(50%);
   white-space: nowrap;
   border: 0;
 }
 
-@keyframes fade-up {
-  from { opacity: 0; transform: translateY(10px); }
+/* Keyboard users land here first. It stays off-screen until focused. */
+.skip-link {
+  position: fixed;
+  inset-block-start: 8px;
+  inset-inline-start: 8px;
+  z-index: 200;
+  transform: translateY(-160%);
+  background: var(--ink);
+  color: var(--on-ink);
+  border: var(--border-w) solid var(--spot);
+  padding: 10px 18px;
+  font-weight: 700;
+  border-radius: var(--r-xs);
+  transition: transform var(--t-mid) var(--ease);
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+/* One focus treatment across the whole product: a spot-coloured ring with
+   an ink halo, legible on both paper and ink grounds. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--spot);
+  outline-offset: 2px;
+  border-radius: var(--r-xs);
+}
+
+/* ============================================================
+   Motion
+   ============================================================ */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
   to { opacity: 1; transform: translateY(0); }
 }
-.animate-in {
-  animation: fade-up 0.4s ease both;
+
+@keyframes stamp-in {
+  0% { opacity: 0; transform: scale(1.18) rotate(-2.5deg); }
+  60% { opacity: 1; }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
 }
 
-@keyframes pop {
-  0% { transform: scale(0.9); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
-}
-.animate-pop {
-  animation: pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+@keyframes wipe-in {
+  from { clip-path: inset(0 0 0 100%); }
+  to { clip-path: inset(0 0 0 0); }
 }
 
-@media (max-width: 480px) {
-  .container { padding-inline: 16px; }
+.anim-rise { animation: rise var(--t-mid) var(--ease) both; }
+.anim-stamp { animation: stamp-in 320ms var(--ease-out-back) both; }
+
+/* Scroll-reveal contract used by <Reveal>: hidden until observed. */
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 480ms var(--ease),
+    transform 480ms var(--ease);
 }
 
-/* ---------- Ambient stadium background ----------
-   A fixed, pointer-events-free layer: faint pitch lines plus a slow
-   floodlight drift. Purely decorative, cheap to composite, and disabled
-   under reduced-motion. */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -2;
-  pointer-events: none;
-  background-image:
-    /* halfway line + centre circle, very faint */
-    linear-gradient(to bottom, transparent calc(50% - 1px), rgba(255, 255, 255, 0.022) 50%, transparent calc(50% + 1px)),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.012) 0 1px, transparent 1px 140px);
+.reveal.is-in {
+  opacity: 1;
+  transform: none;
 }
 
-body::after {
-  content: "";
-  position: fixed;
-  inset: -20%;
-  z-index: -1;
-  pointer-events: none;
-  background: radial-gradient(circle 420px at 50% 20%, rgba(29, 185, 84, 0.07), transparent 70%);
-  animation: floodlight 22s ease-in-out infinite alternate;
+/* Staggered children, driven by an inline --i index. */
+.stagger > * {
+  animation: rise 420ms var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 60ms);
 }
 
-@keyframes floodlight {
-  0%   { transform: translate3d(-8%, 0, 0); }
-  100% { transform: translate3d(8%, 4%, 0); }
-}
-
-/* ---------- Microinteractions ---------- */
-.btn:focus-visible,
-.pill:focus-visible,
-.option-btn:focus-visible,
-.card-interactive:focus-visible,
-.answer-mode:focus-visible {
-  outline: 2px solid var(--pitch-green-bright);
-  outline-offset: 3px;
-}
-
-.pill:active {
-  transform: scale(0.96);
-}
-
-/* ---------- Global reduced-motion contract ----------
-   Honour the OS setting everywhere rather than per-component. */
+/* Honour the OS setting once, globally, rather than per component. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
-    animation-duration: 0.001ms !important;
+    animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
+    transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  body::after { animation: none; }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Hover lifts are position changes, not decoration — drop them too. */
+  .btn:hover:not(:disabled),
+  .card-pressable:hover:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* ============================================================
+   High-contrast / forced-colors: let the OS palette win, keep structure
+   ============================================================ */
+@media (forced-colors: active) {
+  .card,
+  .btn,
+  .chip,
+  .stamp {
+    border: 2px solid CanvasText;
+    box-shadow: none;
+  }
+}
+
+@media (max-width: 520px) {
+  :root { --gutter: 16px; }
 }

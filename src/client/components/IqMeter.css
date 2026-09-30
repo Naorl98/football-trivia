@@ -1,60 +1,74 @@
-.iq-meter {
-  position: relative;
-  width: 200px;
-  height: 200px;
-  margin-inline: auto;
+.iq {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .iq-svg {
   width: 100%;
-  height: 100%;
-  /* Start the arc at the top and run clockwise. */
-  transform: rotate(-90deg);
+  max-width: 260px;
+  height: auto;
+  overflow: visible;
 }
 
-.iq-track {
-  fill: none;
-  stroke: var(--bg-elevated);
-  stroke-width: 12;
+.iq-tick {
+  stroke: var(--ink-4);
+  stroke-width: 2;
+  opacity: 0.4;
+  transition: stroke 220ms var(--ease), opacity 220ms var(--ease);
 }
 
-.iq-progress {
-  fill: none;
-  stroke: url(#iq-grad);
-  stroke-width: 12;
-  stroke-linecap: round;
-  filter: drop-shadow(0 0 8px rgba(29, 185, 84, 0.45));
+.iq-tick.is-major {
+  stroke-width: 2.6;
 }
 
-.iq-center {
-  position: absolute;
-  inset: 0;
+.iq-tick.is-lit {
+  stroke: var(--ink);
+  opacity: 1;
+}
+
+/* Only the hot end of the scale burns into the spot colour, and only once the
+   needle has reached it — so a score in the 90s looks different from a 40 at a
+   glance, without a legend. */
+.iq-tick.is-lit.is-high {
+  stroke: var(--spot);
+}
+
+.iq-needle {
+  fill: var(--spot);
+}
+
+.iq-pivot {
+  fill: var(--ink);
+}
+
+.iq-readout {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   gap: 1px;
-}
-
-.iq-label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-faint);
+  /* Tucked under the dial, but clear of the needle's pivot. */
+  margin-block-start: -6px;
 }
 
 .iq-value {
-  font-size: 52px;
+  font-family: var(--font-ui);
   font-weight: 900;
-  line-height: 1;
-  color: var(--text);
-  font-variant-numeric: tabular-nums;
+  font-size: clamp(50px, 13vw, 70px);
+  line-height: 0.95;
+  color: var(--ink);
+}
+
+.iq-unit {
+  font-size: 10px;
+  color: var(--ink-4);
 }
 
 .iq-rank {
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--gold-bright);
-  margin-top: 2px;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(20px, 4.4vw, 26px);
+  color: var(--spot);
+  margin-block-start: 5px;
 }

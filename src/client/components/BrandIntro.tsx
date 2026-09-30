@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
+import { BallMark } from "./BallMark";
 import "./BrandIntro.css";
 
 const SEEN_KEY = "fiq_intro_seen";
-const DURATION = 1600;
+const DURATION = 1450;
 
 function shouldSkip(): boolean {
   try {
@@ -15,9 +16,13 @@ function shouldSkip(): boolean {
 }
 
 /**
- * Short brand entrance: a football rolls in, neural lines light up across it,
- * and the wordmark resolves. Capped at ~1.6s, dismissible by tap or key, shown
- * once per session, and skipped entirely under prefers-reduced-motion.
+ * The cover, before the programme opens.
+ *
+ * It is built from the same three moves the rest of the design uses — a rule
+ * that draws itself, type that wipes in behind it, and the mark stamping down —
+ * so the first 1.4s teaches the visual language instead of being a separate
+ * splash animation. Once per session, skipped under reduced motion, and
+ * dismissible by any key or tap.
  */
 export function BrandIntro() {
   const [visible, setVisible] = useState(() => !shouldSkip());
@@ -31,7 +36,7 @@ export function BrandIntro() {
       // Non-essential.
     }
     const timer = window.setTimeout(() => setLeaving(true), DURATION);
-    const done = window.setTimeout(() => setVisible(false), DURATION + 380);
+    const done = window.setTimeout(() => setVisible(false), DURATION + 400);
     return () => {
       window.clearTimeout(timer);
       window.clearTimeout(done);
@@ -55,34 +60,20 @@ export function BrandIntro() {
   if (!visible) return null;
 
   return (
-    <div className={`intro-overlay ${leaving ? "intro-leaving" : ""}`} aria-hidden="true">
-      <div className="intro-stage">
-        <svg className="intro-ball" viewBox="0 0 120 120">
-          <defs>
-            <radialGradient id="ball-shade" cx="35%" cy="30%">
-              <stop offset="0%" stopColor="#2a332d" />
-              <stop offset="100%" stopColor="#0c110e" />
-            </radialGradient>
-          </defs>
-          <circle cx="60" cy="60" r="54" fill="url(#ball-shade)" stroke="var(--pitch-green)" strokeWidth="1.5" />
-          {/* Neural web across the ball: nodes + links standing in for the "IQ". */}
-          <g className="intro-net" stroke="var(--pitch-green-bright)" strokeWidth="1" fill="none">
-            <path d="M60 14 L30 44 L42 84 L78 84 L90 44 Z" />
-            <path d="M60 14 L60 44 M30 44 L60 44 M90 44 L60 44 M42 84 L60 44 M78 84 L60 44" />
-            <path d="M30 44 L14 68 M90 44 L106 68 M42 84 L38 106 M78 84 L82 106" />
-          </g>
-          <g className="intro-nodes" fill="var(--gold-bright)">
-            <circle cx="60" cy="14" r="3.4" />
-            <circle cx="30" cy="44" r="3.4" />
-            <circle cx="90" cy="44" r="3.4" />
-            <circle cx="42" cy="84" r="3.4" />
-            <circle cx="78" cy="84" r="3.4" />
-            <circle cx="60" cy="44" r="4" />
-          </g>
-        </svg>
-        <div className="intro-wordmark">
-          Football <span className="text-green">IQ</span>
+    <div className={`cover ${leaving ? "is-leaving" : ""}`} aria-hidden="true">
+      <div className="cover-plate">
+        <p className="cover-kicker label">מבחן ידע · כדורגל</p>
+        <span className="cover-rule" />
+        <div className="cover-lockup">
+          <span className="cover-mark">
+            <BallMark size={58} />
+          </span>
+          <span className="cover-type">
+            <span className="cover-word">FOOTBALL</span>
+            <span className="cover-iq">IQ</span>
+          </span>
         </div>
+        <span className="cover-rule cover-rule-2" />
       </div>
     </div>
   );

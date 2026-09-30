@@ -8,8 +8,11 @@
 //
 // Rules this module guarantees:
 //   * nothing is created until the player's first gesture (autoplay policy)
-//   * the preference persists in localStorage
+//   * the preference persists in localStorage ONLY with "preferences" consent;
+//     without it the toggle still works, it just lives for the session
 //   * any audio failure is swallowed — sound must never break gameplay
+
+import { privacy } from "./privacy";
 
 export type SoundName =
   | "click"
@@ -24,6 +27,7 @@ export type SoundName =
 const STORAGE_KEY = "fiq_sound_enabled";
 
 function readPreference(): boolean {
+  if (!privacy.allows("preferences")) return true;
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     return stored === null ? true : stored === "true";
@@ -50,10 +54,14 @@ class SoundEngine {
 
   setEnabled(enabled: boolean) {
     this.enabled = enabled;
-    try {
-      localStorage.setItem(STORAGE_KEY, String(enabled));
-    } catch {
-      // Private mode / blocked storage — the session still honours the toggle.
+    // No "preferences" consent means the choice is honoured for this session
+    // but never written to disk.
+    if (privacy.allows("preferences")) {
+      try {
+        localStorage.setItem(STORAGE_KEY, String(enabled));
+      } catch {
+        // Private mode / blocked storage — the session still honours the toggle.
+      }
     }
     this.listeners.forEach((l) => l(enabled));
     if (enabled) this.unlock();

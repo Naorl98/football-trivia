@@ -14,9 +14,21 @@ import type { AnswerMode, Category, Difficulty, GameMode, QuizConfiguration, Reg
 import { fetchAvailableCount } from "../lib/api";
 import { startQuiz } from "../lib/startQuiz";
 import { sound } from "../lib/sound";
+import { Icon } from "../components/Icon";
 import "./BuilderPage.css";
 
 const DIFFICULTY_OPTIONS: (Difficulty | "MIXED")[] = ["MIXED", "EASY", "NORMAL", "HARD", "EXPERT", "IMPOSSIBLE"];
+
+// A one-line character note per level, so "בלתי אפשרי" means something before
+// you have played it.
+const DIFFICULTY_NOTES: Record<Difficulty | "MIXED", string> = {
+  MIXED: "תערובת של כל הרמות",
+  EASY: "שמות שכל אוהד מכיר",
+  NORMAL: "ידע כדורגל סביר",
+  HARD: "פרטים שדורשים מעקב אמיתי",
+  EXPERT: "עונות, גמרים ומעברים ספציפיים",
+  IMPOSSIBLE: "שאלות שגם פרשנים יפספסו",
+};
 
 export function BuilderPage() {
   const navigate = useNavigate();
@@ -75,179 +87,236 @@ export function BuilderPage() {
 
   const realCompetitions = COMPETITIONS.filter((c) => c.type !== "GROUP");
   const groupCompetitions = COMPETITIONS.filter((c) => c.type === "GROUP");
+  const shortfall = availableCount !== null && availableCount > 0 && availableCount < questionCount;
 
   return (
-    <div className="container builder">
-      <h1 className="builder-title">בנו את החידון שלכם</h1>
-      <p className="text-dim">התאימו אישית את החידון — טווח גיאוגרפי, ליגות, קטגוריות ורמת קושי.</p>
+    <div className="page builder">
+      <header className="builder-head">
+        <p className="label builder-kicker">טופס · בניית מבחן</p>
+        <h1 className="builder-title display">הרכיבו את המבחן שלכם</h1>
+        <p className="prose builder-lede">
+          כל שדה מצמצם את מאגר השאלות. המספר בתחתית המסך מתעדכן בזמן אמת, כך שתדעו בדיוק מה נשאר
+          לפני שמתחילים.
+        </p>
+      </header>
 
-      <section className="builder-section">
-        <h2>איך עונים?</h2>
-        <div className="answer-mode-row">
-          <button
-            className={`answer-mode ${answerMode === "MULTIPLE_CHOICE" ? "selected" : ""}`}
+      <hr className="rule" />
+
+      <Field index="01" title="איך עונים?" hint="תשובה חופשית זמינה לשאלות עם תשובה יחידה וכינויים מוצהרים.">
+        <div className="mode-pair">
+          <ModeCard
+            active={answerMode === "MULTIPLE_CHOICE"}
+            icon="list"
+            title="אמריקאי"
+            sub="בוחרים מתוך ארבע אפשרויות"
             onClick={() => setAnswerMode("MULTIPLE_CHOICE")}
-            aria-pressed={answerMode === "MULTIPLE_CHOICE"}
-          >
-            <span className="answer-mode-emoji" aria-hidden="true">📝</span>
-            <span className="answer-mode-title">אמריקאי</span>
-            <span className="answer-mode-sub">בוחרים מתוך 4 תשובות</span>
-          </button>
-          <button
-            className={`answer-mode ${answerMode === "FREE_TEXT" ? "selected" : ""}`}
+          />
+          <ModeCard
+            active={answerMode === "FREE_TEXT"}
+            icon="keyboard"
+            title="תשובה חופשית"
+            sub="מקלידים בעצמכם, עם רמזים"
             onClick={() => setAnswerMode("FREE_TEXT")}
-            aria-pressed={answerMode === "FREE_TEXT"}
-          >
-            <span className="answer-mode-emoji" aria-hidden="true">⌨️</span>
-            <span className="answer-mode-title">תשובה חופשית</span>
-            <span className="answer-mode-sub">מקלידים בעצמכם — עם רמזים</span>
+          />
+        </div>
+      </Field>
+
+      <Field index="02" title="סוג משחק">
+        <ChipRow
+          items={ENABLED_GAME_MODES.map((mode) => ({ key: mode, label: GAME_MODE_LABELS[mode] }))}
+          isOn={(key) => gameMode === key}
+          onPick={(key) => setGameMode(key as GameMode)}
+          groupLabel="סוג משחק"
+        />
+      </Field>
+
+      <Field index="03" title="טווח גיאוגרפי">
+        <ChipRow
+          items={REGIONS.map((r) => ({ key: r.code, label: r.labelHe }))}
+          isOn={(key) => region === key}
+          onPick={(key) => setRegion(key as Region)}
+          groupLabel="טווח גיאוגרפי"
+        />
+      </Field>
+
+      <Field index="04" title="מדינות" hint="אופציונלי — אפשר לבחור כמה.">
+        <ChipRow
+          items={COUNTRIES.map((c) => ({ key: c.code, label: c.nameHe }))}
+          isOn={(key) => countries.includes(key)}
+          onPick={(key) => toggle(countries, key, setCountries)}
+          groupLabel="מדינות"
+        />
+      </Field>
+
+      <Field index="05" title="ליגות ותחרויות">
+        <ChipRow
+          items={groupCompetitions.map((c) => ({ key: c.code, label: c.nameHe }))}
+          isOn={(key) => competitions.includes(key)}
+          onPick={(key) => setCompetitions([key])}
+          groupLabel="קבוצות ליגות"
+        />
+        <ChipRow
+          className="chip-row-second"
+          items={realCompetitions.map((c) => ({ key: c.code, label: c.nameHe }))}
+          isOn={(key) => competitions.includes(key)}
+          onPick={(key) =>
+            toggle(
+              competitions.filter((code) => !groupCompetitions.some((g) => g.code === code)),
+              key,
+              setCompetitions
+            )
+          }
+          groupLabel="תחרויות בודדות"
+        />
+      </Field>
+
+      <Field index="06" title="קטגוריות" hint="אופציונלי — בלי בחירה מגיעות שאלות מכל הקטגוריות.">
+        <ChipRow
+          items={CATEGORIES.map((c) => ({ key: c.code, label: c.labelHe }))}
+          isOn={(key) => categories.includes(key as Category)}
+          onPick={(key) => toggle(categories, key as Category, setCategories)}
+          groupLabel="קטגוריות"
+        />
+      </Field>
+
+      <Field index="07" title="רמת קושי" hint={DIFFICULTY_NOTES[difficulty]}>
+        <div className="ladder" role="group" aria-label="רמת קושי">
+          {DIFFICULTY_OPTIONS.map((level, i) => (
+            <button
+              key={level}
+              className={`rung ${difficulty === level ? "on" : ""}`}
+              aria-pressed={difficulty === level}
+              onClick={() => setDifficulty(level)}
+            >
+              {/* A rising bar chart of five steps: the ladder is legible as a
+                  ladder, not just six words in a row. */}
+              <span className="rung-bars" aria-hidden="true">
+                {[0, 1, 2, 3, 4].map((bar) => (
+                  <span key={bar} className={`rung-bar ${i > 0 && bar < i ? "is-lit" : ""}`} />
+                ))}
+              </span>
+              <span className="rung-label">{level === "MIXED" ? "מעורב" : DIFFICULTY_LABELS[level]}</span>
+            </button>
+          ))}
+        </div>
+      </Field>
+
+      <Field index="08" title="מספר שאלות">
+        <ChipRow
+          items={QUESTION_COUNTS.map((n) => ({ key: String(n), label: String(n) }))}
+          isOn={(key) => questionCount === Number(key)}
+          onPick={(key) => setQuestionCount(Number(key) as (typeof QUESTION_COUNTS)[number])}
+          groupLabel="מספר שאלות"
+        />
+      </Field>
+
+      {/* ---------- Sticky start bar ---------- */}
+      <div className="builder-bar">
+        <div className="builder-bar-inner">
+          <p className="builder-count" role="status" aria-live="polite">
+            {counting ? (
+              <span className="ink-3">בודק זמינות…</span>
+            ) : availableCount === null ? (
+              <span className="ink-3">לא הצלחנו לבדוק זמינות</span>
+            ) : availableCount === 0 ? (
+              <span className="builder-count-zero">אין שאלות לסינון הזה — הרחיבו את הבחירה</span>
+            ) : (
+              <>
+                <strong className="figures builder-count-n">{availableCount}</strong>
+                <span className="ink-3"> שאלות זמינות</span>
+                {shortfall && (
+                  <span className="builder-count-warn"> · פחות מ-{questionCount}, המבחן יהיה קצר יותר</span>
+                )}
+              </>
+            )}
+          </p>
+          <button className="btn btn-ink" disabled={starting || availableCount === 0} onClick={handleStart}>
+            {starting ? "יוצר מבחן…" : "התחילו"}
+            {!starting && <Icon name="arrow" size={18} />}
           </button>
         </div>
-      </section>
-
-      <section className="builder-section">
-        <h2>סוג משחק</h2>
-        <div className="pill-row">
-          {ENABLED_GAME_MODES.map((mode) => (
-            <button
-              key={mode}
-              className={`pill ${gameMode === mode ? "selected" : ""}`}
-              onClick={() => setGameMode(mode)}
-            >
-              {GAME_MODE_LABELS[mode]}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <section className="builder-section">
-        <h2>טווח גיאוגרפי</h2>
-        <div className="pill-row">
-          {REGIONS.map((r) => (
-            <button
-              key={r.code}
-              className={`pill ${region === r.code ? "selected" : ""}`}
-              onClick={() => setRegion(r.code)}
-            >
-              {r.labelHe}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <section className="builder-section">
-        <h2>מדינות ספציפיות (אופציונלי)</h2>
-        <div className="pill-row">
-          {COUNTRIES.map((c) => (
-            <button
-              key={c.code}
-              className={`pill ${countries.includes(c.code) ? "selected" : ""}`}
-              onClick={() => toggle(countries, c.code, setCountries)}
-            >
-              {c.nameHe}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <section className="builder-section">
-        <h2>ליגות ותחרויות</h2>
-        <div className="pill-row">
-          {groupCompetitions.map((c) => (
-            <button
-              key={c.code}
-              className={`pill ${competitions.includes(c.code) ? "selected" : ""}`}
-              onClick={() => setCompetitions([c.code])}
-            >
-              {c.nameHe}
-            </button>
-          ))}
-        </div>
-        <div className="pill-row" style={{ marginTop: 8 }}>
-          {realCompetitions.map((c) => (
-            <button
-              key={c.code}
-              className={`pill ${competitions.includes(c.code) ? "selected" : ""}`}
-              onClick={() =>
-                toggle(
-                  competitions.filter((code) => !groupCompetitions.some((g) => g.code === code)),
-                  c.code,
-                  setCompetitions
-                )
-              }
-            >
-              {c.nameHe}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <section className="builder-section">
-        <h2>קטגוריות</h2>
-        <div className="pill-row">
-          {CATEGORIES.map((c) => (
-            <button
-              key={c.code}
-              className={`pill ${categories.includes(c.code) ? "selected" : ""}`}
-              onClick={() => toggle(categories, c.code, setCategories)}
-            >
-              {c.labelHe}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <section className="builder-section">
-        <h2>רמת קושי</h2>
-        <div className="pill-row">
-          {DIFFICULTY_OPTIONS.map((d) => (
-            <button
-              key={d}
-              className={`pill ${difficulty === d ? "selected" : ""}`}
-              onClick={() => setDifficulty(d)}
-            >
-              {d === "MIXED" ? "מעורב" : DIFFICULTY_LABELS[d]}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <section className="builder-section">
-        <h2>מספר שאלות</h2>
-        <div className="pill-row">
-          {QUESTION_COUNTS.map((n) => (
-            <button
-              key={n}
-              className={`pill ${questionCount === n ? "selected" : ""}`}
-              onClick={() => setQuestionCount(n)}
-            >
-              {n}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <div className="builder-footer">
-        <div className="availability">
-          {counting
-            ? "בודק זמינות שאלות…"
-            : availableCount !== null && (
-                <span className={availableCount === 0 ? "text-danger" : "text-dim"}>
-                  {availableCount === 0
-                    ? "אין שאלות מתאימות לסינון הזה — נסו להרחיב"
-                    : `${availableCount} שאלות זמינות בהתאמה לבחירה שלכם`}
-                </span>
-              )}
-        </div>
-        {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
-        <button
-          className="btn btn-primary btn-block"
-          disabled={starting || availableCount === 0}
-          onClick={handleStart}
-        >
-          {starting ? "יוצר חידון…" : "התחל משחק"}
-        </button>
+        {error && (
+          <p className="builder-error" role="alert">
+            {error}
+          </p>
+        )}
       </div>
     </div>
+  );
+}
+
+function Field({
+  index,
+  title,
+  hint,
+  children,
+}: {
+  index: string;
+  title: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="field">
+      <div className="section-head">
+        <span className="section-index">{index}</span>
+        <h2 className="section-title">{title}</h2>
+      </div>
+      {hint && <p className="field-hint">{hint}</p>}
+      {children}
+    </section>
+  );
+}
+
+function ChipRow({
+  items,
+  isOn,
+  onPick,
+  groupLabel,
+  className = "",
+}: {
+  items: { key: string; label: string }[];
+  isOn: (key: string) => boolean;
+  onPick: (key: string) => void;
+  groupLabel: string;
+  className?: string;
+}) {
+  return (
+    <div className={`chip-row ${className}`.trim()} role="group" aria-label={groupLabel}>
+      {items.map((item) => (
+        <button
+          key={item.key}
+          className="chip"
+          aria-pressed={isOn(item.key)}
+          onClick={() => onPick(item.key)}
+        >
+          {item.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ModeCard({
+  active,
+  icon,
+  title,
+  sub,
+  onClick,
+}: {
+  active: boolean;
+  icon: "list" | "keyboard";
+  title: string;
+  sub: string;
+  onClick: () => void;
+}) {
+  return (
+    <button className={`mode card card-pressable ${active ? "is-active" : ""}`} aria-pressed={active} onClick={onClick}>
+      <span className="mode-mark">
+        <Icon name={icon} size={24} />
+      </span>
+      <span className="mode-title">{title}</span>
+      <span className="mode-sub">{sub}</span>
+    </button>
   );
 }

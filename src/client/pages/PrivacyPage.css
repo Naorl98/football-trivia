@@ -1,0 +1,117 @@
+.policy {
+  padding-block: 40px 90px;
+}
+
+.policy-head {
+  margin-bottom: 26px;
+}
+
+.policy-title {
+  font-size: clamp(34px, 7vw, 56px);
+  margin-block: 6px 14px;
+}
+
+.policy-lede {
+  font-size: clamp(16px, 2.2vw, 18px);
+}
+
+.policy-body {
+  display: flex;
+  flex-direction: column;
+  gap: 42px;
+  padding-block-start: 34px;
+}
+
+.policy-clause .prose {
+  font-size: 15.5px;
+}
+
+.policy-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Inked tick instead of a bullet dot — same language as the answer marks. */
+.policy-list li {
+  position: relative;
+  padding-inline-start: 24px;
+}
+
+.policy-list li::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  inset-block-start: 0.62em;
+  width: 11px;
+  height: 2px;
+  background: var(--spot);
+}
+
+.policy-table {
+  margin-block: 18px;
+  border: var(--border-w) solid var(--ink);
+  border-radius: var(--r-xs);
+  background: var(--card);
+}
+
+.policy-row {
+  display: grid;
+  grid-template-columns: minmax(150px, auto) auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+}
+
+.policy-row + .policy-row {
+  border-block-start: var(--border-w-thin) solid var(--rule-soft);
+}
+
+.policy-key {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  font-weight: 700;
+  direction: ltr;
+  text-align: start;
+  color: var(--ink);
+}
+
+.policy-why {
+  font-size: 13.5px;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+
+.policy-cat {
+  color: var(--spot);
+  white-space: nowrap;
+}
+
+.policy-note {
+  font-size: 13px;
+  color: var(--ink-3);
+}
+
+.policy-note code {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 12px;
+  direction: ltr;
+  display: inline-block;
+}
+
+.policy-actions {
+  display: flex;
+  gap: 11px;
+  flex-wrap: wrap;
+  margin-block-start: 20px;
+}
+
+@media (max-width: 680px) {
+  .policy-row {
+    grid-template-columns: 1fr auto;
+    row-gap: 6px;
+  }
+  .policy-why {
+    grid-column: 1 / -1;
+  }
+}
