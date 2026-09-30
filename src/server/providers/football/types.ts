@@ -103,8 +103,19 @@ export interface NormalizedFixture extends ProviderRef {
   venue: NormalizedVenue | null;
   homeTeamExternalId: string | null;
   awayTeamExternalId: string | null;
+  /** Carried so a fixture can stub the clubs it names, as standings do. */
+  homeTeamName: string | null;
+  awayTeamName: string | null;
   homeGoals: number | null;
   awayGoals: number | null;
+  /**
+   * Shootout score, when there was one. Without this a final that finished 3-3
+   * and was decided on penalties — Argentina v France in 2022 — reads as having
+   * no winner at all, and a goals-only comparison would either find a draw or,
+   * worse, name the wrong side.
+   */
+  homePenalties: number | null;
+  awayPenalties: number | null;
   status: string | null;
 }
 

@@ -218,6 +218,29 @@ export function planTasks(options: PlanOptions): SyncTask[] {
         });
       }
 
+      /**
+       * For a cup, the fixture list is what a league table is for a league — and
+       * it is the only honest source of a winner.
+       *
+       * A cup's /standings returns its group tables, flattened, so deriving a
+       * champion from it would crown whoever topped Group A. The final is a
+       * fixture; so are the semi-finals, the knockout results and the scorelines.
+       * One request also names every club that played in the competition, which
+       * no domestic table we hold would introduce.
+       *
+       * This is why cup fixtures are scored as standings rather than with the
+       * `fixtures` tier: a league's fixture list really is 380 rows of little
+       * question value, but a cup's carries the whole competition.
+       */
+      if (target.type === "CUP") {
+        push({
+          resourceType: "fixtures",
+          competitionExternalId: target.externalId,
+          season,
+          priority: scoreTask("standings", target.priority, season),
+        });
+      }
+
       // Top scorers: one request, ~20 players plus their club links.
       push({
         resourceType: "topscorers",

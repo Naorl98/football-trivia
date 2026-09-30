@@ -5,13 +5,17 @@ import {
   derivePlayerAliases,
   deriveTeamAliases,
   generateCareerPaths,
+  generateCompetitionParticipation,
   generateCompetitionWinners,
+  generateCupFinalQuestions,
+  generateKnockoutProgressionQuestions,
   generateTransferQuestions,
   generateTrophyQuestions,
   generateVenueQuestions,
   pickDistinct,
   validateAndDedupe,
   type KnowledgeQuestion,
+  type FixtureRow,
   type TeamRow,
   type TransferRow,
   type WinnerRow,
@@ -346,5 +350,159 @@ describe("quality gates", () => {
   test("rejects missing question text", () => {
     const { rejected } = validateAndDedupe([{ ...base, questionHe: "  " }], new Set());
     assert.equal(rejected[0].reason, "missing-text");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Cup competitions
+// ---------------------------------------------------------------------------
+describe("cup finals and knockout progression", () => {
+  const fixture = (over: Partial<FixtureRow>): FixtureRow => ({
+    id: 1,
+    competition_id: 2,
+    competition_name: "UEFA Champions League",
+    competition_local_code: "UCL",
+    competition_priority: 1,
+    season: 2024,
+    season_label: "2024/25",
+    round: "Final",
+    home_team_id: 10,
+    away_team_id: 20,
+    home_team_name: "Paris Saint Germain",
+    away_team_name: "Inter",
+    home_goals: 5,
+    away_goals: 0,
+    home_penalties: null,
+    away_penalties: null,
+    status: "FT",
+    ...over,
+  });
+
+  const participants = new Map([["2:2024", ["Arsenal", "Barcelona", "Bayern München", "Real Madrid"]]]);
+
+  test("a final produces finalist and scoreline questions", () => {
+    const out = generateCupFinalQuestions([fixture({})], participants);
+    assert.ok(out.length >= 3, `expected finalist questions both ways plus a score, got ${out.length}`);
+    const opponent = out.find((q) => q.questionHe.includes("נגד מי"))!;
+    assert.ok(opponent, "expected a 'who did they face' question");
+    assert.equal(opponent.category, "CHAMPIONS_LEAGUE", "a UCL final belongs in the UCL filter, not TITLES");
+  });
+
+  test("a group-stage fixture is not a final", () => {
+    assert.deepEqual(generateCupFinalQuestions([fixture({ round: "Group Stage - 1" })], participants), []);
+  });
+
+  test("the third-place play-off is not a final", () => {
+    // It contains the word "Final" and settles no trophy.
+    assert.deepEqual(generateCupFinalQuestions([fixture({ round: "3rd Place Final" })], participants), []);
+  });
+
+  test("an unplayed final produces nothing", () => {
+    assert.deepEqual(
+      generateCupFinalQuestions([fixture({ status: "NS", home_goals: null, away_goals: null })], participants),
+      []
+    );
+  });
+
+  test("a shootout is reported in the scoreline rather than hidden", () => {
+    // Argentina 3-3 France, won 4-2 on penalties. A goals-only reading of this
+    // final says nobody won it.
+    const out = generateCupFinalQuestions(
+      [
+        fixture({
+          competition_id: 1,
+          competition_name: "World Cup",
+          competition_local_code: "WORLD_CUP",
+          season: 2022,
+          season_label: "2022",
+          home_team_name: "Argentina",
+          away_team_name: "France",
+          home_goals: 3,
+          away_goals: 3,
+          home_penalties: 4,
+          away_penalties: 2,
+          status: "PEN",
+        }),
+      ],
+      new Map([["1:2022", ["Brazil", "England", "Netherlands", "Croatia"]]])
+    );
+    const score = out.find((q) => q.questionHe.includes("התוצאה"));
+    assert.ok(score, "expected a scoreline question");
+    assert.match(score!.options[score!.correctIndex], /3-3.*4-2/, "the shootout must appear in the answer");
+    assert.equal(score!.category, "WORLD_CUP");
+  });
+
+  test("a two-legged tie names one opponent, read from who reached the next round", () => {
+    // PSG appear in the final, so they won their semi; the loser is simply the
+    // other club in PSG's semi-final fixtures. Neither leg's score is consulted.
+    const out = generateKnockoutProgressionQuestions(
+      [
+        fixture({ id: 1, round: "Final", home_team_id: 10, away_team_id: 20 }),
+        fixture({ id: 2, round: "Semi-finals", home_team_id: 10, away_team_id: 30, home_team_name: "Paris Saint Germain", away_team_name: "Arsenal", home_goals: 1, away_goals: 0 }),
+        fixture({ id: 3, round: "Semi-finals", home_team_id: 30, away_team_id: 10, home_team_name: "Arsenal", away_team_name: "Paris Saint Germain", home_goals: 1, away_goals: 2 }),
+      ],
+      participants
+    );
+    const psg = out.filter((q) => q.questionHe.includes("Paris Saint Germain"));
+    assert.equal(psg.length, 1, "two legs are one tie and must yield one question");
+    assert.equal(psg[0].options[psg[0].correctIndex], "Arsenal");
+  });
+
+  test("a club that never reached the next round is not credited with winning a tie", () => {
+    const out = generateKnockoutProgressionQuestions(
+      [
+        fixture({ id: 2, round: "Semi-finals", home_team_id: 10, away_team_id: 30, away_team_name: "Arsenal" }),
+      ],
+      participants
+    );
+    assert.deepEqual(out, [], "with no later round on record, nothing is known about who advanced");
+  });
+});
+
+describe("competition participation", () => {
+  const meta = new Map([
+    [
+      "2:2024",
+      {
+        competitionId: 2,
+        competitionName: "UEFA Champions League",
+        localCode: "UCL",
+        priority: 1,
+        season: 2024,
+        seasonLabel: "2024/25",
+      },
+    ],
+  ]);
+
+  test("asks only about competition-seasons whose participants are known", () => {
+    const played = new Map([["2:2024", ["Arsenal", "Barcelona", "Inter", "Real Madrid"]]]);
+    const out = generateCompetitionParticipation(played, meta, [
+      "Arsenal",
+      "Barcelona",
+      "Inter",
+      "Real Madrid",
+      "Leeds",
+      "Sunderland",
+      "Cadiz",
+      "Hellas Verona",
+    ]);
+    assert.ok(out.length > 0);
+    for (const q of out) {
+      const answer = q.options[q.correctIndex];
+      assert.ok(played.get("2:2024")!.includes(answer), `${answer} did not play in that competition`);
+      for (const [i, option] of q.options.entries()) {
+        if (i === q.correctIndex) continue;
+        assert.ok(
+          !played.get("2:2024")!.includes(option),
+          `${option} did play, so it is a second correct answer`
+        );
+      }
+    }
+  });
+
+  test("produces nothing when there are too few clubs that did not take part", () => {
+    const played = new Map([["2:2024", ["Arsenal", "Barcelona", "Inter", "Real Madrid"]]]);
+    const out = generateCompetitionParticipation(played, meta, ["Arsenal", "Barcelona", "Inter", "Real Madrid"]);
+    assert.deepEqual(out, []);
   });
 });

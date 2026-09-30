@@ -443,6 +443,8 @@ export class ApiFootballProvider implements FootballDataProvider {
       const home = (teams.home as Record<string, unknown>) ?? {};
       const away = (teams.away as Record<string, unknown>) ?? {};
       const status = (fixture.status as Record<string, unknown>) ?? {};
+      const score = (entry.score as Record<string, unknown>) ?? {};
+      const penalty = (score.penalty as Record<string, unknown>) ?? {};
       return {
         provider: PROVIDER_NAME,
         externalId: toStringId(fixture.id),
@@ -453,8 +455,12 @@ export class ApiFootballProvider implements FootballDataProvider {
         venue: this.normalizeVenue(fixture.venue as Record<string, unknown>),
         homeTeamExternalId: home.id ? toStringId(home.id) : null,
         awayTeamExternalId: away.id ? toStringId(away.id) : null,
+        homeTeamName: (home.name as string) ?? null,
+        awayTeamName: (away.name as string) ?? null,
         homeGoals: toNumberOrNull(goals.home),
         awayGoals: toNumberOrNull(goals.away),
+        homePenalties: toNumberOrNull(penalty.home),
+        awayPenalties: toNumberOrNull(penalty.away),
         status: (status.short as string) ?? null,
       };
     });

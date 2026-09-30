@@ -126,8 +126,10 @@ export interface PlayerTeamRow {
   nationality: string | null;
   team_id: number;
   team_name: string;
+  /** The *club's* country, not the player's. */
   country_name: string | null;
   season: number | null;
+  start_date?: string | null;
 }
 
 /** A player's scoring record in one competition season, from player_season_stats. */
@@ -254,6 +256,27 @@ export function classifyDifficulty(input: {
   return ladder[Math.max(0, Math.min(ladder.length - 1, index))];
 }
 
+/**
+ * The topical category a competition's questions belong in.
+ *
+ * The app exposes Champions League and World Cup as their own filters, so a UCL
+ * final tagged TITLES is findable only by someone browsing trophies in general —
+ * the specialist mode they picked stays empty however much UCL data arrives.
+ */
+export function categoryForCompetition(localCode: string | null): string {
+  switch (localCode) {
+    case "UCL":
+      return "CHAMPIONS_LEAGUE";
+    case "WORLD_CUP":
+      return "WORLD_CUP";
+    case "EURO":
+    case "COPA_AMERICA":
+      return "NATIONAL_TEAMS";
+    default:
+      return "TITLES";
+  }
+}
+
 function scopesForCompetition(localCode: string | null, countryName: string | null) {
   const scopes: KnowledgeQuestion["scopes"] = [];
   if (localCode) scopes.push({ type: "COMPETITION", value: localCode });
@@ -311,7 +334,7 @@ export function generateCompetitionWinners(
       out.push({
         semanticKey: `KB_COMPETITION_WINNER:${row.competition_id}:${row.season}`,
         mode: "CLASSIC",
-        category: "TITLES",
+        category: categoryForCompetition(row.competition_local_code),
         difficulty: classifyDifficulty({
           resource: "winner",
           season: row.season,
@@ -354,11 +377,37 @@ export function notableClubNames(teams: TeamRow[]): Set<string> {
   return new Set(teams.filter((t) => t.competition_priority !== null).map((t) => display(t)));
 }
 
+/**
+ * Cup competitions a club has played in, keyed by club name.
+ *
+ * Used to put a career question in scope for the competitions its clubs
+ * contested. This is a scope, never a category: "which club did X join from
+ * Real Madrid" is a transfer question, and calling it a Champions League question
+ * would be relabelling. But someone who picked a Champions League quiz is asking
+ * about that world, and a move between two clubs who played in it belongs there —
+ * which is the only way the filter reaches beyond the handful of finals.
+ */
+export type CupScopesByClub = Map<string, string[]>;
+
+function cupScopesFor(
+  cupScopes: CupScopesByClub | undefined,
+  ...clubNames: (string | null | undefined)[]
+): KnowledgeQuestion["scopes"] {
+  if (!cupScopes) return [];
+  const codes = new Set<string>();
+  for (const name of clubNames) {
+    if (!name) continue;
+    for (const code of cupScopes.get(name) ?? []) codes.add(code);
+  }
+  return [...codes].sort().map((value) => ({ type: "COMPETITION" as const, value }));
+}
+
 /** "Which club did X move to from Y?" — from player_transfers. */
 export function generateTransferQuestions(
   transfers: TransferRow[],
   teamPool: TeamRow[],
-  notable: Set<string> = new Set()
+  notable: Set<string> = new Set(),
+  cupScopes?: CupScopesByClub
 ): KnowledgeQuestion[] {
   const out: KnowledgeQuestion[] = [];
   const isNotable = (name: string) => notable.size === 0 || notable.has(name);
@@ -399,7 +448,10 @@ export function generateTransferQuestions(
       }.`,
       options: [transfer.to_team_name, ...distractors],
       correctIndex: 0,
-      scopes: [{ type: "REGION", value: "WORLD" }],
+      scopes: [
+        { type: "REGION", value: "WORLD" },
+        ...cupScopesFor(cupScopes, transfer.from_team_name, transfer.to_team_name),
+      ],
       sourceLabel: "מסד נתוני העברות מיובא",
       freeText: true,
       canonicalAnswer: transfer.to_team_name,
@@ -413,7 +465,8 @@ export function generateTransferQuestions(
 /** "Which player's career path is this?" — from ordered transfer chains. */
 export function generateCareerPaths(
   transfersByPlayer: Map<number, TransferRow[]>,
-  playerPool: PlayerRow[]
+  playerPool: PlayerRow[],
+  cupScopes?: CupScopesByClub
 ): KnowledgeQuestion[] {
   const out: KnowledgeQuestion[] = [];
   const playerNames = playerPool.map((p) => display(p));
@@ -449,7 +502,8 @@ export function generateCareerPaths(
       clues: path,
       options: [playerName, ...distractors],
       correctIndex: 0,
-      scopes: [{ type: "REGION", value: "WORLD" }],
+      // A career that passed through the competition belongs in its quiz.
+      scopes: [{ type: "REGION", value: "WORLD" }, ...cupScopesFor(cupScopes, ...path)],
       sourceLabel: "מסד נתוני העברות מיובא",
       freeText: true,
       canonicalAnswer: playerName,
@@ -686,6 +740,10 @@ interface CareerIndex {
   playersByClub: Map<number, number[]>;
   playerById: Map<number, PlayerTeamRow>;
   clubNameById: Map<number, string>;
+  /** Countries a player has a club in, where the club's country is known. */
+  countriesByPlayer: Map<number, Set<string>>;
+  /** Earliest recorded year at any club — a rough career start. */
+  firstYearByPlayer: Map<number, number>;
 }
 
 export function indexCareers(rows: PlayerTeamRow[]): CareerIndex {
@@ -693,10 +751,23 @@ export function indexCareers(rows: PlayerTeamRow[]): CareerIndex {
   const playersByClub = new Map<number, number[]>();
   const playerById = new Map<number, PlayerTeamRow>();
   const clubNameById = new Map<number, string>();
+  const countriesByPlayer = new Map<number, Set<string>>();
+  const firstYearByPlayer = new Map<number, number>();
 
   for (const row of rows) {
     if (!row.player_name || !row.team_name) continue;
     clubNameById.set(row.team_id, row.team_name);
+
+    if (row.country_name) {
+      const countries = countriesByPlayer.get(row.player_id) ?? new Set<string>();
+      countries.add(row.country_name);
+      countriesByPlayer.set(row.player_id, countries);
+    }
+    const year = row.season ?? (row.start_date ? Number(row.start_date.slice(0, 4)) : null);
+    if (year && Number.isFinite(year)) {
+      const existing = firstYearByPlayer.get(row.player_id);
+      if (existing === undefined || year < existing) firstYearByPlayer.set(row.player_id, year);
+    }
     if (!playerById.has(row.player_id)) playerById.set(row.player_id, row);
     else {
       // Keep whichever row actually carries attributes; a stub created by a
@@ -713,7 +784,7 @@ export function indexCareers(rows: PlayerTeamRow[]): CareerIndex {
       playersByClub.set(row.team_id, [...(playersByClub.get(row.team_id) ?? []), row.player_id]);
     }
   }
-  return { clubsByPlayer, playersByClub, playerById, clubNameById };
+  return { clubsByPlayer, playersByClub, playerById, clubNameById, countriesByPlayer, firstYearByPlayer };
 }
 
 /**
@@ -729,7 +800,7 @@ export function indexCareers(rows: PlayerTeamRow[]): CareerIndex {
  */
 export function generateClubConnections(
   careers: CareerIndex,
-  options: { maxPerClub?: number; notable?: Set<string> } = {}
+  options: { maxPerClub?: number; notable?: Set<string>; cupScopes?: CupScopesByClub } = {}
 ): KnowledgeQuestion[] {
   const out: KnowledgeQuestion[] = [];
   const maxPerClub = options.maxPerClub ?? 6;
@@ -788,7 +859,10 @@ export function generateClubConnections(
           clues: [a.player_name, b.player_name],
           options: [clubName, ...distractors],
           correctIndex: 0,
-          scopes: [{ type: "REGION", value: "WORLD" }],
+          scopes: [
+            { type: "REGION", value: "WORLD" },
+            ...cupScopesFor(options.cupScopes, clubName),
+          ],
           sourceLabel: "מסד נתוני קריירות מיובא",
           freeText: true,
           canonicalAnswer: clubName,
@@ -818,9 +892,35 @@ export function generateClubConnections(
  */
 export function generateWhoAmI(careers: CareerIndex): KnowledgeQuestion[] {
   const out: KnowledgeQuestion[] = [];
-  const candidates = [...careers.playerById.values()].filter(
-    (p) => p.position && (careers.clubsByPlayer.get(p.player_id)?.size ?? 0) >= 3
-  );
+
+  /**
+   * What is known about a player beyond the bare list of their clubs.
+   *
+   * At least one of these is required. Without that rule the puzzle degenerates
+   * into "my clubs were A, B and C" — which is Career Path wearing a different
+   * hat, and the bank gains a near-duplicate of a question it already has rather
+   * than a new one. Requiring *position specifically*, as this once did, was the
+   * opposite failure: the provider's squad feed carries no nationality at all and
+   * a position for only a few hundred players, so 46 of 1,675 eligible careers
+   * qualified and the mode stayed empty.
+   */
+  const attributesOf = (p: PlayerTeamRow) => {
+    const countries = [...(careers.countriesByPlayer.get(p.player_id) ?? [])].sort();
+    const firstYear = careers.firstYearByPlayer.get(p.player_id);
+    return {
+      position: p.position ?? null,
+      nationality: p.nationality ?? null,
+      // Two or more is the interesting fact — one country is just "played at home".
+      countries: countries.length >= 2 ? countries : [],
+      firstYear: firstYear ?? null,
+    };
+  };
+
+  const candidates = [...careers.playerById.values()].filter((p) => {
+    if ((careers.clubsByPlayer.get(p.player_id)?.size ?? 0) < 3) return false;
+    const a = attributesOf(p);
+    return Boolean(a.position || a.nationality || a.countries.length > 0);
+  });
   if (candidates.length < 4) return out;
 
   const namesByPosition = new Map<string, string[]>();
@@ -828,38 +928,58 @@ export function generateWhoAmI(careers: CareerIndex): KnowledgeQuestion[] {
     if (!p.position) continue;
     namesByPosition.set(p.position, [...(namesByPosition.get(p.position) ?? []), p.player_name]);
   }
+  // Fallback distractor pool: players with a career of comparable length, so the
+  // options are alike even when nobody's position is on record.
+  const namesWithCareers = candidates.map((p) => p.player_name);
 
   for (const player of candidates) {
     const clubIds = [...careers.clubsByPlayer.get(player.player_id)!];
     const clubNames = clubIds.map((id) => careers.clubNameById.get(id)!).filter(Boolean).sort();
     if (clubNames.length < 3) continue;
+    const attrs = attributesOf(player);
 
-    const ambiguous = candidates.some(
-      (other) =>
-        other.player_id !== player.player_id &&
-        other.position === player.position &&
-        (player.nationality ? other.nationality === player.nationality : true) &&
-        clubIds.every((id) => careers.clubsByPlayer.get(other.player_id)?.has(id))
-    );
+    // The clue set must single this player out. Anyone matching every stated
+    // attribute *and* holding all the listed clubs is a second valid answer.
+    const ambiguous = candidates.some((other) => {
+      if (other.player_id === player.player_id) return false;
+      const theirs = attributesOf(other);
+      if (attrs.position && theirs.position !== attrs.position) return false;
+      if (attrs.nationality && theirs.nationality !== attrs.nationality) return false;
+      if (attrs.countries.length > 0) {
+        const theirCountries = new Set(theirs.countries);
+        if (!attrs.countries.every((c) => theirCountries.has(c))) return false;
+      }
+      return clubIds.every((id) => careers.clubsByPlayer.get(other.player_id)?.has(id));
+    });
     if (ambiguous) continue;
 
-    // Same-position rivals are the believable distractors.
-    const pool = (namesByPosition.get(player.position!) ?? []).filter((n) => n !== player.player_name);
+    const pool = (
+      attrs.position ? (namesByPosition.get(attrs.position) ?? []) : namesWithCareers
+    ).filter((n) => n !== player.player_name);
     const distractors = pickDistinct(pool, 3, `KB_WHO_AM_I:${player.player_id}`);
     if (distractors.length < 3) continue;
+
+    const clues = [
+      ...(attrs.nationality ? [`הלאום שלי: ${attrs.nationality}`] : []),
+      ...(attrs.position ? [`העמדה שלי: ${attrs.position}`] : []),
+      ...(attrs.countries.length > 0 ? [`שיחקתי בליגות של: ${attrs.countries.join(", ")}`] : []),
+      ...(attrs.firstYear ? [`העונה הראשונה שלי במסד: ${attrs.firstYear}`] : []),
+      `סך המועדונים בקריירה שלי: ${clubNames.length}`,
+      `בין המועדונים שלי: ${clubNames.slice(0, 4).join(", ")}`,
+    ];
 
     out.push({
       semanticKey: `KB_WHO_AM_I:${player.player_id}`,
       mode: "WHO_AM_I",
       category: "WHO_AM_I",
-      difficulty: classifyDifficulty({ resource: "career", subjectProminence: 2 }),
+      difficulty: classifyDifficulty({
+        resource: "career",
+        // A career we know a lot about belongs to a more prominent player.
+        subjectProminence: clubNames.length >= 5 ? 2 : 3,
+      }),
       questionHe: "מי אני?",
       explanationHe: `התשובה היא ${player.player_name}.`,
-      clues: [
-        ...(player.nationality ? [`הלאום שלי: ${player.nationality}`] : []),
-        `העמדה שלי: ${player.position}`,
-        `שיחקתי ב: ${clubNames.slice(0, 5).join(", ")}`,
-      ],
+      clues,
       options: [player.player_name, ...distractors],
       correctIndex: 0,
       scopes: [{ type: "REGION", value: "WORLD" }],
@@ -868,8 +988,8 @@ export function generateWhoAmI(careers: CareerIndex): KnowledgeQuestion[] {
       canonicalAnswer: player.player_name,
       aliases: derivePlayerAliases(player.player_name),
       hints: [
-        ...(player.nationality ? [`הלאום: ${player.nationality}`] : []),
-        `העמדה: ${player.position}`,
+        ...(attrs.nationality ? [`הלאום: ${attrs.nationality}`] : []),
+        ...(attrs.position ? [`העמדה: ${attrs.position}`] : []),
         `מספר המועדונים בקריירה: ${clubNames.length}`,
       ],
     });
@@ -1023,7 +1143,8 @@ export function generateGuessTheClub(teams: TeamRow[]): KnowledgeQuestion[] {
 export function generatePreviousClubQuestions(
   transfers: TransferRow[],
   teamPool: TeamRow[],
-  notable: Set<string> = new Set()
+  notable: Set<string> = new Set(),
+  cupScopes?: CupScopesByClub
 ): KnowledgeQuestion[] {
   const out: KnowledgeQuestion[] = [];
   const isNotable = (name: string) => notable.size === 0 || notable.has(name);
@@ -1058,7 +1179,10 @@ export function generatePreviousClubQuestions(
       }.`,
       options: [transfer.from_team_name, ...distractors],
       correctIndex: 0,
-      scopes: [{ type: "REGION", value: "WORLD" }],
+      scopes: [
+        { type: "REGION", value: "WORLD" },
+        ...cupScopesFor(cupScopes, transfer.from_team_name, transfer.to_team_name),
+      ],
       sourceLabel: "מסד נתוני העברות מיובא",
       freeText: true,
       canonicalAnswer: transfer.from_team_name,
@@ -1123,6 +1247,283 @@ export function generateTopScorerQuestions(stats: SeasonStatRow[]): KnowledgeQue
       aliases: derivePlayerAliases(row.player_name),
       hints: [`התחרות: ${row.competition_name}`, `מספר השערים: ${best}`],
     });
+  }
+  return out;
+}
+
+/** One stored fixture, as the cup generators read it. */
+export interface FixtureRow {
+  id: number;
+  competition_id: number;
+  competition_name: string;
+  competition_local_code: string | null;
+  competition_priority: number | null;
+  season: number;
+  season_label?: string | null;
+  round: string | null;
+  home_team_id: number | null;
+  away_team_id: number | null;
+  home_team_name: string | null;
+  away_team_name: string | null;
+  home_goals: number | null;
+  away_goals: number | null;
+  home_penalties: number | null;
+  away_penalties: number | null;
+  status: string | null;
+}
+
+const FINISHED = new Set(["FT", "AET", "PEN"]);
+const isFinal = (round: string | null) => (round ?? "").trim().toLowerCase() === "final";
+
+/** How a finished tie reads, shootout included. */
+function scoreText(f: FixtureRow): string | null {
+  if (f.home_goals === null || f.away_goals === null) return null;
+  const base = `${f.home_goals}-${f.away_goals}`;
+  if (f.home_penalties !== null && f.away_penalties !== null) {
+    return `${base} (${f.home_penalties}-${f.away_penalties} בפנדלים)`;
+  }
+  return base;
+}
+
+/**
+ * Cup finals — who contested one, and how it finished.
+ *
+ * "Who won" is deliberately absent here: the final already produced a
+ * competition_winners row at import, so generateCompetitionWinners asks that and
+ * these add what the fixture knows beyond the trophy. Distractors come from the
+ * clubs that actually played in that competition and season, which is the pool a
+ * plausible wrong answer lives in.
+ */
+export function generateCupFinalQuestions(
+  finals: FixtureRow[],
+  participantsByCompetitionSeason: Map<string, string[]>
+): KnowledgeQuestion[] {
+  const out: KnowledgeQuestion[] = [];
+
+  for (const f of finals) {
+    if (!isFinal(f.round) || !FINISHED.has((f.status ?? "").toUpperCase())) continue;
+    if (!f.home_team_name || !f.away_team_name) continue;
+
+    const label = f.season_label ?? String(f.season);
+    const category = categoryForCompetition(f.competition_local_code);
+    const scopes = scopesForCompetition(f.competition_local_code, null);
+    const pool = (participantsByCompetitionSeason.get(`${f.competition_id}:${f.season}`) ?? []).filter(
+      (name) => name !== f.home_team_name && name !== f.away_team_name
+    );
+
+    // Which two sides reached the final. Asked from one side so the answer is a
+    // single club: "who did X face in the final".
+    for (const [subject, opponent] of [
+      [f.home_team_name, f.away_team_name],
+      [f.away_team_name, f.home_team_name],
+    ]) {
+      const distractors = pickDistinct(pool, 3, `KB_CUP_FINALIST:${f.id}:${subject}`);
+      if (distractors.length < 3) continue;
+      out.push({
+        semanticKey: `KB_CUP_FINAL_OPPONENT:${f.id}:${subject}`,
+        mode: "CLASSIC",
+        category,
+        difficulty: classifyDifficulty({
+          resource: "winner",
+          season: f.season,
+          competitionPriority: f.competition_priority,
+        }),
+        questionHe: `נגד מי שיחקה ${subject} בגמר ${f.competition_name} ${label}?`,
+        explanationHe: `${f.home_team_name} פגשה את ${f.away_team_name} בגמר ${f.competition_name} ${label}.`,
+        options: [opponent, ...distractors],
+        correctIndex: 0,
+        scopes,
+        sourceLabel: "מסד נתוני משחקים מיובא",
+        freeText: true,
+        canonicalAnswer: opponent,
+        aliases: [opponent],
+        hints: [`התחרות: ${f.competition_name}`, `העונה: ${label}`],
+      });
+    }
+
+    // The scoreline. Multiple choice only — a free-text score invites a dozen
+    // spellings of the same answer.
+    const actual = scoreText(f);
+    if (actual) {
+      const alternatives = ["1-0", "2-0", "2-1", "3-1", "1-1", "3-0", "4-1", "0-0", "3-2"].filter(
+        (s) => s !== actual
+      );
+      const distractors = pickDistinct(alternatives, 3, `KB_CUP_FINAL_SCORE:${f.id}`);
+      if (distractors.length === 3) {
+        out.push({
+          semanticKey: `KB_CUP_FINAL_SCORE:${f.id}`,
+          mode: "CLASSIC",
+          category,
+          difficulty: classifyDifficulty({
+            resource: "winner",
+            season: f.season,
+            competitionPriority: f.competition_priority,
+            subjectProminence: 3,
+          }),
+          questionHe: `מה היה התוצאה בגמר ${f.competition_name} ${label} בין ${f.home_team_name} ל${f.away_team_name}?`,
+          explanationHe: `הגמר הסתיים ${actual}.`,
+          options: [actual, ...distractors],
+          correctIndex: 0,
+          scopes,
+          sourceLabel: "מסד נתוני משחקים מיובא",
+          freeText: false,
+          hints: [`התחרות: ${f.competition_name}`, `העונה: ${label}`],
+        });
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * "Who did the eventual finalist beat in the semi-final?"
+ *
+ * The result is read from the *next* round's team sheet rather than from the
+ * semi-final scoreline, and that matters: a Champions League semi-final is two
+ * legs, so neither leg's score settles the tie, and an aggregate would still have
+ * to account for a shootout. But a club appearing in the final necessarily won its
+ * semi — so the loser is simply the other club in that club's semi-final fixtures.
+ * No inference about the football, only about the bracket.
+ */
+export function generateKnockoutProgressionQuestions(
+  fixtures: FixtureRow[],
+  participantsByCompetitionSeason: Map<string, string[]>
+): KnowledgeQuestion[] {
+  const out: KnowledgeQuestion[] = [];
+
+  const byCompetitionSeason = new Map<string, FixtureRow[]>();
+  for (const f of fixtures) {
+    const key = `${f.competition_id}:${f.season}`;
+    byCompetitionSeason.set(key, [...(byCompetitionSeason.get(key) ?? []), f]);
+  }
+
+  // Each earlier round is resolved by who turned up in the later one.
+  const LADDER: [string, string][] = [
+    ["semi-finals", "final"],
+    ["quarter-finals", "semi-finals"],
+    ["round of 16", "quarter-finals"],
+  ];
+
+  for (const [key, rows] of byCompetitionSeason) {
+    const normalized = (round: string | null) => (round ?? "").trim().toLowerCase();
+    const pool = participantsByCompetitionSeason.get(key) ?? [];
+
+    for (const [earlier, later] of LADDER) {
+      const laterFixtures = rows.filter((f) => normalized(f.round) === later);
+      const earlierFixtures = rows.filter((f) => normalized(f.round) === earlier);
+      if (laterFixtures.length === 0 || earlierFixtures.length === 0) continue;
+
+      // Everyone who played the later round therefore won the earlier one.
+      const advanced = new Set<number>();
+      for (const f of laterFixtures) {
+        if (f.home_team_id) advanced.add(f.home_team_id);
+        if (f.away_team_id) advanced.add(f.away_team_id);
+      }
+
+      for (const winnerId of advanced) {
+        const tie = earlierFixtures.filter(
+          (f) => f.home_team_id === winnerId || f.away_team_id === winnerId
+        );
+        if (tie.length === 0) continue;
+
+        const opponents = new Set(
+          tie.map((f) => (f.home_team_id === winnerId ? f.away_team_name : f.home_team_name)).filter(Boolean)
+        );
+        // Two legs name the same opponent twice; anything else is not a clean tie.
+        if (opponents.size !== 1) continue;
+        const opponentName = [...opponents][0]!;
+
+        const winnerName =
+          tie[0].home_team_id === winnerId ? tie[0].home_team_name : tie[0].away_team_name;
+        if (!winnerName || winnerName === opponentName) continue;
+
+        const first = tie[0];
+        const label = first.season_label ?? String(first.season);
+        const distractors = pickDistinct(
+          pool.filter((n) => n !== winnerName && n !== opponentName),
+          3,
+          `KB_KO_BEAT:${key}:${earlier}:${winnerId}`
+        );
+        if (distractors.length < 3) continue;
+
+        const roundHe = earlier === "semi-finals" ? "חצי הגמר" : "רבע הגמר";
+        out.push({
+          semanticKey: `KB_KNOCKOUT_BEAT:${first.competition_id}:${first.season}:${earlier}:${winnerId}`,
+          mode: "CLASSIC",
+          category: categoryForCompetition(first.competition_local_code),
+          difficulty: classifyDifficulty({
+            resource: "winner",
+            season: first.season,
+            competitionPriority: first.competition_priority,
+            subjectProminence: 3,
+          }),
+          questionHe: `את מי ניצחה ${winnerName} ב${roundHe} של ${first.competition_name} ${label}?`,
+          explanationHe: `${winnerName} עלתה על ${opponentName} ב${roundHe} של ${first.competition_name} ${label}.`,
+          options: [opponentName, ...distractors],
+          correctIndex: 0,
+          scopes: scopesForCompetition(first.competition_local_code, null),
+          sourceLabel: "מסד נתוני משחקים מיובא",
+          freeText: true,
+          canonicalAnswer: opponentName,
+          aliases: [opponentName],
+          hints: [`התחרות: ${first.competition_name}`, `העונה: ${label}`],
+        });
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * "Which of these clubs played in the 2024 Champions League?"
+ *
+ * Sound only where the competition's whole fixture list is stored, because the
+ * question turns on three clubs *not* having taken part. With every fixture of
+ * that season present, a club absent from its team sheet demonstrably did not
+ * play; with a partial import the same absence means nothing, so callers pass
+ * only the competition-seasons they imported in full.
+ */
+export function generateCompetitionParticipation(
+  participantsByCompetitionSeason: Map<string, string[]>,
+  meta: Map<string, { competitionId: number; competitionName: string; localCode: string | null; priority: number | null; season: number; seasonLabel: string }>,
+  notableClubs: string[],
+  options: { maxPerCompetitionSeason?: number } = {}
+): KnowledgeQuestion[] {
+  const out: KnowledgeQuestion[] = [];
+  const cap = options.maxPerCompetitionSeason ?? 40;
+
+  for (const [key, participants] of participantsByCompetitionSeason) {
+    const info = meta.get(key);
+    if (!info || participants.length < 4) continue;
+
+    const played = new Set(participants);
+    const absent = notableClubs.filter((name) => !played.has(name));
+    if (absent.length < 3) continue;
+
+    for (const [index, subject] of participants.slice(0, cap).entries()) {
+      const distractors = pickDistinct(absent, 3, `KB_PARTICIPATION:${key}:${index}`);
+      if (distractors.length < 3) continue;
+
+      out.push({
+        semanticKey: `KB_COMPETITION_PARTICIPATION:${info.competitionId}:${info.season}:${subject}`,
+        mode: "CLASSIC",
+        category: categoryForCompetition(info.localCode),
+        difficulty: classifyDifficulty({
+          resource: "winner",
+          season: info.season,
+          competitionPriority: info.priority,
+          subjectProminence: 3,
+        }),
+        questionHe: `איזו מהקבוצות האלה השתתפה ב${info.competitionName} ${info.seasonLabel}?`,
+        explanationHe: `${subject} השתתפה ב${info.competitionName} ${info.seasonLabel}.`,
+        options: [subject, ...distractors],
+        correctIndex: 0,
+        scopes: scopesForCompetition(info.localCode, null),
+        sourceLabel: "מסד נתוני משחקים מיובא",
+        freeText: false,
+        hints: [`התחרות: ${info.competitionName}`, `העונה: ${info.seasonLabel}`],
+      });
+    }
   }
   return out;
 }

@@ -317,24 +317,106 @@ export function upsertCoaches(coaches: NormalizedCoach[]): string[] {
   return statements;
 }
 
+/**
+ * Records every cup champion that the stored finals settle.
+ *
+ * A cup's champion cannot come from its /standings, which returns group tables —
+ * rank 1 there is a group winner, not a trophy. It comes from the final, and this
+ * reads the finals already in the database rather than only the ones in the batch
+ * being imported, so it doubles as a backfill after a schema change and costs no
+ * API request either way.
+ *
+ * Three things it refuses to guess at:
+ *
+ *  * Penalties outrank goals. The 2022 World Cup final finished 3-3; comparing
+ *    goals finds no winner and Argentina's 4-2 shootout win is invisible.
+ *  * A level final with no shootout on record yields nothing, rather than a coin
+ *    toss between two sides.
+ *  * Only a round named exactly "Final" counts. "3rd Place Final" contains the
+ *    word and settles no trophy, and a two-legged semi-final is not one either.
+ */
+export function deriveCupWinnersFromFinals(): string {
+  const shootoutDecided = `f.home_penalties IS NOT NULL AND f.away_penalties IS NOT NULL AND f.home_penalties <> f.away_penalties`;
+  const goalsDecided = `f.home_goals IS NOT NULL AND f.away_goals IS NOT NULL AND f.home_goals <> f.away_goals`;
+  const pick = (better: "home" | "away") => `
+    CASE WHEN ${shootoutDecided}
+           THEN CASE WHEN f.home_penalties > f.away_penalties THEN f.${better}_team_id ELSE f.${better === "home" ? "away" : "home"}_team_id END
+         WHEN ${goalsDecided}
+           THEN CASE WHEN f.home_goals > f.away_goals THEN f.${better}_team_id ELSE f.${better === "home" ? "away" : "home"}_team_id END
+    END`;
+
+  return `INSERT INTO competition_winners (competition_id, season, team_id, runner_up_team_id, derived_from)
+          SELECT competition_id, season, winner, runner_up, 'final-fixture' FROM (
+            SELECT f.competition_id AS competition_id, f.season AS season,
+                   ${pick("home")} AS winner,
+                   ${pick("away")} AS runner_up
+              FROM fixtures f
+             WHERE LOWER(TRIM(f.round)) = 'final'
+               AND UPPER(COALESCE(f.status,'')) IN ('FT','AET','PEN')
+               AND f.competition_id IS NOT NULL AND f.season IS NOT NULL
+               AND f.home_team_id IS NOT NULL AND f.away_team_id IS NOT NULL
+          ) settled
+          WHERE winner IS NOT NULL
+          ON CONFLICT(competition_id, season) DO UPDATE SET team_id = excluded.team_id,
+            runner_up_team_id = excluded.runner_up_team_id, derived_from = excluded.derived_from
+                WHERE team_id IS NOT excluded.team_id OR runner_up_team_id IS NOT excluded.runner_up_team_id OR derived_from IS NOT excluded.derived_from;`;
+}
+
 export function upsertFixtures(fixtures: NormalizedFixture[]): string[] {
   const statements: string[] = [];
+  // A cup fixture list is the only place many of its clubs appear. One request
+  // for the Champions League names every side that played in it, most of which
+  // no domestic league table we hold would have introduced.
+  const stubbedTeams = new Set<string>();
+
   for (const f of fixtures) {
     if (!f.externalId) continue;
     if (f.venue) statements.push(upsertVenue(f.venue));
+
+    for (const side of [
+      { id: f.homeTeamExternalId, name: f.homeTeamName },
+      { id: f.awayTeamExternalId, name: f.awayTeamName },
+    ]) {
+      if (!side.id || !side.name || stubbedTeams.has(side.id)) continue;
+      stubbedTeams.add(side.id);
+      statements.push(teamStub(f.provider, side.id, side.name));
+    }
+
     statements.push(
       `INSERT INTO fixtures (provider, external_id, competition_id, season, round, kickoff, venue_id,
-                             home_team_id, away_team_id, home_goals, away_goals, status)
+                             home_team_id, away_team_id, home_goals, away_goals, home_penalties, away_penalties, status)
        VALUES (${sqlValue(f.provider)}, ${sqlValue(f.externalId)}, ${competitionRef(f.provider, f.competitionExternalId)},
                ${sqlValue(f.season)}, ${sqlValue(f.round)}, ${sqlValue(f.kickoff)},
                ${venueRef(f.provider, f.venue?.externalId)}, ${teamRef(f.provider, f.homeTeamExternalId)},
                ${teamRef(f.provider, f.awayTeamExternalId)}, ${sqlValue(f.homeGoals)}, ${sqlValue(f.awayGoals)},
-               ${sqlValue(f.status)})
+               ${sqlValue(f.homePenalties)}, ${sqlValue(f.awayPenalties)}, ${sqlValue(f.status)})
        ON CONFLICT(provider, external_id) DO UPDATE SET home_goals = excluded.home_goals, away_goals = excluded.away_goals,
+         home_penalties = excluded.home_penalties, away_penalties = excluded.away_penalties,
          status = excluded.status, round = excluded.round
-                WHERE home_goals IS NOT excluded.home_goals OR away_goals IS NOT excluded.away_goals OR status IS NOT excluded.status OR round IS NOT excluded.round;`
+                WHERE home_goals IS NOT excluded.home_goals OR away_goals IS NOT excluded.away_goals OR status IS NOT excluded.status OR round IS NOT excluded.round
+                   OR home_penalties IS NOT excluded.home_penalties OR away_penalties IS NOT excluded.away_penalties;`
     );
+
+    // Playing a fixture in a competition is proof of participation in it, which
+    // is what "which of these clubs played in the 2024 Champions League" rests
+    // on — and it makes those clubs askable subjects everywhere else.
+    if (f.competitionExternalId && f.season != null) {
+      for (const teamExternalId of [f.homeTeamExternalId, f.awayTeamExternalId]) {
+        if (!teamExternalId) continue;
+        statements.push(
+          `INSERT OR IGNORE INTO team_seasons (team_id, competition_id, season)
+           SELECT t.id, c.id, ${sqlValue(f.season)}
+             FROM teams t, competitions c
+            WHERE t.provider = ${sqlValue(f.provider)} AND t.external_id = ${sqlValue(teamExternalId)}
+              AND c.provider = ${sqlValue(f.provider)} AND c.external_id = ${sqlValue(f.competitionExternalId)};`
+        );
+      }
+    }
   }
+
+  // Runs once per batch rather than per fixture: it is a set operation over the
+  // finals now in the database.
+  if (statements.length > 0) statements.push(deriveCupWinnersFromFinals());
   return statements;
 }
 

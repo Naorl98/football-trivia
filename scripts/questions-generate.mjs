@@ -13,8 +13,11 @@ import { chunkByCost, maxWritesPerRun, planWrites } from "../src/server/sync/wri
 import {
   generateCareerPaths,
   generateClubConnections,
+  generateCompetitionParticipation,
   generateCompetitionWinners,
+  generateCupFinalQuestions,
   generateDidNotPlayFor,
+  generateKnockoutProgressionQuestions,
   generateGuessTheClub,
   generateManagerQuestions,
   generatePreviousClubQuestions,
@@ -112,10 +115,46 @@ const trophies = await db.query(`
 // rather than transfers alone.
 const playerTeams = await db.query(`
   SELECT pt.player_id, p.name AS player_name, p.position, p.nationality,
-         pt.team_id, t.name AS team_name, t.country_name, pt.season
+         pt.team_id, t.name AS team_name, t.country_name, pt.season, pt.start_date
     FROM player_teams pt
     JOIN players p ON p.id = pt.player_id
     JOIN teams t ON t.id = pt.team_id
+`);
+
+// Cup fixtures. Only the rounds the generators reason about are read: a group or
+// league phase is hundreds of rows that settle nothing on their own.
+const cupFixtures = await db.query(`
+  SELECT f.id, f.competition_id, c.name AS competition_name, c.local_code AS competition_local_code,
+         c.priority AS competition_priority, f.season, f.round,
+         f.home_team_id, f.away_team_id, h.name AS home_team_name, a.name AS away_team_name,
+         f.home_goals, f.away_goals, f.home_penalties, f.away_penalties, f.status,
+         cs.start_date, cs.end_date
+    FROM fixtures f
+    JOIN competitions c ON c.id = f.competition_id
+    LEFT JOIN teams h ON h.id = f.home_team_id
+    LEFT JOIN teams a ON a.id = f.away_team_id
+    LEFT JOIN competition_seasons cs ON cs.competition_id = f.competition_id AND cs.season = f.season
+   WHERE LOWER(TRIM(f.round)) IN ('final','semi-finals','quarter-finals','round of 16')
+`);
+
+/**
+ * Who took part in each competition-season, and for which of them the fixture
+ * list is complete enough to argue from absence.
+ *
+ * Participation questions turn on three clubs *not* having played, so they are
+ * only offered for a competition-season whose fixtures were imported whole.
+ */
+const participationRows = await db.query(`
+  SELECT ts.competition_id, ts.season, t.name AS team_name,
+         c.name AS competition_name, c.local_code AS competition_local_code, c.priority AS competition_priority,
+         cs.start_date, cs.end_date,
+         (SELECT COUNT(*) FROM fixtures f
+           WHERE f.competition_id = ts.competition_id AND f.season = ts.season) AS fixture_count
+    FROM team_seasons ts
+    JOIN teams t ON t.id = ts.team_id
+    JOIN competitions c ON c.id = ts.competition_id
+    LEFT JOIN competition_seasons cs ON cs.competition_id = ts.competition_id AND cs.season = ts.season
+   WHERE c.type = 'CUP'
 `);
 
 const coachSpells = await db.query(`
@@ -142,8 +181,32 @@ for (const row of seasonStats) {
   row.season_label = seasonLabel(Number(row.season), row.start_date, row.end_date);
 }
 
-for (const rows of [teams, winners, transfers, players, trophies, playerTeams, coachSpells, seasonStats]) {
+for (const rows of [teams, winners, transfers, players, trophies, playerTeams, coachSpells, seasonStats, cupFixtures, participationRows]) {
   tidyNames(rows);
+}
+for (const row of cupFixtures) {
+  row.season_label = seasonLabel(Number(row.season), row.start_date, row.end_date);
+}
+
+// Grouped by competition-season. Only seasons with a stored fixture list get
+// participation questions, because those are the only ones where a club's absence
+// from the team sheet actually means it did not play.
+const cupParticipants = new Map();
+const cupSeasonMeta = new Map();
+for (const row of participationRows) {
+  if (Number(row.fixture_count) === 0) continue;
+  const key = `${row.competition_id}:${row.season}`;
+  cupParticipants.set(key, [...(cupParticipants.get(key) ?? []), String(row.team_name)]);
+  if (!cupSeasonMeta.has(key)) {
+    cupSeasonMeta.set(key, {
+      competitionId: Number(row.competition_id),
+      competitionName: String(row.competition_name),
+      localCode: row.competition_local_code ?? null,
+      priority: row.competition_priority ?? null,
+      season: Number(row.season),
+      seasonLabel: seasonLabel(Number(row.season), row.start_date, row.end_date),
+    });
+  }
 }
 
 console.log(
@@ -181,17 +244,38 @@ const clubCountryById = new Map(teams.map((t) => [Number(t.id), t.country_name ?
 
 console.log(`  ${notable.size} of ${teams.length} clubs are competition-backed and askable`);
 
+/**
+ * Which cups each club has played in, by club name.
+ *
+ * Gives career questions a competition scope, so a Champions League quiz reaches
+ * the transfers and team-mates of the clubs that contested it rather than only
+ * the two finals we hold. A scope, not a category: the question is still a
+ * transfer question and is still counted as one.
+ */
+const cupScopes = new Map();
+for (const row of participationRows) {
+  if (!row.competition_local_code) continue;
+  const name = String(row.team_name);
+  const codes = cupScopes.get(name) ?? new Set();
+  codes.add(String(row.competition_local_code));
+  cupScopes.set(name, codes);
+}
+for (const [name, codes] of cupScopes) cupScopes.set(name, [...codes]);
+
 const byGenerator = {
   competitionWinners: generateCompetitionWinners(winners, clubsByCompetition),
-  transferTo: generateTransferQuestions(transfers, teams, notable),
-  transferFrom: generatePreviousClubQuestions(transfers, teams, notable),
-  careerPath: generateCareerPaths(transfersByPlayer, players),
-  clubConnection: generateClubConnections(careers, { notable }),
+  transferTo: generateTransferQuestions(transfers, teams, notable, cupScopes),
+  transferFrom: generatePreviousClubQuestions(transfers, teams, notable, cupScopes),
+  careerPath: generateCareerPaths(transfersByPlayer, players, cupScopes),
+  clubConnection: generateClubConnections(careers, { notable, cupScopes }),
   didNotPlayFor: generateDidNotPlayFor(careers, { notable, clubCountryById }),
   whoAmI: generateWhoAmI(careers),
   guessTheClub: generateGuessTheClub(teams),
   managers: generateManagerQuestions(coachSpells),
   topScorers: generateTopScorerQuestions(seasonStats),
+  cupFinals: generateCupFinalQuestions(cupFixtures, cupParticipants),
+  knockouts: generateKnockoutProgressionQuestions(cupFixtures, cupParticipants),
+  cupParticipation: generateCompetitionParticipation(cupParticipants, cupSeasonMeta, [...notable]),
   venues: generateVenueQuestions(teams),
   trophies: generateTrophyQuestions(trophies),
 };
@@ -256,21 +340,62 @@ let nextId = Number(maxRow[0]?.max_id ?? KB_ID_BASE - 1) + 1;
  * completely because they run dry early, and the abundant ones contribute evenly
  * instead of crowding the rest out.
  */
+/**
+ * Draws per round, by category.
+ *
+ * The under-served modes are weighted up so that a run cut short by the write
+ * budget closes the gaps rather than widening them. Transfers and career paths
+ * already dominate the bank by a wide margin, so they take one slot a round and
+ * the specialist modes take four; a category that runs dry simply stops being
+ * drawn, which is why the scarce ones end up written in full.
+ */
+const CATEGORY_WEIGHT = {
+  WHO_AM_I: 5,
+  GUESS_THE_CLUB: 5,
+  CHAMPIONS_LEAGUE: 4,
+  WORLD_CUP: 4,
+  NATIONAL_TEAMS: 3,
+  COACHES: 3,
+  TITLES: 2,
+  STATS: 2,
+  STADIUMS: 2,
+  CLUBS: 2,
+  PLAYERS: 2,
+  CAREERS: 1,
+  CAREER_PATH: 1,
+  TRANSFERS: 1,
+};
+const DEFAULT_CATEGORY_WEIGHT = 2;
+
 function interleaveByCategory(questions) {
   const queues = new Map();
   for (const q of questions) {
     queues.set(q.category, [...(queues.get(q.category) ?? []), q]);
   }
-  const order = [...queues.keys()].sort();
+  // Heaviest first, so the order inside a partially-written round also favours
+  // the modes that need the most.
+  const order = [...queues.keys()].sort(
+    (a, b) =>
+      (CATEGORY_WEIGHT[b] ?? DEFAULT_CATEGORY_WEIGHT) - (CATEGORY_WEIGHT[a] ?? DEFAULT_CATEGORY_WEIGHT) ||
+      a.localeCompare(b)
+  );
+
+  const cursor = new Map(order.map((category) => [category, 0]));
   const out = [];
-  for (let round = 0; out.length < questions.length; round++) {
+  while (out.length < questions.length) {
     let progressed = false;
     for (const category of order) {
       const queue = queues.get(category);
-      if (round < queue.length) {
-        out.push(queue[round]);
+      const weight = CATEGORY_WEIGHT[category] ?? DEFAULT_CATEGORY_WEIGHT;
+      let taken = 0;
+      let at = cursor.get(category);
+      while (taken < weight && at < queue.length) {
+        out.push(queue[at]);
+        at++;
+        taken++;
         progressed = true;
       }
+      cursor.set(category, at);
     }
     if (!progressed) break;
   }
