@@ -27,10 +27,13 @@
   transition: transform 420ms var(--ease);
 }
 
+/* Sized to the hero and faded out well before its edge, so the `overflow:
+   hidden` above never has anything visible to cut. An inset-negative glow
+   clipped to the box reads as a lit rectangle, which is worse than no glow. */
 .hero-light {
   position: absolute;
-  inset: -40% -20%;
-  background: radial-gradient(ellipse at 50% 45%, var(--green-wash), transparent 62%);
+  inset: 0;
+  background: radial-gradient(ellipse 60% 62% at 50% 45%, var(--green-wash), transparent 70%);
   animation: floodlight 18s var(--ease) infinite alternate;
   pointer-events: none;
 }
