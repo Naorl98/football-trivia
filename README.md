@@ -98,8 +98,8 @@ node scripts/ui-test.mjs         http://localhost:5173 # 31 browser assertions
 node scripts/freetext-ui-test.mjs http://localhost:5173 # 30 free-text assertions
 node scripts/challenge-e2e.mjs   http://localhost:5173 # 4 challenge round-trip assertions
 node scripts/viewport-qa.mjs     http://localhost:5173 # 147 layout checks across 7 viewports
-npm run test:mp                                        # 154 multiplayer protocol assertions
-npm run test:mp:browser                                # 73 multi-browser assertions
+npm run test:mp                                        # 169 multiplayer protocol assertions
+npm run test:mp:browser                                # 74 multi-browser assertions
 node scripts/screenshots.mjs                           # visual snapshots
 ```
 
@@ -108,8 +108,9 @@ node scripts/screenshots.mjs                           # visual snapshots
 `scripts/mp-e2e.mjs` speaks the WebSocket protocol directly against real Durable Objects.
 It proves the SERVER is right: that the reveal stays hidden until the last player answers,
 that an out-of-turn submission is refused, that eleven players entering matchmaking at once
-produce five unique pairs and one still-searching player, that an abandoned duel ends in a
-forfeit rather than hanging. A full run is seconds, and a failure points at a message.
+produce five unique pairs and one still-searching player, that twenty players in one room
+end on one leaderboard that is byte-identical on all twenty sockets, and that an abandoned
+duel ends in a forfeit rather than hanging. A failure points at a message, not a selector.
 
 `scripts/mp-browser.mjs` runs four players in four separate `BrowserContext`s — separate
 storage, so each mints its own player token exactly as four phones would. It proves the

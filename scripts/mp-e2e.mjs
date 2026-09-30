@@ -71,10 +71,37 @@ class Client {
     this.closed = false;
   }
 
+  /**
+   * Opens the socket, with one retry.
+   *
+   * Twenty sockets opened back to back against a deployment occasionally have one
+   * take longer than a tight timeout allows — a cold Durable Object plus a TLS
+   * handshake — and a single slow connect used to abort the whole run with
+   * "socket did not open". A real client would reconnect, so the harness does too;
+   * a connection that fails twice is a genuine failure and still throws.
+   */
   async open() {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        await this.#connectOnce();
+        return this.#listen();
+      } catch (error) {
+        if (attempt === 1) throw error;
+        try {
+          this.socket?.close();
+        } catch {
+          /* nothing to close */
+        }
+        await sleep(600);
+      }
+    }
+    return this;
+  }
+
+  #connectOnce() {
     this.socket = new WebSocket(this.url);
-    await new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error(`${this.name}: socket did not open`)), 10_000);
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error(`${this.name}: socket did not open`)), 20_000);
       this.socket.addEventListener("open", () => {
         clearTimeout(timer);
         resolve();
@@ -84,6 +111,9 @@ class Client {
         reject(new Error(`${this.name}: socket error`));
       });
     });
+  }
+
+  #listen() {
 
     this.socket.addEventListener("close", () => {
       this.closed = true;
@@ -1237,6 +1267,97 @@ async function testMatchmakingConcurrency() {
   canceller.close();
 }
 
+// ============================================================== a full room
+
+/**
+ * Twenty players, one room, a whole game.
+ *
+ * This is the stated ceiling for a private room, and the point of running it is
+ * to be able to say "tested at 20" rather than "should work at 20". It exercises
+ * the parts that only get interesting with a crowd: a round that closes only when
+ * the twentieth answer lands, a broadcast that has to reach twenty sockets, and a
+ * standings table that has to come out identical on every one of them.
+ */
+async function testFullRoom() {
+  section("A FULL ROOM — twenty players, one game, one leaderboard");
+
+  const code = await createRoom("CLASSIC_BATTLE");
+  const names = Array.from({ length: 20 }, (_, i) => `שחקן ${i + 1}`);
+  const clients = await joinRoom(code, names);
+  const host = clients[0];
+
+  check(clients.length === 20, "twenty players joined the room", clients.length);
+  check(host.room.players.length === 20, "and the room reports all twenty", host.room.players.length);
+
+  // A twenty-first is turned away.
+  const extra = new Client("אחד יותר", `/api/mp/rooms/${code}/ws`);
+  await extra.open();
+  await extra.waitForType("ROOM_STATE");
+  extra.send({ type: "JOIN_ROOM", name: "אחד יותר" });
+  const refused = await extra.waitFor((m) => m.type === "ERROR");
+  check(refused?.code === "ROOM_FULL", "and a twenty-first is refused", refused);
+  extra.close();
+
+  check(await applySettings(host, { questionCount: 5, secondsPerQuestion: 30 }), "the host settings were applied");
+  host.send({ type: "START_GAME" });
+
+  const started = await host.waitForType("GAME_STARTED", { timeout: 20_000 });
+  check(!!started, "the game started for twenty players");
+
+  const opened = await Promise.all(
+    clients.map((client) => client.waitForType("QUESTION_STARTED", { timeout: 25_000 }))
+  );
+  check(opened.every(Boolean), "and the first question reached every one of them");
+  check(
+    new Set(opened.map((m) => m?.question.questionHe)).size === 1,
+    "with the same question text on all twenty"
+  );
+
+  // Each player takes a different option position, cycling through all four.
+  //
+  // Splitting them two ways (first option vs last) looked fine and was not: the
+  // harness cannot know which option is correct, so on a question set where the
+  // answer never happened to sit at either position, all twenty scored zero and
+  // the table had no spread at all. Spreading across every position means roughly
+  // a quarter of the room is right on each question whatever the bank hands over.
+  const trace = await playToEnd(clients, (client) => {
+    const index = names.indexOf(client.name);
+    const options = client.question.options;
+    return options[index % options.length].id;
+  });
+
+  check(!!host.result, "the twenty-player game finished", trace);
+
+  if (host.result) {
+    check(host.result.standings.length === 20, "the leaderboard lists all twenty", host.result.standings.length);
+
+    const finals = await Promise.all(
+      clients.slice(1).map((client) => client.waitForType("GAME_FINISHED", { timeout: 20_000 }))
+    );
+    check(finals.every(Boolean), "every client received the final result");
+    const tables = new Set(
+      [host.result, ...finals.map((f) => f?.result)].filter(Boolean).map((r) => JSON.stringify(r.standings))
+    );
+    check(tables.size === 1, "and it is byte-identical across all twenty screens", tables.size);
+
+    const scores = host.result.standings.map((s) => s.score);
+    check(
+      scores.every((score, i) => i === 0 || scores[i - 1] >= score),
+      "ordered by score",
+      scores
+    );
+    check(scores[0] > 0, "somebody in the room actually scored", scores.slice(0, 5));
+    check(
+      host.result.standings.every((s) => s.correctCount + s.wrongCount === 5),
+      "and every player is recorded as having answered all five questions",
+      host.result.standings.map((s) => s.correctCount + s.wrongCount)
+    );
+  }
+
+  clients.forEach((client) => client.close());
+  return code;
+}
+
 // ================================================================ history
 
 async function testHistoryPersistence(roomCodes) {
@@ -1272,6 +1393,7 @@ async function main() {
     await testFreeText();
     await testAntiCheat();
     await testResilience();
+    codes.push(await testFullRoom());
     codes.push(await testMatchmaking());
     await testMatchmakingConcurrency();
     await testMatchmakingForfeit();

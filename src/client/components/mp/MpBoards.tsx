@@ -465,8 +465,20 @@ export function TeamWinCard({ result, standings }: { result: TeamResult; standin
       <p className={`mp-teamwin-name ${result.winner ? `is-${result.winner.toLowerCase()}` : ""}`}>
         {result.winner ? `${result.names[result.winner]} ניצחו` : "שוויון בין הקבוצות"}
       </p>
-      <p className="mp-teamwin-score num">
-        {result.scores.GREEN} — {result.scores.GOLD}
+      {/* Each number is labelled with its team rather than shown as a bare
+          "606 — 149". In an RTL page a two-number scoreline gives the reader no
+          way to tell which side is which without counting back to the row above,
+          and this is the one line of the screen people will quote at each other. */}
+      <p className="mp-teamwin-score">
+        <span className="mp-teamwin-side is-green">
+          {result.names.GREEN} <b className="num">{result.scores.GREEN}</b>
+        </span>
+        <span className="mp-teamwin-sep" aria-hidden="true">
+          ·
+        </span>
+        <span className="mp-teamwin-side is-gold">
+          {result.names.GOLD} <b className="num">{result.scores.GOLD}</b>
+        </span>
       </p>
 
       {mvp && (

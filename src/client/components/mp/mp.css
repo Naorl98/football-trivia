@@ -985,11 +985,28 @@
 }
 
 .mp-teamwin-score {
-  margin-block-start: 4px;
-  font-size: 1.5rem;
-  font-weight: 800;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px;
+  margin-block-start: 8px;
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 1rem;
   color: var(--text-2);
 }
+
+.mp-teamwin-side b {
+  font-size: 1.6rem;
+  font-weight: 900;
+  margin-inline-start: 4px;
+}
+
+.mp-teamwin-side.is-green b { color: var(--green-bright); }
+.mp-teamwin-side.is-gold b { color: var(--amber-bright); }
+
+.mp-teamwin-sep { color: var(--text-3); }
 
 .mp-winner-stats {
   display: grid;
