@@ -33,11 +33,50 @@ export function sqlValue(value: string | number | boolean | null | undefined): s
   return `'${String(value).replace(/'/g, "''")}'`;
 }
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Failures worth retrying rather than surfacing.
+ *
+ * `Authentication error [code: 10000]` is the one that matters in practice: the
+ * Cloudflare API returns it intermittently on an otherwise valid OAuth session,
+ * and against a remote database every write goes through the D1 import endpoint,
+ * so a single blip can take out a batch. That batch is an API-Football response
+ * already paid for out of a 100-request day, and the harvester's contract is that
+ * a fetched response is persisted before the next request goes out — so giving up
+ * on the first transient error breaks the guarantee the whole design rests on.
+ *
+ * Retrying is safe: every statement the importers generate is an idempotent
+ * upsert, and Wrangler rolls a failed import back to the database's prior state.
+ */
+function isTransientD1Failure(error: unknown): boolean {
+  const text = String((error as { stdout?: string })?.stdout ?? "") + String(error);
+  return (
+    /code:\s*10000|Authentication error|internal error|Internal Server Error|\b5\d\d\b|ECONNRESET|ETIMEDOUT|EAI_AGAIN|socket hang up|fetch failed|Network connection lost/i.test(
+      text
+    ) && !/no such table|syntax error|NOT NULL constraint|UNIQUE constraint|no such column/i.test(text)
+  );
+}
+
 export class D1Client {
   private readonly databaseName: string;
   private readonly target: D1Target;
   private readonly env: NodeJS.ProcessEnv;
   private readonly cwd: string;
+  private readonly maxAttempts = 4;
+
+  /** Runs a Wrangler invocation, retrying transient Cloudflare API failures. */
+  private async withRetry<T>(label: string, run: () => Promise<T>): Promise<T> {
+    for (let attempt = 1; ; attempt++) {
+      try {
+        return await run();
+      } catch (error) {
+        if (attempt >= this.maxAttempts || !isTransientD1Failure(error)) throw error;
+        // 1.5s, 3s, 6s — long enough for a token refresh or a blip to clear.
+        await sleep(1500 * Math.pow(2, attempt - 1));
+      }
+    }
+  }
 
   constructor(options: D1ClientOptions) {
     this.databaseName = options.databaseName ?? "football-iq-db";
@@ -61,20 +100,30 @@ export class D1Client {
       writeFileSync(file, sql, "utf8");
       // Invoke Wrangler's JS entry directly with the current Node binary: no
       // shell, so generated SQL can never be interpreted by a command line.
-      const { stdout } = await execFileAsync(
-        process.execPath,
-        [
-          WRANGLER_ENTRY,
-          "d1",
-          "execute",
-          this.databaseName,
-          `--${this.target}`,
-          "--json",
-          `--file=${file}`,
-        ],
-        { env: this.env, cwd: this.cwd, maxBuffer: 128 * 1024 * 1024 }
-      );
-      return stdout;
+      return await this.withRetry("execute", async () => {
+        const { stdout } = await execFileAsync(
+          process.execPath,
+          [
+            WRANGLER_ENTRY,
+            "d1",
+            "execute",
+            this.databaseName,
+            `--${this.target}`,
+            "--json",
+            `--file=${file}`,
+          ],
+          { env: this.env, cwd: this.cwd, maxBuffer: 128 * 1024 * 1024 }
+        );
+        // Wrangler does not always exit non-zero for a failed import, and a write
+        // that reports an error while claiming success would lose a harvested
+        // response silently. Surface it so withRetry can act on it.
+        if (/"error"\s*:/.test(stdout)) {
+          const failure = new Error(`D1 execute reported an error: ${stdout.slice(0, 800)}`);
+          (failure as Error & { stdout?: string }).stdout = stdout;
+          throw failure;
+        }
+        return stdout;
+      });
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -104,21 +153,23 @@ export class D1Client {
 
   /** Single-statement execution. Returns real rows on both local and remote. */
   private async runCommand(sql: string): Promise<string> {
-    const { stdout } = await execFileAsync(
-      process.execPath,
-      [
-        WRANGLER_ENTRY,
-        "d1",
-        "execute",
-        this.databaseName,
-        `--${this.target}`,
-        "--json",
-        "--command",
-        sql,
-      ],
-      { env: this.env, cwd: this.cwd, maxBuffer: 128 * 1024 * 1024 }
-    );
-    return stdout;
+    return this.withRetry("query", async () => {
+      const { stdout } = await execFileAsync(
+        process.execPath,
+        [
+          WRANGLER_ENTRY,
+          "d1",
+          "execute",
+          this.databaseName,
+          `--${this.target}`,
+          "--json",
+          "--command",
+          sql,
+        ],
+        { env: this.env, cwd: this.cwd, maxBuffer: 128 * 1024 * 1024 }
+      );
+      return stdout;
+    });
   }
 
   /**

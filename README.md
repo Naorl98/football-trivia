@@ -400,14 +400,38 @@ authenticated route.
 | `npm run data:harvest` | Import within today's budget, resuming where the last run stopped |
 | `npm run data:harvest -- --remote` | Same, against production D1 |
 | `npm run data:harvest -- --max 20` | Cap this run at 20 requests |
-| `npm run data:harvest -- --historical` | Also queue deeper league history |
+| `npm run data:harvest -- --historical` | Also queue deeper league history (no effect on the Free plan — see below) |
 | `npm run data:status` | Real row counts, queue state, recent runs, requests used today |
-| `npm run questions:generate` | Turn stored facts into playable questions |
+| `npm run questions:generate` | Turn stored facts into playable questions, within a D1 write budget |
+| `npm run questions:generate -- --dry-run` | Price and count what would be written, without writing |
 | `npm run questions:stats` | Real question-bank breakdown from D1 |
+
+### What the Free plan actually covers
+
+Two provider limits shape everything above, and both are enforced by
+API-Football rather than chosen here:
+
+**100 requests/day.** Confirmed from `/status`, which is itself free.
+
+**Seasons 2022–2024 only.** Any other season answers with
+
+```
+{"plan":"Free plans do not have access to this season, try from 2022 to 2024."}
+```
+
+and that refusal costs a request from the same 100. So the window lives in
+`SEASON_WINDOW` in `planner.ts`, is applied when work is planned *and* again
+before a queued task is claimed, and work outside it is parked as `DEFERRED`
+rather than retried. Widening `SEASON_WINDOW` after a plan upgrade is the only
+change needed to unpark it — `npm run data:harvest` picks it up.
+
+This is why there is no 2010-onward history: it is not reachable on this plan,
+not merely unharvested. On the same basis the World Cup means Qatar 2022, and
+the Euro and Copa América mean their 2024 editions.
 
 ### Living within a 100-request/day plan
 
-The free plan allows ~100 requests/day. The harvester:
+The harvester:
 
 - operates at **95/day** by default, keeping ~5 in reserve for retries
 - counts spend from `api_request_log`, so a crash cannot lose track of requests
@@ -421,9 +445,31 @@ The free plan allows ~100 requests/day. The harvester:
 - re-plans as data lands: season work is only queued for competitions the
   provider actually returned, so quota is never spent on uncovered competitions
 
-Work is ordered by expected **questions per request** — squads and transfers
-first, fixtures last. Odds, predictions, injuries and live scores are never
-requested: they cost quota and generate no questions.
+Work is ordered by expected **questions per request**, which is not the same as
+rows per request:
+
+1. `/leagues` once — 1,247 competitions and 8,752 seasons for a single request.
+2. **League tables.** A table names every club in the division and the importer
+   stubs a row for each, so standings deliver the club graph *and* a champion for
+   one request. A `/teams` call on the same league-season returns those same clubs
+   adding only venue, founded year and country — which is why `teams` is ranked
+   below it, and why ordering `teams` first (as this once did) spent the whole day
+   re-listing clubs standings would have produced for free.
+3. **Transfers, per club.** One request returns the full move history of every
+   player who passed through a club — many careers, not one. `/transfers?player=`
+   would cost a request each for the same rows.
+4. Squads, then coaches, for the same clubs — a club is worked through
+   depth-first, because "which two were team-mates" and "which of these never
+   played for X" need many known players at *one* club.
+5. Fixtures last: hundreds of rows, almost no unambiguous questions.
+
+Odds, predictions, injuries and live scores are never requested: they cost quota
+and generate no questions.
+
+A season of age costs more than a tier of resource (`SEASON_DEPTH_STRIDE`), so
+the current season is swept across every league before older ones are reached.
+Without that the accessible seasons score within a few points of each other, the
+budget goes entirely on league tables, and no per-club request is ever reached.
 
 Daily runs need no manual bookkeeping; the queue and `data_sync_state` carry
 progress across days.
@@ -438,6 +484,49 @@ also correct, no alias colliding with a distractor, certain career ordering
 
 Semantic keys — `KB_CAREER_PATH:<playerId>`, `KB_TRANSFER_TO:<playerId>:<teamId>:<year>`,
 `KB_COMPETITION_WINNER:<competitionId>:<season>` — make generation idempotent.
+
+Generators, and the fact each rests on:
+
+| Generator | Mode | Built from |
+| --- | --- | --- |
+| Competition winners | CLASSIC | `competition_winners`, derived from a finished single-table season |
+| Transfer to / from | CLASSIC | `player_transfers`, both directions of one move |
+| Career path | CAREER_PATH | dated transfer chains |
+| Club connection | CLUB_CONNECTION | two players' shared club in `player_teams` |
+| Did not play for | CLASSIC | a career of 5+ clubs, answer from a country the player never played in |
+| Who am I | WHO_AM_I | position plus 3+ clubs, clue set checked to be unique |
+| Guess the club | GUESS_THE_CLUB | country, founding year and stadium, jointly unique |
+| Managers | CLASSIC | `coach_teams`, one question per spell |
+| Top scorers | CLASSIC | `player_season_stats`, only an outright leader |
+| Stadiums | CLASSIC | `teams` joined to `venues` |
+
+Three gates are worth calling out, because each was added after the naive
+version produced questions that were wrong rather than merely dull:
+
+- **Distractors match the answer's notability.** A club enters the database
+  either by playing in a harvested competition or because somebody transferred
+  there, and the second kind arrives in bulk — academies, loan partners, every
+  minor club a fringe player passed through. Questions are only built around the
+  first kind, *and so are their distractors*: a famous answer beside three
+  obscure clubs is guessable by recognition, which looks well-formed and is still
+  free.
+- **A champion needs exactly one rank-1 row and a finished season.** The provider
+  flattens grouped tables into one list, so a Champions League group stage arrives
+  as eight rank-1 rows; taking the first would crown whoever topped Group A. And
+  a season still being played has a leader in September, not a champion.
+- **Season labels come from the stored dates.** A European season 2024 is
+  2024/25, but Brazil, Argentina and MLS play inside one calendar year, where
+  "2024/25" names a season that never existed.
+
+Writes are priced before they are made. D1 bills rows written and counts each
+index entry as a row, which puts one question at roughly thirty rows once its
+options, clues, scopes, aliases and hints are included — so the full candidate
+set costs several times the free tier's 100,000/day. `questions:generate` honours
+`MAX_D1_WRITES_PER_RUN` (or `--max-writes`), writes only whole questions, and
+reports what is left; because every question is keyed, re-running continues
+rather than duplicating. Candidates are interleaved by category first, so a run
+cut short by the budget still produces a balanced bank instead of nothing but
+transfers.
 
 Difficulty is classified by deterministic rules (fact age, competition tier,
 subject prominence, question type), never by an LLM, so a question always lands

@@ -20,7 +20,7 @@ export type Difficulty = "EASY" | "NORMAL" | "HARD" | "EXPERT" | "IMPOSSIBLE";
 
 export interface KnowledgeQuestion {
   semanticKey: string;
-  mode: "CLASSIC" | "CAREER_PATH" | "CLUB_CONNECTION";
+  mode: "CLASSIC" | "CAREER_PATH" | "CLUB_CONNECTION" | "WHO_AM_I" | "GUESS_THE_CLUB";
   category: string;
   difficulty: Difficulty;
   questionHe: string;
@@ -77,6 +77,26 @@ export interface WinnerRow {
   season: number;
   team_name: string;
   runner_up_name: string | null;
+  /** Pre-formatted by seasonLabel(); "2024/25" or "2024". */
+  season_label?: string | null;
+}
+
+/**
+ * How a season should be written.
+ *
+ * A European league's season 2024 is the 2024/25 campaign, but Brazil, Argentina
+ * and MLS play within a single calendar year, where "2024/25" names a season that
+ * never existed. The provider's own start and end dates settle it, so the label is
+ * read from the data rather than assumed from the number; with no dates stored,
+ * the bare year is used, because it is never wrong.
+ */
+export function seasonLabel(season: number, startDate?: string | null, endDate?: string | null): string {
+  const startYear = startDate ? Number(startDate.slice(0, 4)) : null;
+  const endYear = endDate ? Number(endDate.slice(0, 4)) : null;
+  if (startYear && endYear && endYear > startYear) {
+    return `${season}/${String(season + 1).slice(2)}`;
+  }
+  return String(season);
 }
 
 export interface TrophyRow {
@@ -85,6 +105,45 @@ export interface TrophyRow {
   competition_name: string;
   season: string | null;
   place: string | null;
+}
+
+/** One coach's spell at one club, from coach_teams. */
+export interface CoachSpellRow {
+  coach_id: number;
+  coach_name: string;
+  nationality: string | null;
+  team_id: number;
+  team_name: string;
+  start_date: string | null;
+  end_date: string | null;
+}
+
+/** One known player-at-club relationship, from player_teams. */
+export interface PlayerTeamRow {
+  player_id: number;
+  player_name: string;
+  position: string | null;
+  nationality: string | null;
+  team_id: number;
+  team_name: string;
+  country_name: string | null;
+  season: number | null;
+}
+
+/** A player's scoring record in one competition season, from player_season_stats. */
+export interface SeasonStatRow {
+  player_id: number;
+  player_name: string;
+  team_name: string | null;
+  competition_name: string;
+  competition_local_code: string | null;
+  competition_priority: number | null;
+  season: number;
+  goals: number | null;
+  assists: number | null;
+  appearances: number | null;
+  /** Pre-formatted by seasonLabel(); "2024/25" or "2024". */
+  season_label?: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -213,21 +272,37 @@ function scopesForCompetition(localCode: string | null, countryName: string | nu
 // Generators
 // ---------------------------------------------------------------------------
 
-/** "Who won competition X in season Y?" — from competition_winners. */
-export function generateCompetitionWinners(winners: WinnerRow[]): KnowledgeQuestion[] {
+/**
+ * "Who won competition X in season Y?" — from competition_winners.
+ *
+ * Distractors are the competition's other clubs, not only its other champions.
+ * Requiring four past champions sounds like the safer rule but it silently
+ * produces nothing at all until a competition has four *different* winners in
+ * store: with three accessible seasons per league, every champion fact we hold
+ * generated zero questions. Rival clubs from the same division are both
+ * available and more believable — the plausible wrong answer to "who won the
+ * Premier League" is the club that finished second, not a champion from a
+ * different decade.
+ */
+export function generateCompetitionWinners(
+  winners: WinnerRow[],
+  clubsByCompetition: Map<number, string[]> = new Map()
+): KnowledgeQuestion[] {
   const out: KnowledgeQuestion[] = [];
   const byCompetition = new Map<number, WinnerRow[]>();
   for (const row of winners) {
     byCompetition.set(row.competition_id, [...(byCompetition.get(row.competition_id) ?? []), row]);
   }
 
-  for (const [, rows] of byCompetition) {
-    const championPool = [...new Set(rows.map((r) => r.team_name))];
-    if (championPool.length < 4) continue; // not enough believable distractors
+  for (const [competitionId, rows] of byCompetition) {
+    const pool = [
+      ...new Set([...(clubsByCompetition.get(competitionId) ?? []), ...rows.map((r) => r.team_name)]),
+    ];
+    if (pool.length < 4) continue; // not enough believable distractors
 
     for (const row of rows) {
       const distractors = pickDistinct(
-        championPool.filter((name) => name !== row.team_name),
+        pool.filter((name) => name !== row.team_name),
         3,
         `kb_winner:${row.competition_id}:${row.season}`
       );
@@ -242,10 +317,10 @@ export function generateCompetitionWinners(winners: WinnerRow[]): KnowledgeQuest
           season: row.season,
           competitionPriority: row.competition_priority,
         }),
-        questionHe: `מי זכתה באליפות ${row.competition_name} בעונת ${row.season}/${String(row.season + 1).slice(2)}?`,
+        questionHe: `מי זכתה באליפות ${row.competition_name} בעונת ${row.season_label ?? row.season}?`,
         explanationHe: row.runner_up_name
-          ? `${row.team_name} סיימה במקום הראשון בעונת ${row.season}, לפני ${row.runner_up_name}.`
-          : `${row.team_name} זכתה באליפות ${row.competition_name} בעונת ${row.season}.`,
+          ? `${row.team_name} סיימה במקום הראשון בעונת ${row.season_label ?? row.season}, לפני ${row.runner_up_name}.`
+          : `${row.team_name} זכתה באליפות ${row.competition_name} בעונת ${row.season_label ?? row.season}.`,
         options: [row.team_name, ...distractors],
         correctIndex: 0,
         scopes: scopesForCompetition(row.competition_local_code, null),
@@ -253,26 +328,53 @@ export function generateCompetitionWinners(winners: WinnerRow[]): KnowledgeQuest
         freeText: true,
         canonicalAnswer: row.team_name,
         aliases: [row.team_name],
-        hints: [`התחרות: ${row.competition_name}`, `העונה: ${row.season}`],
+        hints: [`התחרות: ${row.competition_name}`, `העונה: ${row.season_label ?? row.season}`],
       });
     }
   }
   return out;
 }
 
+/**
+ * Clubs worth building a question around.
+ *
+ * A club enters the knowledge base for two very different reasons: because it
+ * played in a harvested competition, or because somebody once transferred there.
+ * The second kind arrives in bulk — one Premier League club's transfer list
+ * reaches its academy, its lower-division loan partners and every minor club a
+ * fringe player passed through — and questions built on those are unanswerable
+ * trivia rather than football knowledge. Only clubs with a recorded season in a
+ * real competition are treated as askable subjects; the rest still matter as the
+ * far end of a career path, which is why they are imported at all.
+ */
+export function notableClubNames(teams: TeamRow[]): Set<string> {
+  // competition_priority is non-null exactly when the club has a team_seasons
+  // row, which is what distinguishes "played in a competition we harvested"
+  // from "appeared as the other end of a transfer".
+  return new Set(teams.filter((t) => t.competition_priority !== null).map((t) => display(t)));
+}
+
 /** "Which club did X move to from Y?" — from player_transfers. */
 export function generateTransferQuestions(
   transfers: TransferRow[],
-  teamPool: TeamRow[]
+  teamPool: TeamRow[],
+  notable: Set<string> = new Set()
 ): KnowledgeQuestion[] {
   const out: KnowledgeQuestion[] = [];
-  const teamNames = teamPool.map((t) => display(t));
+  const isNotable = (name: string) => notable.size === 0 || notable.has(name);
+  // Distractors are drawn from the same notability band as the answer. Mixing
+  // obscure clubs in beside a famous one gives the answer away by recognition,
+  // which is a harder problem than an implausible distractor: the question looks
+  // well-formed and is still free.
+  const teamNames = teamPool.map((t) => display(t)).filter(isNotable);
 
   for (const transfer of transfers) {
     // Both ends must be known, and a loan is not a clean "moved to" fact.
     if (!transfer.from_team_name || !transfer.to_team_name) continue;
     if (/loan/i.test(transfer.transfer_type ?? "")) continue;
     if (transfer.from_team_name === transfer.to_team_name) continue;
+    // Both ends must also be clubs a player could reasonably be asked about.
+    if (!isNotable(transfer.from_team_name) || !isNotable(transfer.to_team_name)) continue;
 
     const year = transfer.transfer_date ? Number(transfer.transfer_date.slice(0, 4)) : null;
     const seedKey = `KB_TRANSFER_TO:${transfer.player_id}:${transfer.to_team_id}:${year ?? "-"}`;
@@ -436,6 +538,590 @@ export function generateTrophyQuestions(trophies: TrophyRow[]): KnowledgeQuestio
       sourceLabel: "מסד נתוני תארים מיובא",
       freeText: false,
       hints: [`העונה: ${row.season}`],
+    });
+  }
+  return out;
+}
+
+const yearOf = (date: string | null): number | null => {
+  if (!date) return null;
+  const year = Number(date.slice(0, 4));
+  return Number.isFinite(year) ? year : null;
+};
+
+/**
+ * Managers — from coaches + coach_teams.
+ *
+ * Both directions are asked, and each is only asked where the stored spells make
+ * the answer unique: a coach who held two jobs in the same calendar year has no
+ * single club for "which club did he manage in 2019", and a club that changed
+ * manager mid-season has no single manager for that year. Those are dropped
+ * rather than guessed at, which is why a sacking season produces no question.
+ */
+export function generateManagerQuestions(spells: CoachSpellRow[]): KnowledgeQuestion[] {
+  const out: KnowledgeQuestion[] = [];
+  const dated = spells.filter((s) => s.team_name && s.coach_name && s.start_date);
+
+  const coachNames = [...new Set(dated.map((s) => s.coach_name))];
+  const clubNames = [...new Set(dated.map((s) => s.team_name))];
+  if (coachNames.length < 4 || clubNames.length < 4) return out;
+
+  // Which clubs a coach held in a given year, used for the uniqueness test
+  // below rather than as a question source in its own right.
+  const clubsByCoachYear = new Map<string, Set<string>>();
+  const coachesByClubYear = new Map<string, Set<string>>();
+  const spellYears = (spell: CoachSpellRow): number[] => {
+    const start = yearOf(spell.start_date)!;
+    const end = yearOf(spell.end_date) ?? start;
+    const years: number[] = [];
+    for (let year = start; year <= Math.min(end, start + 12); year++) years.push(year);
+    return years;
+  };
+
+  for (const spell of dated) {
+    for (const year of spellYears(spell)) {
+      const byCoach = clubsByCoachYear.get(`${spell.coach_id}:${year}`) ?? new Set<string>();
+      byCoach.add(spell.team_name);
+      clubsByCoachYear.set(`${spell.coach_id}:${year}`, byCoach);
+
+      const byClub = coachesByClubYear.get(`${spell.team_id}:${year}`) ?? new Set<string>();
+      byClub.add(spell.coach_name);
+      coachesByClubYear.set(`${spell.team_id}:${year}`, byClub);
+    }
+  }
+
+  /**
+   * One question per spell, not per year of it.
+   *
+   * Asking about every year a manager stayed somewhere turns a four-season spell
+   * into four questions with the same answer, which pads the bank without adding
+   * anything to know. The spell is the fact; a single representative year is
+   * enough to state it, and the year chosen is the first one where the answer is
+   * unambiguous.
+   */
+  const spellKey = (spell: CoachSpellRow) => `${spell.coach_id}:${spell.team_id}:${spell.start_date}`;
+  const seenSpells = new Set<string>();
+
+  // "Which club did <coach> manage in <year>?"
+  for (const spell of dated) {
+    const key = spellKey(spell);
+    if (seenSpells.has(key)) continue;
+
+    const year = spellYears(spell).find(
+      (candidate) => clubsByCoachYear.get(`${spell.coach_id}:${candidate}`)?.size === 1
+    );
+    if (year === undefined) continue; // every year of this spell overlapped another job
+    seenSpells.add(key);
+    const row = spell;
+
+    const distractors = pickDistinct(
+      clubNames.filter((n) => n !== row.team_name),
+      3,
+      `KB_COACH_CLUB:${row.coach_id}:${year}`
+    );
+    if (distractors.length < 3) continue;
+
+    out.push({
+      semanticKey: `KB_COACH_CLUB:${row.coach_id}:${row.team_id}`,
+      mode: "CLASSIC",
+      category: "COACHES",
+      difficulty: classifyDifficulty({ resource: "career", season: year, subjectProminence: 2 }),
+      questionHe: `את איזו קבוצה אימן ${row.coach_name} בשנת ${year}?`,
+      explanationHe: `${row.coach_name} אימן את ${row.team_name} בשנת ${year}.`,
+      options: [row.team_name, ...distractors],
+      correctIndex: 0,
+      scopes: [{ type: "REGION", value: "WORLD" }],
+      sourceLabel: "מסד נתוני מאמנים מיובא",
+      freeText: true,
+      canonicalAnswer: row.team_name,
+      aliases: [row.team_name],
+      hints: [...(row.nationality ? [`הלאום של המאמן: ${row.nationality}`] : []), `השנה: ${year}`],
+    });
+  }
+
+  // "Who managed <club> in <year>?" — the same one-per-spell rule, per club.
+  const seenClubSpells = new Set<string>();
+  for (const spell of dated) {
+    const key = spellKey(spell);
+    if (seenClubSpells.has(key)) continue;
+
+    const year = spellYears(spell).find(
+      (candidate) => coachesByClubYear.get(`${spell.team_id}:${candidate}`)?.size === 1
+    );
+    if (year === undefined) continue; // the club changed manager in every year of it
+    seenClubSpells.add(key);
+    const row = spell;
+
+    const distractors = pickDistinct(
+      coachNames.filter((n) => n !== row.coach_name),
+      3,
+      `KB_CLUB_COACH:${row.team_id}:${year}`
+    );
+    if (distractors.length < 3) continue;
+
+    out.push({
+      semanticKey: `KB_CLUB_COACH:${row.team_id}:${row.coach_id}`,
+      mode: "CLASSIC",
+      category: "COACHES",
+      difficulty: classifyDifficulty({ resource: "career", season: year, subjectProminence: 2 }),
+      questionHe: `מי אימן את ${row.team_name} בשנת ${year}?`,
+      explanationHe: `${row.coach_name} אימן את ${row.team_name} בשנת ${year}.`,
+      options: [row.coach_name, ...distractors],
+      correctIndex: 0,
+      scopes: [{ type: "REGION", value: "WORLD" }],
+      sourceLabel: "מסד נתוני מאמנים מיובא",
+      freeText: true,
+      canonicalAnswer: row.coach_name,
+      aliases: derivePlayerAliases(row.coach_name),
+      hints: [`הקבוצה: ${row.team_name}`, `השנה: ${year}`],
+    });
+  }
+
+  return out;
+}
+
+/** Indexes the player-at-club table once; several generators below share it. */
+interface CareerIndex {
+  clubsByPlayer: Map<number, Set<number>>;
+  playersByClub: Map<number, number[]>;
+  playerById: Map<number, PlayerTeamRow>;
+  clubNameById: Map<number, string>;
+}
+
+export function indexCareers(rows: PlayerTeamRow[]): CareerIndex {
+  const clubsByPlayer = new Map<number, Set<number>>();
+  const playersByClub = new Map<number, number[]>();
+  const playerById = new Map<number, PlayerTeamRow>();
+  const clubNameById = new Map<number, string>();
+
+  for (const row of rows) {
+    if (!row.player_name || !row.team_name) continue;
+    clubNameById.set(row.team_id, row.team_name);
+    if (!playerById.has(row.player_id)) playerById.set(row.player_id, row);
+    else {
+      // Keep whichever row actually carries attributes; a stub created by a
+      // transfer has neither position nor nationality.
+      const existing = playerById.get(row.player_id)!;
+      if (!existing.position && row.position) existing.position = row.position;
+      if (!existing.nationality && row.nationality) existing.nationality = row.nationality;
+    }
+
+    const clubs = clubsByPlayer.get(row.player_id) ?? new Set<number>();
+    if (!clubs.has(row.team_id)) {
+      clubs.add(row.team_id);
+      clubsByPlayer.set(row.player_id, clubs);
+      playersByClub.set(row.team_id, [...(playersByClub.get(row.team_id) ?? []), row.player_id]);
+    }
+  }
+  return { clubsByPlayer, playersByClub, playerById, clubNameById };
+}
+
+/**
+ * Club Connection — "at which club did both of these players play?"
+ *
+ * The distractors are the safety mechanism here, and they are chosen as clubs
+ * *neither* player is known to have played for. That matters because our view of
+ * a career is only as complete as what has been harvested: if the pair in fact
+ * shared a second club nobody has imported yet, an answer keyed to one shared
+ * club would be marking a true answer wrong. Excluding every club either player
+ * touched means the four options on screen still contain exactly one right
+ * answer, whatever is missing from the database.
+ */
+export function generateClubConnections(
+  careers: CareerIndex,
+  options: { maxPerClub?: number; notable?: Set<string> } = {}
+): KnowledgeQuestion[] {
+  const out: KnowledgeQuestion[] = [];
+  const maxPerClub = options.maxPerClub ?? 6;
+  const notable = options.notable ?? new Set<string>();
+  const isNotable = (name: string) => notable.size === 0 || notable.has(name);
+  // Both the answer and its distractors are held to the same standard, so the
+  // four clubs on screen are comparable and the famous one is not the giveaway.
+  const allClubIds = [...careers.clubNameById.keys()].filter((id) =>
+    isNotable(careers.clubNameById.get(id)!)
+  );
+  if (allClubIds.length < 4) return out;
+
+  for (const [clubId, playerIds] of careers.playersByClub) {
+    const clubName = careers.clubNameById.get(clubId);
+    if (!clubName || !isNotable(clubName)) continue;
+
+    // Players whose careers we know something about make better puzzles, and
+    // the "well known" proxy available here is simply how many clubs we hold.
+    const ranked = playerIds
+      .filter((id) => (careers.clubsByPlayer.get(id)?.size ?? 0) >= 2)
+      .sort(
+        (a, b) =>
+          (careers.clubsByPlayer.get(b)?.size ?? 0) - (careers.clubsByPlayer.get(a)?.size ?? 0) ||
+          a - b
+      )
+      .slice(0, 14);
+    if (ranked.length < 2) continue;
+
+    let made = 0;
+    for (let i = 0; i < ranked.length && made < maxPerClub; i++) {
+      for (let j = i + 1; j < ranked.length && made < maxPerClub; j++) {
+        const [aId, bId] = [ranked[i], ranked[j]];
+        const a = careers.playerById.get(aId);
+        const b = careers.playerById.get(bId);
+        if (!a || !b || a.player_name === b.player_name) continue;
+
+        const aClubs = careers.clubsByPlayer.get(aId)!;
+        const bClubs = careers.clubsByPlayer.get(bId)!;
+        const touched = new Set([...aClubs, ...bClubs]);
+
+        const distractors = pickDistinct(
+          allClubIds.filter((id) => !touched.has(id)).map((id) => careers.clubNameById.get(id)!),
+          3,
+          `KB_CLUB_CONNECTION:${clubId}:${aId}:${bId}`
+        );
+        if (distractors.length < 3 || distractors.some((d) => d === clubName)) continue;
+
+        made++;
+        out.push({
+          semanticKey: `KB_CLUB_CONNECTION:${clubId}:${Math.min(aId, bId)}:${Math.max(aId, bId)}`,
+          mode: "CLUB_CONNECTION",
+          category: "CAREERS",
+          difficulty: classifyDifficulty({ resource: "career", subjectProminence: 2 }),
+          questionHe: `באיזה מועדון שיחקו גם ${a.player_name} וגם ${b.player_name}?`,
+          explanationHe: `גם ${a.player_name} וגם ${b.player_name} שיחקו ב${clubName}.`,
+          clues: [a.player_name, b.player_name],
+          options: [clubName, ...distractors],
+          correctIndex: 0,
+          scopes: [{ type: "REGION", value: "WORLD" }],
+          sourceLabel: "מסד נתוני קריירות מיובא",
+          freeText: true,
+          canonicalAnswer: clubName,
+          aliases: [clubName],
+          hints: [`שני השחקנים חלקו מועדון אחד`, `מספר המועדונים בקריירה של ${a.player_name}: ${aClubs.size}`],
+        });
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * Who Am I — a player named from their position and the clubs they played for.
+ *
+ * Nationality is used when it is known but is not required, because on this
+ * provider it usually is not: /players/squads returns a position for every player
+ * and no nationality at all, so demanding both produced a generator that could
+ * never fire. The career itself carries most of the identifying information
+ * anyway — a run of three or more clubs narrows a player down far more sharply
+ * than a passport does.
+ *
+ * The clue set still has to single the player out: if any other candidate shares
+ * the position, the nationality where known, and every club listed, the puzzle
+ * has two answers and is dropped. Two team-mates of the same position who moved
+ * together are exactly the case this catches.
+ */
+export function generateWhoAmI(careers: CareerIndex): KnowledgeQuestion[] {
+  const out: KnowledgeQuestion[] = [];
+  const candidates = [...careers.playerById.values()].filter(
+    (p) => p.position && (careers.clubsByPlayer.get(p.player_id)?.size ?? 0) >= 3
+  );
+  if (candidates.length < 4) return out;
+
+  const namesByPosition = new Map<string, string[]>();
+  for (const p of careers.playerById.values()) {
+    if (!p.position) continue;
+    namesByPosition.set(p.position, [...(namesByPosition.get(p.position) ?? []), p.player_name]);
+  }
+
+  for (const player of candidates) {
+    const clubIds = [...careers.clubsByPlayer.get(player.player_id)!];
+    const clubNames = clubIds.map((id) => careers.clubNameById.get(id)!).filter(Boolean).sort();
+    if (clubNames.length < 3) continue;
+
+    const ambiguous = candidates.some(
+      (other) =>
+        other.player_id !== player.player_id &&
+        other.position === player.position &&
+        (player.nationality ? other.nationality === player.nationality : true) &&
+        clubIds.every((id) => careers.clubsByPlayer.get(other.player_id)?.has(id))
+    );
+    if (ambiguous) continue;
+
+    // Same-position rivals are the believable distractors.
+    const pool = (namesByPosition.get(player.position!) ?? []).filter((n) => n !== player.player_name);
+    const distractors = pickDistinct(pool, 3, `KB_WHO_AM_I:${player.player_id}`);
+    if (distractors.length < 3) continue;
+
+    out.push({
+      semanticKey: `KB_WHO_AM_I:${player.player_id}`,
+      mode: "WHO_AM_I",
+      category: "WHO_AM_I",
+      difficulty: classifyDifficulty({ resource: "career", subjectProminence: 2 }),
+      questionHe: "מי אני?",
+      explanationHe: `התשובה היא ${player.player_name}.`,
+      clues: [
+        ...(player.nationality ? [`הלאום שלי: ${player.nationality}`] : []),
+        `העמדה שלי: ${player.position}`,
+        `שיחקתי ב: ${clubNames.slice(0, 5).join(", ")}`,
+      ],
+      options: [player.player_name, ...distractors],
+      correctIndex: 0,
+      scopes: [{ type: "REGION", value: "WORLD" }],
+      sourceLabel: "מסד נתוני שחקנים מיובא",
+      freeText: true,
+      canonicalAnswer: player.player_name,
+      aliases: derivePlayerAliases(player.player_name),
+      hints: [
+        ...(player.nationality ? [`הלאום: ${player.nationality}`] : []),
+        `העמדה: ${player.position}`,
+        `מספר המועדונים בקריירה: ${clubNames.length}`,
+      ],
+    });
+  }
+  return out;
+}
+
+/**
+ * "Which of these clubs did X never play for?"
+ *
+ * This is the one generator here that asserts a negative, and a negative can only
+ * ever be as good as the record is complete. Two conditions make it defensible:
+ *
+ *  * The transfers endpoint returns a player's *entire* move history, not just
+ *    the spell at the club being queried. So for anyone who passed through a
+ *    harvested club, the career on file is the whole career, not a fragment.
+ *  * The subject must still have at least five clubs on record. A player with two
+ *    is one we happen to know two things about, and the missing years are exactly
+ *    where a wrong "never" would hide.
+ *
+ * Where a club's country is known, the absent club is also required to be from a
+ * country the player has no recorded club in, which puts a second, independent
+ * barrier in front of the failure that matters: naming a club the player really
+ * did turn out for.
+ */
+export function generateDidNotPlayFor(
+  careers: CareerIndex,
+  options: { notable?: Set<string>; clubCountryById?: Map<number, string | null> } = {}
+): KnowledgeQuestion[] {
+  const out: KnowledgeQuestion[] = [];
+  const notable = options.notable ?? new Set<string>();
+  const countries = options.clubCountryById ?? new Map<number, string | null>();
+  const isNotable = (name: string) => notable.size === 0 || notable.has(name);
+
+  const notableClubIds = [...careers.clubNameById.keys()].filter((id) =>
+    isNotable(careers.clubNameById.get(id)!)
+  );
+  if (notableClubIds.length < 4) return out;
+
+  for (const [playerId, clubIds] of careers.clubsByPlayer) {
+    if (clubIds.size < 5) continue;
+    const player = careers.playerById.get(playerId);
+    if (!player) continue;
+
+    const played = [...clubIds]
+      .filter((id) => isNotable(careers.clubNameById.get(id) ?? ""))
+      .map((id) => ({ id, name: careers.clubNameById.get(id)! }));
+    if (played.length < 3) continue;
+
+    const playedCountries = new Set(
+      [...clubIds].map((id) => countries.get(id)).filter((c): c is string => Boolean(c))
+    );
+
+    const absentPool = notableClubIds.filter((id) => {
+      if (clubIds.has(id)) return false;
+      const country = countries.get(id);
+      // Unknown country cannot confirm separation, so such a club is not used
+      // once we have any country information for this player at all.
+      if (playedCountries.size > 0) return Boolean(country) && !playedCountries.has(country!);
+      return true;
+    });
+    if (absentPool.length === 0) continue;
+
+    const answerId = pickDistinct(absentPool, 1, `KB_NEVER_PLAYED:${playerId}`)[0];
+    const answer = careers.clubNameById.get(answerId)!;
+    const shown = pickDistinct(played.map((p) => p.name), 3, `KB_NEVER_PLAYED_SHOWN:${playerId}`);
+    if (shown.length < 3 || shown.includes(answer)) continue;
+
+    out.push({
+      semanticKey: `KB_NEVER_PLAYED:${playerId}:${answerId}`,
+      mode: "CLASSIC",
+      category: "CAREERS",
+      difficulty: classifyDifficulty({ resource: "career", subjectProminence: 2 }),
+      questionHe: `באיזו קבוצה מהרשימה ${player.player_name} מעולם לא שיחק?`,
+      explanationHe: `${player.player_name} שיחק ב${shown.join(", ")}, אך לא ב${answer}.`,
+      options: [answer, ...shown],
+      correctIndex: 0,
+      scopes: [{ type: "REGION", value: "WORLD" }],
+      sourceLabel: "מסד נתוני קריירות מיובא",
+      freeText: false,
+      hints: [`מספר המועדונים בקריירה: ${clubIds.size}`],
+    });
+  }
+  return out;
+}
+
+/**
+ * Guess The Club — a club named from country, founding year and stadium.
+ *
+ * Only clubs whose three facts are all stored and jointly unique are used; two
+ * clubs sharing a ground, as several city rivals do, cancel each other out.
+ */
+export function generateGuessTheClub(teams: TeamRow[]): KnowledgeQuestion[] {
+  const out: KnowledgeQuestion[] = [];
+  const usable = teams.filter((t) => t.country_name && t.founded && t.venue_name);
+  if (usable.length < 4) return out;
+
+  const names = usable.map((t) => display(t));
+
+  for (const club of usable) {
+    const ambiguous = usable.some(
+      (other) =>
+        other.id !== club.id &&
+        other.country_name === club.country_name &&
+        other.founded === club.founded &&
+        other.venue_name === club.venue_name
+    );
+    if (ambiguous) continue;
+
+    // Clubs from the same country are the believable wrong answers.
+    const sameCountry = usable.filter((t) => t.id !== club.id && t.country_name === club.country_name);
+    const pool = (sameCountry.length >= 3 ? sameCountry : usable.filter((t) => t.id !== club.id)).map((t) =>
+      display(t)
+    );
+    const distractors = pickDistinct(pool, 3, `KB_GUESS_CLUB:${club.id}`);
+    if (distractors.length < 3) continue;
+
+    out.push({
+      semanticKey: `KB_GUESS_CLUB:${club.id}`,
+      mode: "GUESS_THE_CLUB",
+      category: "GUESS_THE_CLUB",
+      difficulty: classifyDifficulty({
+        resource: "venue",
+        competitionPriority: club.competition_priority,
+      }),
+      questionHe: "איזה מועדון אני?",
+      explanationHe: `התשובה היא ${display(club)}.`,
+      clues: [
+        `המדינה שלי: ${club.country_name}`,
+        `נוסדתי בשנת ${club.founded}`,
+        `האצטדיון שלי: ${club.venue_name}`,
+      ],
+      options: [display(club), ...distractors],
+      correctIndex: 0,
+      scopes: scopesForCompetition(club.local_code, club.country_name),
+      sourceLabel: "מסד נתוני מועדונים מיובא",
+      freeText: true,
+      canonicalAnswer: display(club),
+      aliases: deriveTeamAliases(club),
+      hints: [`המדינה: ${club.country_name}`, `שנת ההיווסדות: ${club.founded}`],
+    });
+  }
+  return out;
+}
+
+/**
+ * "Which club did X leave to join Y?" — the mirror of generateTransferQuestions,
+ * asking for the origin of a move rather than its destination. One transfer row
+ * therefore supports two distinct questions with two distinct semantic keys.
+ */
+export function generatePreviousClubQuestions(
+  transfers: TransferRow[],
+  teamPool: TeamRow[],
+  notable: Set<string> = new Set()
+): KnowledgeQuestion[] {
+  const out: KnowledgeQuestion[] = [];
+  const isNotable = (name: string) => notable.size === 0 || notable.has(name);
+  const teamNames = teamPool.map((t) => display(t)).filter(isNotable);
+
+  for (const transfer of transfers) {
+    if (!transfer.from_team_name || !transfer.to_team_name) continue;
+    if (/loan/i.test(transfer.transfer_type ?? "")) continue;
+    if (transfer.from_team_name === transfer.to_team_name) continue;
+    if (!isNotable(transfer.from_team_name) || !isNotable(transfer.to_team_name)) continue;
+
+    const year = transfer.transfer_date ? Number(transfer.transfer_date.slice(0, 4)) : null;
+    const seedKey = `KB_TRANSFER_FROM:${transfer.player_id}:${transfer.from_team_id}:${year ?? "-"}`;
+
+    const distractors = pickDistinct(
+      teamNames.filter((n) => n !== transfer.to_team_name && n !== transfer.from_team_name),
+      3,
+      seedKey
+    );
+    if (distractors.length < 3) continue;
+
+    out.push({
+      semanticKey: seedKey,
+      mode: "CLASSIC",
+      category: "TRANSFERS",
+      difficulty: classifyDifficulty({ resource: "transfer", season: year }),
+      questionHe: `מאיזו קבוצה הגיע ${transfer.player_name} ל${transfer.to_team_name}${
+        year ? ` בשנת ${year}` : ""
+      }?`,
+      explanationHe: `${transfer.player_name} הגיע ל${transfer.to_team_name} מ${transfer.from_team_name}${
+        year ? ` בשנת ${year}` : ""
+      }.`,
+      options: [transfer.from_team_name, ...distractors],
+      correctIndex: 0,
+      scopes: [{ type: "REGION", value: "WORLD" }],
+      sourceLabel: "מסד נתוני העברות מיובא",
+      freeText: true,
+      canonicalAnswer: transfer.from_team_name,
+      aliases: [transfer.from_team_name],
+      hints: [`המועדון החדש: ${transfer.to_team_name}`, ...(year ? [`השנה: ${year}`] : [])],
+    });
+  }
+  return out;
+}
+
+/**
+ * Top scorers — "who finished top scorer in X in season Y?"
+ *
+ * Asked only where one player leads the stored table outright. A shared golden
+ * boot, which happens often enough, has no single answer and is skipped.
+ */
+export function generateTopScorerQuestions(stats: SeasonStatRow[]): KnowledgeQuestion[] {
+  const out: KnowledgeQuestion[] = [];
+  const scored = stats.filter((s) => typeof s.goals === "number" && s.goals! > 0 && s.player_name);
+
+  const byCompetitionSeason = new Map<string, SeasonStatRow[]>();
+  for (const row of scored) {
+    const key = `${row.competition_name}:${row.season}`;
+    byCompetitionSeason.set(key, [...(byCompetitionSeason.get(key) ?? []), row]);
+  }
+
+  const allScorers = [...new Set(scored.map((s) => s.player_name))];
+  if (allScorers.length < 4) return out;
+
+  for (const [key, rows] of byCompetitionSeason) {
+    const best = Math.max(...rows.map((r) => r.goals!));
+    const leaders = rows.filter((r) => r.goals === best);
+    if (leaders.length !== 1) continue; // shared top scorer — ambiguous
+    const row = leaders[0];
+
+    const distractors = pickDistinct(
+      rows.filter((r) => r.player_name !== row.player_name).map((r) => r.player_name),
+      3,
+      `KB_TOP_SCORER:${key}`
+    );
+    if (distractors.length < 3) continue;
+
+    out.push({
+      semanticKey: `KB_TOP_SCORER:${row.competition_name}:${row.season}`,
+      mode: "CLASSIC",
+      category: "STATS",
+      difficulty: classifyDifficulty({
+        resource: "trophy",
+        season: row.season,
+        competitionPriority: row.competition_priority,
+      }),
+      questionHe: `מי היה מלך השערים של ${row.competition_name} בעונת ${row.season_label ?? row.season}?`,
+      explanationHe: `${row.player_name} סיים כמלך השערים עם ${best} שערים${
+        row.team_name ? `, בשורות ${row.team_name}` : ""
+      }.`,
+      options: [row.player_name, ...distractors],
+      correctIndex: 0,
+      scopes: scopesForCompetition(row.competition_local_code, null),
+      sourceLabel: "מסד נתוני סטטיסטיקות מיובא",
+      freeText: true,
+      canonicalAnswer: row.player_name,
+      aliases: derivePlayerAliases(row.player_name),
+      hints: [`התחרות: ${row.competition_name}`, `מספר השערים: ${best}`],
     });
   }
   return out;

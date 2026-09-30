@@ -3,7 +3,14 @@ import assert from "node:assert/strict";
 import { MockProvider } from "../src/server/providers/football/MockProvider.ts";
 import { executeTask } from "../src/server/sync/harvest.ts";
 import { buildTaskKey } from "../src/server/sync/queue.ts";
-import { planTasks, scoreTask, COMPETITION_TARGETS } from "../src/server/sync/planner.ts";
+import {
+  planTasks,
+  scoreTask,
+  COMPETITION_TARGETS,
+  SEASON_WINDOW,
+  isSeasonAccessible,
+} from "../src/server/sync/planner.ts";
+import { ApiFootballProvider } from "../src/server/providers/football/ApiFootballProvider.ts";
 import { quotaDayKey, DEFAULT_OPERATIONAL_LIMIT } from "../src/server/sync/budget.ts";
 import {
   upsertCountries,
@@ -12,7 +19,7 @@ import {
   upsertTeams,
   upsertTransfers,
 } from "../src/server/sync/importers.ts";
-import { ProviderQuotaError } from "../src/server/providers/football/types.ts";
+import { ProviderPermanentError, ProviderQuotaError } from "../src/server/providers/football/types.ts";
 import { parseResults, sqlValue } from "../src/server/sync/d1Client.ts";
 
 const PROVIDER = "api-football";
@@ -104,8 +111,12 @@ describe("importers produce idempotent SQL", () => {
     const first = upsertTransfers(PROVIDER, [transfer]);
     const second = upsertTransfers(PROVIDER, [transfer]);
     assert.deepEqual(first, second, "same input must produce identical SQL");
-    assert.ok(first[0].includes("154:529:85:2021-08-10"));
-    assert.match(first[0], /ON CONFLICT\(transfer_key\)/);
+    // The batch opens with stub rows for the player and both clubs, so the
+    // transfer itself is no longer the first statement.
+    const transferRow = first.find((s) => s.includes("INSERT INTO player_transfers"))!;
+    assert.ok(transferRow, "expected a player_transfers statement");
+    assert.ok(transferRow.includes("154:529:85:2021-08-10"));
+    assert.match(transferRow, /ON CONFLICT\(transfer_key\)/);
   });
 
   test("a transfer also records career history", () => {
@@ -140,25 +151,52 @@ describe("importers produce idempotent SQL", () => {
       },
     ]);
     const careerRow = sql.find((s) => s.includes("player_teams"))!;
-    // is_loan column is the 5th value: season, start_date, is_loan
-    assert.match(careerRow, /'2020-07-01', 1, 'transfer'/);
+    // season, start_date, is_loan, source — matched across whitespace so the
+    // assertion is about the loan flag, not about where the SQL wraps.
+    assert.match(careerRow, /'2020-07-01',\s*1,\s*'transfer'/);
   });
 
+  const CITY = { teamExternalId: "50", teamName: "Man City", rank: 1, points: 91, played: 38, won: 28, drawn: 7, lost: 3, goalsFor: 94, goalsAgainst: 33 };
+  const ARSENAL = { teamExternalId: "42", teamName: "Arsenal", rank: 2, points: 89, played: 38, won: 28, drawn: 5, lost: 5, goalsFor: 88, goalsAgainst: 43 };
+
   test("standings derive a champion row from rank 1", () => {
-    const sql = upsertStandings(PROVIDER, "39", 2023, [
-      { teamExternalId: "50", teamName: "Man City", rank: 1, points: 91, played: 38, won: 28, drawn: 7, lost: 3, goalsFor: 94, goalsAgainst: 33 },
-      { teamExternalId: "42", teamName: "Arsenal", rank: 2, points: 89, played: 38, won: 28, drawn: 5, lost: 5, goalsFor: 88, goalsAgainst: 43 },
-    ]);
+    const sql = upsertStandings(PROVIDER, "39", 2023, [CITY, ARSENAL], { seasonComplete: true });
     const winnerRow = sql.find((s) => s.includes("competition_winners"));
     assert.ok(winnerRow, "expected a competition_winners statement");
     assert.match(winnerRow!, /ON CONFLICT\(competition_id, season\) DO UPDATE/);
   });
 
   test("standings without a rank-1 row produce no champion claim", () => {
-    const sql = upsertStandings(PROVIDER, "39", 2023, [
-      { teamExternalId: "42", teamName: "Arsenal", rank: 2, points: 89, played: 38, won: 28, drawn: 5, lost: 5, goalsFor: 88, goalsAgainst: 43 },
-    ]);
+    const sql = upsertStandings(PROVIDER, "39", 2023, [ARSENAL], { seasonComplete: true });
     assert.ok(!sql.some((s) => s.includes("competition_winners")));
+  });
+
+  test("a season still being played has a leader but no champion", () => {
+    const sql = upsertStandings(PROVIDER, "39", 2026, [CITY, ARSENAL], { seasonComplete: false });
+    assert.ok(sql.some((s) => s.includes("INSERT INTO standings")), "the table itself is still stored");
+    assert.ok(
+      !sql.some((s) => s.includes("competition_winners")),
+      "topping the table in September is not winning the league"
+    );
+  });
+
+  test("a grouped competition's several rank-1 rows produce no champion claim", () => {
+    // The provider flattens group tables into one list, so a group stage arrives
+    // as multiple rank-1 rows. Crowning the first would name a group winner.
+    const sql = upsertStandings(
+      PROVIDER,
+      "2",
+      2023,
+      [CITY, { ...ARSENAL, rank: 1 }],
+      { seasonComplete: true }
+    );
+    assert.ok(!sql.some((s) => s.includes("competition_winners")));
+  });
+
+  test("standings stub every club in the table so they need no separate /teams call", () => {
+    const sql = upsertStandings(PROVIDER, "39", 2023, [CITY, ARSENAL], { seasonComplete: true });
+    assert.ok(sql.some((s) => s.includes("INSERT OR IGNORE INTO teams") && s.includes("Man City")));
+    assert.ok(sql.some((s) => s.includes("INSERT OR IGNORE INTO team_seasons")));
   });
 });
 
@@ -176,9 +214,23 @@ describe("task keys and planning", () => {
     assert.notEqual(p1, p2);
   });
 
-  test("planner orders cheap metadata before expensive per-team work", () => {
-    assert.ok(scoreTask("countries", 1, null) < scoreTask("teams", 1, 2024));
+  test("planner spends the budget on question yield, not on row count", () => {
+    // The catalogue is one request for every competition and season there is.
+    assert.ok(scoreTask("competitions", 1, null) < scoreTask("standings", 1, 2024));
+    // A league table brings a champion and stubs the whole division, so it runs
+    // ahead of the /teams call that would only add metadata for the same clubs.
+    assert.ok(scoreTask("standings", 1, 2024) < scoreTask("teams", 1, 2024));
+    // Fixtures are hundreds of rows and almost no unambiguous questions.
     assert.ok(scoreTask("teams", 1, 2024) < scoreTask("fixtures", 1, 2024));
+    assert.ok(scoreTask("transfers", 1, null) < scoreTask("fixtures", 1, 2024));
+  });
+
+  test("a season of age costs more than a tier of resource", () => {
+    // Without this the five accessible seasons of every league score within a
+    // few points of each other, the budget goes entirely on league tables, and
+    // no per-club request is ever reached.
+    assert.ok(scoreTask("standings", 1, 2024) > scoreTask("standings", 1, 2025));
+    assert.ok(scoreTask("standings", 1, 2022) > scoreTask("teams", 1, 2025));
   });
 
   test("planner prefers higher-priority competitions and newer seasons", () => {
@@ -324,5 +376,88 @@ describe("executeTask against a mock provider", () => {
     });
     assert.equal(result.recordCount, 0);
     assert.equal(provider.getRequestsUsed(), 0);
+  });
+});
+
+describe("the provider plan's season window", () => {
+  test("only seasons inside the window are accessible", () => {
+    assert.ok(isSeasonAccessible(SEASON_WINDOW.min));
+    assert.ok(isSeasonAccessible(SEASON_WINDOW.max));
+    assert.ok(!isSeasonAccessible(SEASON_WINDOW.min - 1));
+    assert.ok(!isSeasonAccessible(SEASON_WINDOW.max + 1));
+    // Season-less resources (the catalogue, a squad, a coach) are unaffected.
+    assert.ok(isSeasonAccessible(null));
+  });
+
+  test("no task is ever planned for a season the plan cannot serve", () => {
+    const tasks = planTasks({
+      satisfied: new Set(),
+      knownCompetitionIds: new Set(COMPETITION_TARGETS.map((c) => c.externalId)),
+      includeHistorical: true,
+    });
+    assert.ok(tasks.length > 0, "expected the planner to produce work");
+    const offending = tasks.filter((t) => t.season != null && !isSeasonAccessible(t.season));
+    assert.deepEqual(
+      offending.map((t) => t.taskKey),
+      [],
+      "a task outside the window costs a request and is answered with a refusal"
+    );
+  });
+});
+
+describe("API-Football error classification", () => {
+  /** A provider whose single response is the given envelope. */
+  const providerReturning = (body: unknown) =>
+    new ApiFootballProvider({
+      apiKey: "test-key",
+      minRequestIntervalMs: 0,
+      maxRetries: 0,
+      fetchImpl: (async () =>
+        new Response(JSON.stringify(body), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        })) as unknown as typeof fetch,
+    });
+
+  test("a season the plan does not cover is permanent, not a quota stop", async () => {
+    // Conflating the two is expensive in both directions. This message concerns
+    // one request and nothing else, so the harvester must skip that season and
+    // carry on; treating it as quota exhaustion aborts the run on the first
+    // out-of-range season and leaves the rest of the day's budget unspent.
+    const provider = providerReturning({
+      errors: { plan: "Free plans do not have access to this season, try from 2022 to 2024." },
+    });
+    await assert.rejects(
+      () => provider.getStandings({ competitionExternalId: "39", season: 2025 }),
+      (error: unknown) => {
+        assert.ok(
+          error instanceof ProviderPermanentError,
+          `expected ProviderPermanentError, got ${(error as Error)?.name}`
+        );
+        assert.ok(!(error instanceof ProviderQuotaError));
+        return true;
+      }
+    );
+  });
+
+  test("running out of requests for the day is a quota stop", async () => {
+    const provider = providerReturning({
+      errors: { requests: "You have reached the request limit for the day" },
+    });
+    await assert.rejects(
+      () => provider.getStandings({ competitionExternalId: "39", season: 2024 }),
+      (error: unknown) => {
+        assert.ok(error instanceof ProviderQuotaError, `expected ProviderQuotaError, got ${(error as Error)?.name}`);
+        return true;
+      }
+    );
+  });
+
+  test("a parameter mistake is permanent so the request is not retried", async () => {
+    const provider = providerReturning({ errors: { league: "The League field must be an integer." } });
+    await assert.rejects(
+      () => provider.getStandings({ competitionExternalId: "x", season: 2024 }),
+      (error: unknown) => error instanceof ProviderPermanentError
+    );
   });
 });

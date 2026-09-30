@@ -98,5 +98,6 @@ if (after.providerRemaining !== null) {
 console.log(`  tasks completed        : ${report.tasksCompleted}`);
 console.log(`  tasks failed           : ${report.tasksFailed}`);
 console.log(`  tasks still pending    : ${report.tasksPending}`);
+console.log(`  tasks parked (deferred): ${report.tasksDeferred}`);
 console.log(`  records by resource    :`, report.recordsByResource);
 console.log(`\nNext: npm run questions:generate${target === "remote" ? " -- --remote" : ""}\n`);

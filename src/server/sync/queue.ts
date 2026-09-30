@@ -75,13 +75,21 @@ export class SyncQueue {
     return tasks.length;
   }
 
-  /** Next runnable tasks, best value first. */
+  /**
+   * Next runnable tasks, best value first.
+   *
+   * Only PENDING is runnable. DEFERRED means parked — work the subscription
+   * cannot currently perform, such as a season outside the plan's window — and
+   * re-claiming it would spend a request on a refusal every single run. A quota
+   * stop does not use DEFERRED: `defer()` puts that task straight back to
+   * PENDING, because it will succeed tomorrow untouched.
+   */
   async claimBatch(limit: number): Promise<SyncTask[]> {
     const rows = await this.db.query<Record<string, unknown>>(
       `SELECT id, task_key, resource_type, competition_external_id, season, team_external_id,
               player_external_id, page, priority, status, attempt_count
          FROM data_sync_queue
-        WHERE status IN ('PENDING', 'DEFERRED') AND attempt_count < ${MAX_ATTEMPTS}
+        WHERE status = 'PENDING' AND attempt_count < ${MAX_ATTEMPTS}
         ORDER BY priority ASC, id ASC
         LIMIT ${Math.max(1, Math.floor(limit))}`
     );
@@ -125,6 +133,36 @@ export class SyncQueue {
     ]);
   }
 
+  /**
+   * Parks work this subscription cannot perform, without spending a request.
+   * It stays visible and costed in reports, and becomes runnable again — via
+   * `unpark` — if the plan's coverage widens.
+   */
+  async park(taskKeys: string[], reason: string): Promise<number> {
+    if (taskKeys.length === 0) return 0;
+    const list = taskKeys.map((k) => sqlValue(k)).join(", ");
+    await this.db.execute([
+      `UPDATE data_sync_queue
+          SET status = 'DEFERRED', error = ${sqlValue(reason.slice(0, 500))}
+        WHERE task_key IN (${list}) AND status = 'PENDING';`,
+    ]);
+    return taskKeys.length;
+  }
+
+  /** Returns parked tasks to the runnable pool, e.g. after a plan upgrade. */
+  async unpark(): Promise<void> {
+    await this.db.execute([
+      `UPDATE data_sync_queue SET status = 'PENDING', error = NULL WHERE status = 'DEFERRED';`,
+    ]);
+  }
+
+  async deferredCount(): Promise<number> {
+    const rows = await this.db.query<{ n: number }>(
+      `SELECT COUNT(*) AS n FROM data_sync_queue WHERE status = 'DEFERRED'`
+    );
+    return Number(rows[0]?.n ?? 0);
+  }
+
   /** Leaves a task for the next run without counting an attempt (quota stop). */
   async defer(taskKey: string, reason: string): Promise<void> {
     await this.db.execute([
@@ -143,7 +181,7 @@ export class SyncQueue {
 
   async pendingCount(): Promise<number> {
     const rows = await this.db.query<{ n: number }>(
-      `SELECT COUNT(*) AS n FROM data_sync_queue WHERE status IN ('PENDING','DEFERRED') AND attempt_count < ${MAX_ATTEMPTS}`
+      `SELECT COUNT(*) AS n FROM data_sync_queue WHERE status = 'PENDING' AND attempt_count < ${MAX_ATTEMPTS}`
     );
     return Number(rows[0]?.n ?? 0);
   }

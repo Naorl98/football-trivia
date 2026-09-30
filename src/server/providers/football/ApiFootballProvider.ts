@@ -176,8 +176,26 @@ export class ApiFootballProvider implements FootballDataProvider {
       // parameter problems.
       if (body.errors && !Array.isArray(body.errors) && Object.keys(body.errors as object).length > 0) {
         const message = JSON.stringify(body.errors);
-        if (/limit|plan|subscription/i.test(message)) {
-          throw new ProviderQuotaError(`API-Football quota/plan error on ${endpoint}: ${message}`);
+
+        // Two very different failures both mention the plan, and conflating them
+        // is expensive in opposite directions.
+        //
+        // "Free plans do not have access to this season" is permanent for this
+        // request and irrelevant to every other: the right response is to give up
+        // on that season and carry on. Treating it as a quota stop — which a bare
+        // /plan/ test does, because the word "plans" is right there — aborts the
+        // whole run on the first out-of-range season and leaves the day's
+        // remaining budget unspent.
+        //
+        // Running out of requests for the day is the reverse: nothing else will
+        // succeed either, and continuing just burns retries against a wall.
+        if (/do not have access|upgrade your plan|not available for your plan/i.test(message)) {
+          throw new ProviderPermanentError(
+            `API-Football plan does not cover ${endpoint} for these parameters: ${message}`
+          );
+        }
+        if (/request limit|too many requests|rateLimit|exceeded/i.test(message)) {
+          throw new ProviderQuotaError(`API-Football quota exhausted on ${endpoint}: ${message}`);
         }
         throw new ProviderPermanentError(`API-Football error on ${endpoint}: ${message}`);
       }

@@ -9,23 +9,56 @@
 
 import { D1Client, sqlValue } from "../src/server/sync/d1Client.ts";
 import { normalizeAnswer } from "../src/shared/answerMatching.ts";
+import { chunkByCost, maxWritesPerRun, planWrites } from "../src/server/sync/writeBudget.ts";
 import {
   generateCareerPaths,
+  generateClubConnections,
   generateCompetitionWinners,
+  generateDidNotPlayFor,
+  generateGuessTheClub,
+  generateManagerQuestions,
+  generatePreviousClubQuestions,
+  generateTopScorerQuestions,
   generateTransferQuestions,
   generateTrophyQuestions,
   generateVenueQuestions,
+  generateWhoAmI,
+  indexCareers,
+  notableClubNames,
+  seasonLabel,
   validateAndDedupe,
 } from "../src/server/questions/knowledgeGenerators.ts";
 
 const KB_ID_BASE = 500000;
 const target = process.argv.includes("--remote") ? "remote" : "local";
+// Reads the facts, runs every generator and applies the quality gates, then
+// reports what it would write without writing it.
+const dryRun = process.argv.includes("--dry-run");
 const db = new D1Client({
   target,
   accountId: process.env.CLOUDFLARE_ACCOUNT_ID ?? "367bed473a2c48604d27f2e668162c49",
 });
 
 console.log(`\nGenerating questions from the knowledge base → ${target} D1\n`);
+
+/**
+ * Tidies provider-supplied names before they reach question text.
+ *
+ * API-Football returns the odd "Tomasz  Kuszczak" with a doubled space, which
+ * reads as a typo in a question and, worse, normalises to a different free-text
+ * answer than the same name written once. Whitespace only — nothing here renames
+ * or re-spells anybody.
+ */
+const cleanName = (value) => (typeof value === "string" ? value.replace(/\s+/g, " ").trim() : value);
+const NAME_COLUMNS = ["player_name", "team_name", "from_team_name", "to_team_name", "coach_name", "name", "runner_up_name", "competition_name", "venue_name"];
+function tidyNames(rows) {
+  for (const row of rows) {
+    for (const column of NAME_COLUMNS) {
+      if (row[column] != null) row[column] = cleanName(row[column]);
+    }
+  }
+  return rows;
+}
 
 // ---- Read the facts.
 const teams = await db.query(`
@@ -41,12 +74,18 @@ const teams = await db.query(`
 const winners = await db.query(`
   SELECT cw.competition_id, c.name AS competition_name, c.local_code AS competition_local_code,
          c.priority AS competition_priority, cw.season,
-         w.name AS team_name, r.name AS runner_up_name
+         w.name AS team_name, r.name AS runner_up_name,
+         cs.start_date, cs.end_date
     FROM competition_winners cw
     JOIN competitions c ON c.id = cw.competition_id
     JOIN teams w ON w.id = cw.team_id
     LEFT JOIN teams r ON r.id = cw.runner_up_team_id
+    LEFT JOIN competition_seasons cs
+           ON cs.competition_id = cw.competition_id AND cs.season = cw.season
 `);
+for (const row of winners) {
+  row.season_label = seasonLabel(Number(row.season), row.start_date, row.end_date);
+}
 
 const transfers = await db.query(`
   SELECT pt.player_id, p.name AS player_name,
@@ -67,9 +106,51 @@ const trophies = await db.query(`
     JOIN players p ON p.id = tr.player_id
 `);
 
+// Every known player-at-club relationship, however it was learned — a squad
+// listing, a transfer, or a scoring record. Club Connection and Who Am I are
+// both built from this, so they see a career assembled from all three sources
+// rather than transfers alone.
+const playerTeams = await db.query(`
+  SELECT pt.player_id, p.name AS player_name, p.position, p.nationality,
+         pt.team_id, t.name AS team_name, t.country_name, pt.season
+    FROM player_teams pt
+    JOIN players p ON p.id = pt.player_id
+    JOIN teams t ON t.id = pt.team_id
+`);
+
+const coachSpells = await db.query(`
+  SELECT ct.coach_id, co.name AS coach_name, co.nationality,
+         ct.team_id, t.name AS team_name, ct.start_date, ct.end_date
+    FROM coach_teams ct
+    JOIN coaches co ON co.id = ct.coach_id
+    JOIN teams t ON t.id = ct.team_id
+`);
+
+const seasonStats = await db.query(`
+  SELECT s.player_id, p.name AS player_name, t.name AS team_name,
+         c.name AS competition_name, c.local_code AS competition_local_code,
+         c.priority AS competition_priority, s.season, s.goals, s.assists, s.appearances,
+         cs.start_date, cs.end_date
+    FROM player_season_stats s
+    JOIN players p ON p.id = s.player_id
+    JOIN competitions c ON c.id = s.competition_id
+    LEFT JOIN teams t ON t.id = s.team_id
+    LEFT JOIN competition_seasons cs
+           ON cs.competition_id = s.competition_id AND cs.season = s.season
+`);
+for (const row of seasonStats) {
+  row.season_label = seasonLabel(Number(row.season), row.start_date, row.end_date);
+}
+
+for (const rows of [teams, winners, transfers, players, trophies, playerTeams, coachSpells, seasonStats]) {
+  tidyNames(rows);
+}
+
 console.log(
   `  facts: ${teams.length} teams, ${players.length} players, ${transfers.length} transfers, ` +
-    `${winners.length} competition winners, ${trophies.length} trophies`
+    `${winners.length} competition winners, ${trophies.length} trophies,\n` +
+    `         ${playerTeams.length} player-club links, ${coachSpells.length} coach spells, ` +
+    `${seasonStats.length} season stat rows`
 );
 
 // ---- Generate candidates.
@@ -78,15 +159,49 @@ for (const row of transfers) {
   transfersByPlayer.set(row.player_id, [...(transfersByPlayer.get(row.player_id) ?? []), row]);
 }
 
-const candidates = [
-  ...generateCompetitionWinners(winners),
-  ...generateTransferQuestions(transfers, teams),
-  ...generateCareerPaths(transfersByPlayer, players),
-  ...generateVenueQuestions(teams),
-  ...generateTrophyQuestions(trophies),
-];
+const careers = indexCareers(playerTeams);
+const notable = notableClubNames(teams);
+
+// Clubs that actually contested each competition, used as believable distractors
+// for "who won X in season Y".
+const competitionClubs = await db.query(`
+  SELECT ts.competition_id, t.name AS team_name
+    FROM team_seasons ts
+    JOIN teams t ON t.id = ts.team_id
+`);
+const clubsByCompetition = new Map();
+for (const row of competitionClubs) {
+  const id = Number(row.competition_id);
+  clubsByCompetition.set(id, [...(clubsByCompetition.get(id) ?? []), String(row.team_name)]);
+}
+
+// Club countries, used to keep a "never played for" club on a different national
+// footing from every club the player is recorded at.
+const clubCountryById = new Map(teams.map((t) => [Number(t.id), t.country_name ?? null]));
+
+console.log(`  ${notable.size} of ${teams.length} clubs are competition-backed and askable`);
+
+const byGenerator = {
+  competitionWinners: generateCompetitionWinners(winners, clubsByCompetition),
+  transferTo: generateTransferQuestions(transfers, teams, notable),
+  transferFrom: generatePreviousClubQuestions(transfers, teams, notable),
+  careerPath: generateCareerPaths(transfersByPlayer, players),
+  clubConnection: generateClubConnections(careers, { notable }),
+  didNotPlayFor: generateDidNotPlayFor(careers, { notable, clubCountryById }),
+  whoAmI: generateWhoAmI(careers),
+  guessTheClub: generateGuessTheClub(teams),
+  managers: generateManagerQuestions(coachSpells),
+  topScorers: generateTopScorerQuestions(seasonStats),
+  venues: generateVenueQuestions(teams),
+  trophies: generateTrophyQuestions(trophies),
+};
+
+const candidates = Object.values(byGenerator).flat();
 
 console.log(`  candidates generated: ${candidates.length}`);
+for (const [name, list] of Object.entries(byGenerator)) {
+  if (list.length > 0) console.log(`    ${name.padEnd(20)} ${list.length}`);
+}
 
 // ---- Quality gates + dedupe against what already exists.
 const existingRows = await db.query(
@@ -104,15 +219,67 @@ if (accepted.length === 0) {
   process.exit(0);
 }
 
-// ---- Assign stable ids and write.
+if (dryRun) {
+  const byCategory = {};
+  const byMode = {};
+  let freeText = 0;
+  for (const q of accepted) {
+    byCategory[q.category] = (byCategory[q.category] ?? 0) + 1;
+    byMode[q.mode] = (byMode[q.mode] ?? 0) + 1;
+    if (q.freeText) freeText++;
+  }
+  console.log(`\n  DRY RUN — nothing written.`);
+  console.log(`  would insert ${accepted.length} question(s); ${freeText} free-text capable`);
+  console.log(`  by category:`, byCategory);
+  console.log(`  by mode    :`, byMode);
+  console.log(`\n  sample:`);
+  for (const q of accepted.slice(0, 5)) console.log(`    [${q.category}] ${q.questionHe} → ${q.options[q.correctIndex]}`);
+  console.log();
+  process.exit(0);
+}
+
+// ---- Assign stable ids and write, within the run's D1 write allowance.
 const maxRow = await db.query(
   `SELECT COALESCE(MAX(id), ${KB_ID_BASE - 1}) AS max_id FROM questions WHERE id >= ${KB_ID_BASE}`
 );
 let nextId = Number(maxRow[0]?.max_id ?? KB_ID_BASE - 1) + 1;
 
-const statements = [];
-for (const q of accepted) {
-  const id = nextId++;
+/**
+ * Interleaves the accepted questions by category.
+ *
+ * A run is normally cut short by the write budget rather than by running out of
+ * questions, so whatever sits at the front of the list is what production
+ * actually gets. Generated in generator order that front is all transfers —
+ * they outnumber everything else roughly two to one — and the modes with only a
+ * few dozen candidates would never be reached at all. Round-robin spends the
+ * budget across every category at once: the scarce ones are written out
+ * completely because they run dry early, and the abundant ones contribute evenly
+ * instead of crowding the rest out.
+ */
+function interleaveByCategory(questions) {
+  const queues = new Map();
+  for (const q of questions) {
+    queues.set(q.category, [...(queues.get(q.category) ?? []), q]);
+  }
+  const order = [...queues.keys()].sort();
+  const out = [];
+  for (let round = 0; out.length < questions.length; round++) {
+    let progressed = false;
+    for (const category of order) {
+      const queue = queues.get(category);
+      if (round < queue.length) {
+        out.push(queue[round]);
+        progressed = true;
+      }
+    }
+    if (!progressed) break;
+  }
+  return out;
+}
+
+/** SQL for one question, kept together so a question is never half-written. */
+function statementsForQuestion(q, id) {
+  const statements = [];
   statements.push(
     `INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he,
        verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated)
@@ -163,18 +330,70 @@ for (const q of accepted) {
       `INSERT INTO question_hints (question_id, text, order_index) VALUES (${id}, ${sqlValue(hint)}, ${index});`
     );
   });
+  return statements;
 }
 
-// Write in chunks so a single CLI invocation never gets unwieldy.
-const CHUNK = 2000;
-for (let i = 0; i < statements.length; i += CHUNK) {
-  await db.execute(statements.slice(i, i + CHUNK));
-  console.log(`  wrote ${Math.min(i + CHUNK, statements.length)}/${statements.length} statements`);
+/**
+ * Selects as many whole questions as the run's write allowance covers.
+ *
+ * D1 bills rows written and counts every index entry as a row, which puts one
+ * question at roughly thirty rows once its options, clues, scopes, aliases and
+ * hints are priced. The full set therefore costs several times the free tier's
+ * 100,000-a-day, so the ceiling decides how much lands and the remainder waits
+ * for the next run. That is safe to leave half-done: every question carries a
+ * semantic key and is skipped if it is already stored, so re-running continues
+ * rather than duplicating.
+ */
+const maxWrites = (() => {
+  const flag = process.argv.indexOf("--max-writes");
+  if (flag !== -1) return Number(process.argv[flag + 1]);
+  return maxWritesPerRun();
+})();
+
+const ordered = interleaveByCategory(accepted);
+const selected = [];
+const statements = [];
+let estimatedRows = 0;
+
+for (const q of ordered) {
+  const id = nextId;
+  const group = statementsForQuestion(q, id);
+  const cost = planWrites(group).estimatedRowsWritten;
+  if (estimatedRows + cost > maxWrites && selected.length > 0) break;
+  nextId++;
+  selected.push(q);
+  statements.push(...group);
+  estimatedRows += cost;
+}
+
+const deferredCount = accepted.length - selected.length;
+console.log(
+  `\n  write budget ${maxWrites.toLocaleString()} rows → writing ${selected.length.toLocaleString()} question(s) ` +
+    `(~${estimatedRows.toLocaleString()} rows, ${statements.length.toLocaleString()} statements)`
+);
+if (deferredCount > 0) {
+  console.log(
+    `  ${deferredCount.toLocaleString()} question(s) left for the next run — re-run this command to continue`
+  );
+}
+
+// Chunk by cost rather than by statement count, so one batch never balloons.
+const chunks = chunkByCost(statements, 4000);
+let written = 0;
+for (const chunk of chunks) {
+  await db.execute(chunk);
+  written += chunk.length;
+  console.log(`  wrote ${written}/${statements.length} statements`);
 }
 
 const byDifficulty = {};
-for (const q of accepted) byDifficulty[q.difficulty] = (byDifficulty[q.difficulty] ?? 0) + 1;
+const byCategoryWritten = {};
+for (const q of selected) {
+  byDifficulty[q.difficulty] = (byDifficulty[q.difficulty] ?? 0) + 1;
+  byCategoryWritten[q.category] = (byCategoryWritten[q.category] ?? 0) + 1;
+}
 
-console.log(`\n  ${accepted.length} new question(s) written.`);
+console.log(`\n  ${selected.length} new question(s) written.`);
 console.log(`  by difficulty:`, byDifficulty);
+console.log(`  by category  :`, byCategoryWritten);
 console.log(`\nNext: npm run questions:stats${target === "remote" ? " -- --remote" : ""}\n`);

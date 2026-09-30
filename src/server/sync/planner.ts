@@ -29,8 +29,35 @@ export interface CompetitionTarget {
   type: "LEAGUE" | "CUP";
 }
 
-const RECENT_LEAGUE_SEASONS = [2024, 2023, 2022, 2021, 2020];
-const DEEPER_LEAGUE_SEASONS = [2019, 2018, 2017, 2016, 2015, 2014, 2013, 2012, 2011, 2010];
+// API-Football labels a European 2025/26 campaign as season 2025, so 2025 is
+// the most recent *completed* season and 2026 is in progress.
+const CURRENT_SEASON = 2026;
+
+/**
+ * Seasons this subscription may actually request, inclusive.
+ *
+ * Not a tuning choice — the provider enforces it. On the Free plan every other
+ * season answers with
+ *   {"plan":"Free plans do not have access to this season, try from 2022 to 2024."}
+ * and that answer costs a request from the same 100/day allowance as real data.
+ * Planning outside the window would spend a third of a day's budget rediscovering
+ * the same sentence, so the window is applied when work is planned and again
+ * before a queued task is claimed.
+ *
+ * Widen this after a plan upgrade and the parked seasons become runnable again;
+ * nothing else needs to change.
+ */
+export const SEASON_WINDOW = { min: 2022, max: 2024 } as const;
+
+export function isSeasonAccessible(season: number | null | undefined): boolean {
+  if (season === null || season === undefined) return true;
+  return season >= SEASON_WINDOW.min && season <= SEASON_WINDOW.max;
+}
+
+const RECENT_LEAGUE_SEASONS = [2024, 2023, 2022];
+// Empty on the Free plan: nothing before 2022 can be fetched at all. Kept so a
+// paid plan only has to extend this list.
+const DEEPER_LEAGUE_SEASONS: number[] = [];
 
 /**
  * Priority 1 competitions with their API-Football league ids. These ids are
@@ -46,6 +73,8 @@ export const COMPETITION_TARGETS: CompetitionTarget[] = [
   { externalId: "61", localCode: "LIGUE_1", label: "Ligue 1", priority: 1, type: "LEAGUE", seasons: RECENT_LEAGUE_SEASONS },
   { externalId: "94", localCode: "LIGA_PORTUGAL", label: "Primeira Liga", priority: 1, type: "LEAGUE", seasons: RECENT_LEAGUE_SEASONS },
   { externalId: "2", localCode: "UCL", label: "UEFA Champions League", priority: 1, type: "CUP", seasons: RECENT_LEAGUE_SEASONS },
+  // Tournament years are filtered to the window below, so the World Cup means
+  // Qatar 2022 only, and the Euro and Copa América mean their 2024 editions.
   { externalId: "1", localCode: "WORLD_CUP", label: "FIFA World Cup", priority: 1, type: "CUP", seasons: [2022, 2018, 2014, 2010] },
 
   { externalId: "3", localCode: "UEL", label: "UEFA Europa League", priority: 2, type: "CUP", seasons: RECENT_LEAGUE_SEASONS },
@@ -67,30 +96,63 @@ export const HISTORICAL_TARGETS: CompetitionTarget[] = COMPETITION_TARGETS.filte
 /**
  * Base score per resource type — lower runs first.
  * Tuned by expected questions generated per request.
+ *
+ * Two things drive this order, and both are consequences of the budget being
+ * ~95 requests a day rather than thousands:
+ *
+ * `standings` runs early and `teams` runs late. A league table names every club
+ * in the division, and the importer stubs a row for each, so standings delivers
+ * the club graph *and* a champion for one request. A /teams call on the same
+ * league-season returns the same clubs again, adding only venue, founded year
+ * and country — metadata almost nothing asks about. Ordering teams first, as
+ * this did, spent the entire daily budget re-listing clubs that standings would
+ * have produced for free, and left no quota for a single career fact.
+ *
+ * `transfers` outranks everything per-team: one request returns the full move
+ * history of every player who passed through a club, which is many careers, not
+ * one. /transfers?player= would cost one request per player for the same rows.
  */
 const RESOURCE_BASE_PRIORITY: Record<ResourceType, number> = {
-  countries: 5,
-  competitions: 10,
-  teams: 20,
+  competitions: 5,
+  standings: 10,
+  // /teams is the only source of a club's founding year, country and stadium.
+  // Those three facts are what Guess The Club and the stadium questions are made
+  // of, and standings cannot supply them — a club stubbed from a league table has
+  // a name and nothing else. Ranked below transfers because a marginal transfer
+  // request still yields more raw questions, but well above the rest: without a
+  // handful of these, two whole game modes generate nothing at all.
+  teams: 15,
+  transfers: 20,
   squad: 30,
-  transfers: 35,
-  standings: 40,
-  trophies: 50,
-  topscorers: 60,
-  players: 70,
-  coaches: 80,
+  coaches: 40,
+  topscorers: 50,
+  trophies: 70,
+  countries: 80,
+  players: 85,
   fixtures: 95,
 };
 
+/**
+ * How much worse one extra season of age makes a competition-level request.
+ *
+ * This is large on purpose. With ~95 requests a day, a stride of 1 — which is
+ * what a plain `2026 - season` gives — leaves five seasons of every league
+ * scoring within a few points of each other, so the whole budget goes on league
+ * tables and the first per-club request is never reached. A stride wider than
+ * the gap between resource tiers means the current season's tables are gathered
+ * everywhere first, and 2021's wait behind a round of club work.
+ */
+const SEASON_DEPTH_STRIDE = 150;
+
 export function scoreTask(
   resourceType: ResourceType,
-  competitionPriority: 1 | 2 | 3,
+  competitionPriority: number,
   season: number | null
 ): number {
   const base = RESOURCE_BASE_PRIORITY[resourceType];
   // Newer seasons first: they are cheaper to reason about and more recognisable.
-  const recency = season ? Math.max(0, 2026 - season) : 0;
-  return base * 10 + competitionPriority * 15 + recency;
+  const seasonsOld = season ? Math.max(0, CURRENT_SEASON - season) : 0;
+  return base * 10 + competitionPriority * 3 + seasonsOld * SEASON_DEPTH_STRIDE;
 }
 
 export interface PlanOptions {
@@ -135,6 +197,9 @@ export function planTasks(options: PlanOptions): SyncTask[] {
     if (!options.knownCompetitionIds.has(target.externalId)) continue;
 
     for (const season of target.seasons) {
+      // A season the plan cannot reach is not queued at all: the request would
+      // be spent and answered with a refusal.
+      if (!isSeasonAccessible(season)) continue;
       // Teams first: squads, standings and fixtures all reference them.
       push({
         resourceType: "teams",
@@ -166,26 +231,68 @@ export function planTasks(options: PlanOptions): SyncTask[] {
   return tasks.sort((a, b) => a.priority - b.priority);
 }
 
+/** Per-club requests, in the order they are spent on any one club. */
+const TEAM_RESOURCES = ["transfers", "squad", "coaches"] as const;
+
 /**
- * Follow-up work unlocked by data already imported: squads and transfer
- * histories for known teams. Generated after teams exist, because both are
- * per-team requests and would otherwise have nothing to point at.
+ * Club work is scored on its own scale rather than through RESOURCE_BASE_PRIORITY.
+ *
+ * The tiers there are 100 points apart, which is wider than the gap between one
+ * club and the next — so borrowing them would sort every club's transfers ahead
+ * of any club's squad and lose the depth-first grouping this function exists to
+ * produce. These constants keep a club's three requests adjacent, and place the
+ * whole block just after the current season's league tables.
+ */
+/**
+ * Placed just above one season's worth of league tables (base 100 + a single
+ * SEASON_DEPTH_STRIDE step), so the most recent accessible season is swept
+ * across every priority league before any club is opened up.
+ *
+ * That ordering is what gives the club pool its spread. Diving into the first
+ * league whose table happens to land would fill the budget with twenty clubs
+ * from one country, and "which two of these were team-mates" is a far better
+ * question when the candidates span England, Spain, Italy and Germany.
+ */
+const TEAM_BLOCK_START = 420;
+const TEAM_STRIDE = 15;
+const TEAM_RESOURCE_STRIDE = 5;
+
+/**
+ * Follow-up work unlocked by data already imported: transfer histories, squads
+ * and coaches for known clubs. Generated after clubs exist, because each is a
+ * per-club request and would otherwise have nothing to point at.
+ *
+ * These are scored club-by-club rather than resource-by-resource, so the budget
+ * finishes a handful of clubs completely instead of starting hundreds. That is
+ * deliberate, and it is what the question generators reward:
+ *
+ *   * "which two players were team-mates at X" and "which of these never played
+ *     for X" need *many* known players at one club. Half a squad each for
+ *     fifty clubs answers neither.
+ *   * a squad pass fills in nationality, position and date of birth for the
+ *     players the same club's transfer list created as name-only stubs, so the
+ *     pair together support Who Am I where either alone does not.
+ *
+ * Within a club, transfers go first: it is the one request whose value does not
+ * depend on any other having been spent.
  */
 export function planTeamFollowUps(
-  teams: { externalId: string; competitionPriority: 1 | 2 | 3 }[],
+  teams: { externalId: string; competitionPriority: number }[],
   satisfied: Set<string>,
   limit: number
 ): SyncTask[] {
   const tasks: SyncTask[] = [];
-  for (const team of teams) {
-    for (const resourceType of ["squad", "transfers"] as const) {
+  for (const [index, team] of teams.entries()) {
+    for (const [offset, resourceType] of TEAM_RESOURCES.entries()) {
       const partial = { resourceType, teamExternalId: team.externalId, page: 1 };
       const taskKey = buildTaskKey(partial);
       if (satisfied.has(taskKey)) continue;
       tasks.push({
         ...partial,
         taskKey,
-        priority: scoreTask(resourceType, team.competitionPriority, null),
+        // Club rank dominates; the offset only orders the three requests within
+        // one club, and stays inside one club's stride.
+        priority: TEAM_BLOCK_START + index * TEAM_STRIDE + offset * TEAM_RESOURCE_STRIDE,
       });
       if (tasks.length >= limit) return tasks.sort((a, b) => a.priority - b.priority);
     }

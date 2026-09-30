@@ -149,6 +149,34 @@ describe("imports never rewrite unchanged rows", () => {
     }
   });
 
+  it("names every column it assigns in the change guard", () => {
+    // A guard that lists only some of the columns being SET does not merely miss
+    // an update — it silently discards data. upsertPlayers assigned position,
+    // nationality and birth_date but guarded on the name columns alone, so a
+    // player first created as a name-only stub by a transfer list could never
+    // gain a position from the squad import that followed: the name already
+    // matched, the whole UPDATE was skipped, and Who Am I had nothing to work
+    // with. The existing "has a guard" test passed throughout.
+    const upserts = [...importers.matchAll(/DO UPDATE SET([\s\S]*?)WHERE([\s\S]*?);`/g)];
+    assert.ok(upserts.length > 0, "expected UPSERT statements to exist");
+
+    for (const [, setClause, guard] of upserts) {
+      const assigned = [...setClause.matchAll(/(?:^|,)\s*(?:--[^\n]*\n\s*)*([a-z_]+)\s*=/g)]
+        .map((m) => m[1])
+        // updated_at is bookkeeping: it records that a change happened and must
+        // not be what decides whether one did.
+        .filter((column) => column !== "updated_at");
+
+      for (const column of assigned) {
+        assert.ok(
+          guard.includes(column),
+          `${column} is assigned but absent from the guard, so a change to it alone is dropped:\n` +
+            `SET${setClause.slice(0, 160)}\nWHERE${guard.slice(0, 200)}`
+        );
+      }
+    }
+  });
+
   it("uses IS NOT rather than <> so NULL transitions still count as changes", () => {
     const guards = [...importers.matchAll(/WHERE ([^;]*IS NOT excluded[^;]*);/g)].map((m) => m[1]);
     for (const guard of guards) {

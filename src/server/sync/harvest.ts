@@ -27,7 +27,13 @@ import {
   upsertTransfers,
   upsertTrophies,
 } from "./importers.ts";
-import { COMPETITION_TARGETS, planTasks, planTeamFollowUps } from "./planner.ts";
+import {
+  COMPETITION_TARGETS,
+  SEASON_WINDOW,
+  isSeasonAccessible,
+  planTasks,
+  planTeamFollowUps,
+} from "./planner.ts";
 
 export interface HarvestOptions {
   provider: FootballDataProvider;
@@ -45,11 +51,21 @@ export interface HarvestReport {
   tasksCompleted: number;
   tasksFailed: number;
   tasksPending: number;
+  /** Parked: queued work this plan cannot currently perform. */
+  tasksDeferred: number;
   stoppedReason: "budget" | "quota" | "queue-empty" | "max-requests";
   recordsByResource: Record<string, number>;
 }
 
-const CURRENT_SEASON = 2025;
+/**
+ * The season currently being played, in API-Football's convention where a
+ * European 2026/27 campaign is season 2026. Seasons before this one are
+ * finished: their results are immutable and may be treated as settled facts.
+ */
+const CURRENT_SEASON = 2026;
+
+const isSeasonComplete = (season: number | null | undefined): boolean =>
+  typeof season === "number" && season < CURRENT_SEASON;
 
 const targetByExternalId = new Map(COMPETITION_TARGETS.map((t) => [t.externalId, t]));
 
@@ -63,7 +79,7 @@ function priorityFor(externalId: string): number {
 
 /** Completed historical seasons are immutable and must never be re-fetched. */
 function isArchivable(season: number | null | undefined): boolean {
-  return typeof season === "number" && season < CURRENT_SEASON;
+  return isSeasonComplete(season);
 }
 
 export async function runHarvest(options: HarvestOptions): Promise<HarvestReport> {
@@ -78,6 +94,7 @@ export async function runHarvest(options: HarvestOptions): Promise<HarvestReport
     tasksCompleted: 0,
     tasksFailed: 0,
     tasksPending: 0,
+    tasksDeferred: 0,
     stoppedReason: "queue-empty",
     recordsByResource: {},
   };
@@ -121,13 +138,27 @@ export async function runHarvest(options: HarvestOptions): Promise<HarvestReport
     }
 
     // Team-level follow-ups (squads, transfers) once teams exist.
+    /**
+     * Clubs worth spending a per-team request on, best first.
+     *
+     * Ordering matters more than the limit here. Transfers and squads cost one
+     * request per club, so on a ~95-request day only the first few dozen rows
+     * of this list will ever be reached — they need to be Real Madrid and
+     * Liverpool, not whichever club a stub happened to create first. Clubs
+     * reached only as the far end of someone else's transfer have no
+     * team_seasons row at all and sort last, which is correct: they are there to
+     * complete a career path, not to be crawled themselves.
+     */
     const knownTeams = await db.query<{ external_id: string; priority: number }>(
-      `SELECT t.external_id AS external_id, COALESCE(MIN(c.priority), 3) AS priority
+      `SELECT t.external_id AS external_id,
+              COALESCE(MIN(c.priority), 9) AS priority,
+              MAX(ts.season) AS recent_season
          FROM teams t
          LEFT JOIN team_seasons ts ON ts.team_id = t.id
          LEFT JOIN competitions c ON c.id = ts.competition_id
         WHERE t.provider = ${sqlValue(provider.name)}
         GROUP BY t.external_id
+        ORDER BY priority ASC, recent_season DESC, t.external_id ASC
         LIMIT 400`
     );
     if (knownTeams.length > 0) {
@@ -149,6 +180,23 @@ export async function runHarvest(options: HarvestOptions): Promise<HarvestReport
 
   const initiallyPlanned = await replan();
   if (initiallyPlanned > 0) log(`planned ${initiallyPlanned} task(s)`);
+
+  // Work queued by an earlier run under different assumptions about the plan's
+  // coverage is parked here rather than discovered one refused request at a time.
+  const outOfWindow = await db.query<{ task_key: string }>(
+    `SELECT task_key FROM data_sync_queue
+      WHERE status = 'PENDING' AND season IS NOT NULL
+        AND (season < ${SEASON_WINDOW.min} OR season > ${SEASON_WINDOW.max})`
+  );
+  if (outOfWindow.length > 0) {
+    await queue.park(
+      outOfWindow.map((r) => String(r.task_key)),
+      `season outside provider plan window ${SEASON_WINDOW.min}-${SEASON_WINDOW.max}`
+    );
+    log(
+      `parked ${outOfWindow.length} task(s) for seasons outside the plan's ${SEASON_WINDOW.min}-${SEASON_WINDOW.max} window`
+    );
+  }
 
   const maxRequests = options.maxRequests ?? Number.POSITIVE_INFINITY;
   let requestsThisRun = 0;
@@ -177,6 +225,12 @@ export async function runHarvest(options: HarvestOptions): Promise<HarvestReport
       continue;
     }
 
+    // Last line of defence: a task the plan cannot serve costs nothing here.
+    if (!isSeasonAccessible(task.season)) {
+      await queue.park([task.taskKey], `season outside provider plan window ${SEASON_WINDOW.min}-${SEASON_WINDOW.max}`);
+      continue;
+    }
+
     try {
       const outcome = await executeTask(provider, task);
       requestsThisRun++;
@@ -198,9 +252,15 @@ export async function runHarvest(options: HarvestOptions): Promise<HarvestReport
           (outcome.nextPage ? ` (queued page ${outcome.nextPage})` : "")
       );
 
-      // Importing the catalogue or a team list unlocks work that could not be
-      // planned before, so re-plan immediately rather than waiting a whole run.
-      if (task.resourceType === "competitions" || task.resourceType === "teams") {
+      // Importing the catalogue, a team list or a league table unlocks work that
+      // could not be planned before, so re-plan immediately rather than waiting
+      // a whole run. Standings counts because a table names every club in the
+      // division, which is what per-team requests hang off.
+      if (
+        task.resourceType === "competitions" ||
+        task.resourceType === "teams" ||
+        task.resourceType === "standings"
+      ) {
         const added = await replan();
         if (added > 0) log(`re-planned: +${added} task(s) now unlocked`);
       }
@@ -235,6 +295,7 @@ export async function runHarvest(options: HarvestOptions): Promise<HarvestReport
   report.requestsUsed = requestsThisRun;
   report.requestsRemaining = snapshot.remaining;
   report.tasksPending = await queue.pendingCount();
+  report.tasksDeferred = await queue.deferredCount();
 
   await db.execute([
     `UPDATE data_sync_runs
@@ -324,7 +385,9 @@ export async function executeTask(provider: FootballDataProvider, task: SyncTask
         season: task.season,
       });
       return {
-        statements: upsertStandings(provider.name, task.competitionExternalId, task.season, page.items),
+        statements: upsertStandings(provider.name, task.competitionExternalId, task.season, page.items, {
+          seasonComplete: isSeasonComplete(task.season),
+        }),
         recordCount: page.items.length,
         nextPage: null,
       };
