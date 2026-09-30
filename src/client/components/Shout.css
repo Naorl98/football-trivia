@@ -1,0 +1,30 @@
+.shout {
+  position: fixed;
+  inset-block-start: 22vh;
+  inset-inline-start: 50%;
+  z-index: 80;
+  padding: 9px 22px;
+  border-radius: var(--r-pill);
+  font-family: var(--font-head);
+  font-weight: 900;
+  font-size: clamp(1.3rem, 6vw, 2rem);
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: var(--shadow-3);
+}
+
+.shout-goal {
+  background: var(--green);
+  color: var(--on-green);
+}
+
+.shout-fast {
+  background: var(--blue);
+  color: #04121f;
+}
+
+.shout-streak {
+  background: var(--amber);
+  color: var(--on-amber);
+}

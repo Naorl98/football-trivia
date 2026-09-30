@@ -1,0 +1,62 @@
+.ring {
+  position: relative;
+  margin: 0;
+  width: 168px;
+  height: 168px;
+  display: grid;
+  place-items: center;
+}
+
+.ring svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  /* Start the arc at twelve o'clock. */
+  transform: rotate(-90deg);
+}
+
+.ring-track {
+  fill: none;
+  stroke: var(--surface-3);
+  stroke-width: 9;
+}
+
+.ring-arc {
+  fill: none;
+  stroke: var(--green);
+  stroke-width: 9;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 240ms linear, stroke var(--t-3) var(--ease);
+}
+
+/* Tone classes are prefixed `tone-`, not `ring-`: `ring-mid` collided with the
+   caption's class below, which handed the whole <figure> a column flex layout
+   and shunted the score to the top of the dial. */
+.tone-low .ring-arc { stroke: var(--red); }
+.tone-mid .ring-arc { stroke: var(--amber); }
+.tone-good .ring-arc { stroke: var(--green); }
+
+.ring-center {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.ring-value {
+  font-size: 3.1rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text);
+}
+
+.ring-cap {
+  font-family: var(--font-head);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+  margin-block-start: 3px;
+}

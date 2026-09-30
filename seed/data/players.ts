@@ -90,7 +90,11 @@ export const PLAYERS: PlayerRecord[] = [
   { id: "evra", en: "Patrice Evra", he: "פטריס אברה", aliases: ["Evra", "אברה"], nat: "FRA", pos: "DF", tier: 3, clubs: ["monaco", "man_utd", "juventus", "marseille"], seq: "partial", firstListed: false },
   { id: "kante", en: "N'Golo Kanté", he: "נגולו קנטה", aliases: ["Kante", "Kanté", "קנטה"], nat: "FRA", pos: "MF", tier: 2, clubs: ["caen_placeholder", "leicester", "chelsea", "al_ittihad"], seq: "partial", firstListed: false },
   { id: "pogba", en: "Paul Pogba", he: "פול פוגבה", aliases: ["Pogba", "פוגבה"], nat: "FRA", pos: "MF", tier: 2, clubs: ["man_utd", "juventus", "man_utd", "juventus"], seq: "partial", firstListed: true },
-  { id: "varane", en: "Raphaël Varane", he: "רפאל ורן", aliases: ["Varane", "ורן"], nat: "FRA", pos: "DF", tier: 2, clubs: ["lens", "real_madrid", "man_utd"], seq: "full", firstListed: true },
+  // Hebrew transliterations of "Varane" differ by an optional aleph, and all
+  // three spellings are in common use. They are declared here rather than left
+  // to typo tolerance: at this name's length the budget is one edit, so
+  // "רפאל ואראן" would otherwise be rejected as two edits from "רפאל ורן".
+  { id: "varane", en: "Raphaël Varane", he: "רפאל ורן", aliases: ["Varane", "ורן", "רפאל וראן", "וראן"], nat: "FRA", pos: "DF", tier: 2, clubs: ["lens", "real_madrid", "man_utd"], seq: "full", firstListed: true },
   { id: "lloris", en: "Hugo Lloris", he: "הוגו יוריס", aliases: ["Lloris", "יוריס"], nat: "FRA", pos: "GK", tier: 2, clubs: ["nice", "lyon", "tottenham"], seq: "partial", firstListed: true },
   { id: "giroud", en: "Olivier Giroud", he: "אוליבייה ז'ירו", aliases: ["Giroud", "ז'ירו"], nat: "FRA", pos: "FW", tier: 2, clubs: ["montpellier", "arsenal", "chelsea", "milan"], seq: "partial", firstListed: false },
   { id: "anelka", en: "Nicolas Anelka", he: "ניקולא אנלקה", aliases: ["Anelka", "אנלקה"], nat: "FRA", pos: "FW", tier: 3, clubs: ["psg", "arsenal", "real_madrid", "psg", "liverpool", "man_city", "fenerbahce", "bolton_placeholder", "chelsea"], seq: "partial", firstListed: true },

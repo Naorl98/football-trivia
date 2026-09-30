@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { motionAllowed } from "../lib/a11y";
 
 // Restrained celebration for strong results: a single short canvas burst in
 // the brand palette that cleans itself up. Skipped entirely under
@@ -8,7 +9,7 @@ export function Confetti({ active }: { active: boolean }) {
 
   useEffect(() => {
     if (!active) return;
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    if (!motionAllowed()) return;
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
@@ -25,11 +26,11 @@ export function Confetti({ active }: { active: boolean }) {
     const styles = getComputedStyle(document.documentElement);
     const token = (name: string, fallback: string) => styles.getPropertyValue(name).trim() || fallback;
     const colors = [
-      token("--spot", "#cf3b22"),
-      token("--pitch", "#12523a"),
-      token("--ink", "#17160f"),
-      token("--stamp", "#1c4f8a"),
-      token("--spot", "#cf3b22"),
+      token("--green", "#26c463"),
+      token("--green-bright", "#43e07e"),
+      token("--amber", "#f6b93b"),
+      token("--blue", "#52a5e8"),
+      token("--text", "#f1f0ea"),
     ];
     const pieces = Array.from({ length: 70 }, () => ({
       x: width / 2 + (Math.random() - 0.5) * width * 0.5,

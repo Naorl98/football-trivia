@@ -1,111 +1,86 @@
-.masthead {
-  background: var(--paper);
+/* Named `topbar`, not `bar`: `.bar` is the thin progress-bar primitive in
+   global.css, and the collision silently gave this element `height: 4px` and
+   `overflow: hidden`, clipping the entire header. */
+.topbar {
+  position: relative;
+  z-index: 40;
+  /* #root is a column flex container; without this the header is the first
+     thing squeezed when the page is taller than the viewport. */
+  flex: none;
+  border-block-end: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(6px);
 }
 
-.masthead-inner {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
+.topbar-inner {
+  display: flex;
   align-items: center;
-  gap: 16px;
-  min-height: var(--masthead-h);
+  justify-content: space-between;
+  gap: 12px;
+  min-height: var(--header-h);
 }
 
-.wordmark {
+.mark {
   display: inline-flex;
   align-items: center;
   gap: 9px;
-  color: var(--ink);
+  color: var(--text);
+  transition: opacity var(--t-2) var(--ease);
 }
 
-.wordmark-text {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 5px;
+.mark:hover { opacity: 0.82; }
+
+.mark-text {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 1.02rem;
+  letter-spacing: -0.01em;
 }
 
-/* Tight, heavy, tracked-out Latin for the wordmark — the one place the design
-   speaks English, because the product name is English. */
-.wordmark-main {
-  font-family: var(--font-ui);
-  font-weight: 900;
-  font-size: 18px;
-  letter-spacing: 0.02em;
+.topbar-link {
+  padding: 7px 12px;
+  border-radius: var(--r-xs);
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 0.86rem;
+  color: var(--text-2);
+  transition: background-color var(--t-2) var(--ease), color var(--t-2) var(--ease);
 }
 
-.wordmark-iq {
-  font-family: var(--font-display);
-  font-weight: 900;
-  font-size: 20px;
-  color: var(--spot);
-  line-height: 1;
+.topbar-link:hover {
+  background: var(--surface-2);
+  color: var(--text);
 }
 
-/* The "edition" line, centred like a running head. Hidden on narrow screens
-   where it would compete with the nav. */
-.masthead-issue {
-  text-align: center;
-  font-size: 10.5px;
-  color: var(--ink-4);
-  white-space: nowrap;
-}
-
-.masthead-nav {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  justify-self: end;
-}
-
-.masthead-link {
-  font-weight: 700;
-  font-size: 14px;
-  padding: 5px 2px;
-  border-block-end: var(--border-w) solid transparent;
-  transition: border-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
-}
-
-.masthead-link:hover {
-  border-block-end-color: var(--spot);
-}
-
-.masthead-link.is-current {
-  border-block-end-color: var(--spot);
-  color: var(--spot);
-}
-
-/* Icon buttons in the masthead: square, inked, unmistakably pressable. */
+/* Square icon buttons, shared by the sound toggle and the accessibility menu. */
 .icon-btn {
   display: grid;
   place-items: center;
   width: 34px;
   height: 34px;
-  background: transparent;
-  color: var(--ink-2);
-  border: var(--border-w-thin) solid var(--rule-soft);
+  border: 1px solid var(--line);
   border-radius: var(--r-xs);
+  background: transparent;
+  color: var(--text-2);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition:
-    border-color var(--t-fast) var(--ease),
-    color var(--t-fast) var(--ease),
-    background-color var(--t-fast) var(--ease);
+    background-color var(--t-2) var(--ease),
+    color var(--t-2) var(--ease),
+    border-color var(--t-2) var(--ease),
+    transform var(--t-1) var(--ease);
 }
 
 .icon-btn:hover {
-  border-color: var(--ink);
-  color: var(--ink);
-  background: var(--card-2);
+  background: var(--surface-2);
+  color: var(--text);
+  border-color: var(--line-strong);
 }
 
-.icon-btn[aria-pressed="false"] {
-  color: var(--ink-4);
-}
+.icon-btn:active { transform: scale(0.92); }
 
-@media (max-width: 720px) {
-  .masthead-issue {
-    display: none;
-  }
-  .masthead-inner {
-    grid-template-columns: auto 1fr;
-  }
+.icon-btn[aria-expanded="true"] {
+  background: var(--surface-2);
+  color: var(--green);
+  border-color: var(--green);
 }

@@ -1,9 +1,9 @@
+import { useEffect } from "react";
 import { Route, Routes } from "react-router-dom";
 import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { RouteAnnouncer } from "./components/RouteAnnouncer";
-import { BrandIntro } from "./components/BrandIntro";
 import { PrivacyGate } from "./components/PrivacyGate";
 import { HomePage } from "./pages/HomePage";
 import { BuilderPage } from "./pages/BuilderPage";
@@ -13,16 +13,26 @@ import { ChallengePage } from "./pages/ChallengePage";
 import { DailyPage } from "./pages/DailyPage";
 import { PrivacyPage } from "./pages/PrivacyPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { a11y } from "./lib/a11y";
+import { sound } from "./lib/sound";
 
 export default function App() {
+  useEffect(() => {
+    // Apply stored accessibility settings before first paint of the routes,
+    // and arm the audio context on the first interaction of any kind.
+    a11y.init();
+    sound.bindGestures();
+  }, []);
+
   return (
     <>
-      {/* First tab stop on every page: jump straight past the masthead. */}
       <a href="#main" className="skip-link">
         דלגו לתוכן הראשי
       </a>
 
-      <BrandIntro />
+      {/* Faint halfway line and centre circle, behind everything. */}
+      <div className="pitch-bg" aria-hidden="true" />
+
       <ScrollToTop />
       <RouteAnnouncer />
       <Header />

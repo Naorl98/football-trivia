@@ -1,32 +1,25 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { openPrivacySettings } from "./PrivacyGate";
-import { Icon } from "./Icon";
 import "./Footer.css";
 
 /**
- * A colophon, not a sitemap. It closes the page the way a printed programme
- * does: a rule, who made it, and the one honest line about data — with the
- * privacy controls reachable from every screen, which is the point.
+ * Two links and a line. It disappears entirely mid-quiz, where nothing below
+ * the answers should compete for attention.
  */
 export function Footer() {
+  const { pathname } = useLocation();
+  if (pathname === "/play") return null;
+
   return (
-    <footer className="colophon">
-      <hr className="rule" />
-      <div className="page colophon-inner">
-        <p className="colophon-line">
-          <span className="colophon-mark">FOOTBALL <span className="spot">IQ</span></span>
-          <span className="colophon-sep" aria-hidden="true">·</span>
-          חידוני כדורגל בעברית
-          <span className="colophon-sep" aria-hidden="true">·</span>
-          ללא Cookie, ללא אנליטיקס, ללא חשבונות
-        </p>
-        <nav className="colophon-nav" aria-label="מסמכים והגדרות">
-          <Link to="/privacy" className="colophon-link">
+    <footer className="foot">
+      <div className="page-wide page foot-inner">
+        <span className="foot-text">Football IQ · חידוני כדורגל בעברית</span>
+        <nav className="foot-nav" aria-label="מידע">
+          <Link to="/privacy" className="foot-link">
             פרטיות
           </Link>
-          <button className="colophon-link colophon-btn" onClick={openPrivacySettings}>
-            <Icon name="sliders" size={15} />
-            הגדרות נתונים
+          <button className="foot-link foot-btn" onClick={openPrivacySettings}>
+            נתונים
           </button>
         </nav>
       </div>

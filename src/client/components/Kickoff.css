@@ -1,0 +1,41 @@
+.kick {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  display: grid;
+  place-items: center;
+  gap: 0;
+  background: color-mix(in srgb, var(--bg-deep) 92%, transparent);
+  pointer-events: none;
+}
+
+.kick-out {
+  animation: curtain-out 300ms var(--ease) both;
+}
+
+.kick-ball {
+  grid-area: 1 / 1;
+  color: var(--text);
+  animation: kick-ball 620ms var(--ease) both;
+}
+
+/* The whistle, drawn: a ring expanding out of the ball. */
+.kick-ring {
+  grid-area: 1 / 1;
+  width: 120px;
+  height: 120px;
+  border: 2px solid var(--green);
+  border-radius: 50%;
+  animation: whistle-ring 700ms var(--ease) 180ms both;
+}
+
+.kick-text {
+  grid-area: 1 / 1;
+  transform: translateY(66px);
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  color: var(--text-2);
+  animation: fade-up 400ms var(--ease) 260ms both;
+}

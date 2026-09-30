@@ -82,7 +82,7 @@ INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (8, 'Mi
 INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (8, 'Klose', 'klose', 'en');
 INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (8, 'קלוזה', 'קלוזה', 'he');
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (9, 'q_0009', 'CLASSIC', 'WORLD_CUP', 'HARD', 'מי היה מלך השערים של מונדיאל 2022, עם 8 שערים?', 'קיליאן אמבפה כבש 8 שערים במונדיאל 2022, כולל שלישייה בגמר מול ארגנטינה, וזכה בנעל הזהב.', 1, 1, 'היסטוריית המונדיאל', 'קיליאן אמבפה', 1, NULL, 0);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (9, 'q_0009', 'CLASSIC', 'WORLD_CUP', 'NORMAL', 'מי היה מלך השערים של מונדיאל 2022, עם 8 שערים?', 'קיליאן אמבפה כבש 8 שערים במונדיאל 2022, כולל שלישייה בגמר מול ארגנטינה, וזכה בנעל הזהב.', 1, 1, 'היסטוריית המונדיאל', 'קיליאן אמבפה', 1, NULL, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (9, 'קיליאן אמבפה', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (9, 'ליאו מסי', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (9, 'אוליבייה ז''ירו', 0, 2);
@@ -149,7 +149,7 @@ INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) 
 INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (14, 'REGION', 'WORLD');
 INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (14, 'COMPETITION', 'WORLD_CUP');
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (15, 'q_0015', 'CLASSIC', 'WORLD_CUP', 'HARD', 'איזו נבחרת זכתה במונדיאל 1990 באיטליה?', 'מערב גרמניה זכתה בתואר השלישי שלה, בניצחון 0:1 על ארגנטינה בגמר.', 1, 1, 'היסטוריית המונדיאל', NULL, 0, NULL, 0);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (15, 'q_0015', 'CLASSIC', 'WORLD_CUP', 'NORMAL', 'איזו נבחרת זכתה במונדיאל 1990 באיטליה?', 'מערב גרמניה זכתה בתואר השלישי שלה, בניצחון 0:1 על ארגנטינה בגמר.', 1, 1, 'היסטוריית המונדיאל', NULL, 0, NULL, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (15, 'מערב גרמניה', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (15, 'ארגנטינה', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (15, 'איטליה', 0, 2);
@@ -260,7 +260,7 @@ INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (24, '�
 INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (24, 'Liverpool', 'liverpool', 'en');
 INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (24, 'LFC', 'lfc', 'en');
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (25, 'q_0025', 'CLASSIC', 'CHAMPIONS_LEAGUE', 'HARD', 'איזו קבוצה ביצעה את ''הנס איסטנבול'' ב-2005, כשהשלימה מפנה מ-0:3 לניצחון בפנדלים?', 'ליברפול פיגרה 0:3 למילאן במחצית הגמר ב-2005, השוותה ל-3:3 וניצחה בפנדלים.', 1, 1, 'היסטוריית ליגת האלופות', 'ליברפול', 1, NULL, 0);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (25, 'q_0025', 'CLASSIC', 'CHAMPIONS_LEAGUE', 'NORMAL', 'איזו קבוצה ביצעה את ''הנס איסטנבול'' ב-2005, כשהשלימה מפנה מ-0:3 לניצחון בפנדלים?', 'ליברפול פיגרה 0:3 למילאן במחצית הגמר ב-2005, השוותה ל-3:3 וניצחה בפנדלים.', 1, 1, 'היסטוריית ליגת האלופות', 'ליברפול', 1, NULL, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (25, 'ליברפול', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (25, 'ניוקאסל יונייטד', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (25, 'צ''לסי', 0, 2);
@@ -272,7 +272,7 @@ INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (25, '�
 INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (25, 'Liverpool', 'liverpool', 'en');
 INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (25, 'LFC', 'lfc', 'en');
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (26, 'q_0026', 'CLASSIC', 'CHAMPIONS_LEAGUE', 'HARD', 'איזו קבוצה זכתה בליגת האלופות 2012, לאחר ניצחון בפנדלים על באיירן מינכן במינכן עצמה?', 'צ''לסי ניצחה את באיירן מינכן בפנדלים על מגרשה של באיירן, ה-Allianz Arena, וזכתה בתואר הראשון שלה.', 1, 1, 'היסטוריית ליגת האלופות', 'צ''לסי', 1, NULL, 0);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (26, 'q_0026', 'CLASSIC', 'CHAMPIONS_LEAGUE', 'NORMAL', 'איזו קבוצה זכתה בליגת האלופות 2012, לאחר ניצחון בפנדלים על באיירן מינכן במינכן עצמה?', 'צ''לסי ניצחה את באיירן מינכן בפנדלים על מגרשה של באיירן, ה-Allianz Arena, וזכתה בתואר הראשון שלה.', 1, 1, 'היסטוריית ליגת האלופות', 'צ''לסי', 1, NULL, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (26, 'צ''לסי', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (26, 'באיירן מינכן', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (26, 'ריאל מדריד', 0, 2);
@@ -513,7 +513,7 @@ INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) 
 INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (48, 'REGION', 'SOUTH_AMERICA');
 INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (48, 'COUNTRY', 'ARG');
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (49, 'q_0049', 'CLASSIC', 'CLUBS', 'HARD', 'בין אילו שתי קבוצות מתקיים ה''אולד פירם'' הסקוטי?', 'האולד פירם הוא הדרבי בין סלטיק לריינג''רס בגלזגו, אחד הדרבים העתיקים והנטענים בעולם.', 1, 1, 'עובדות מועדונים', NULL, 0, NULL, 0);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (49, 'q_0049', 'CLASSIC', 'CLUBS', 'NORMAL', 'בין אילו שתי קבוצות מתקיים ה''אולד פירם'' הסקוטי?', 'האולד פירם הוא הדרבי בין סלטיק לריינג''רס בגלזגו, אחד הדרבים העתיקים והנטענים בעולם.', 1, 1, 'עובדות מועדונים', NULL, 0, NULL, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (49, 'סלטיק וריינג''רס', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (49, 'הרטס והייברניאן', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (49, 'אברדין ודנדי יונייטד', 0, 2);
@@ -897,7 +897,7 @@ INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (83, 'G
 INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (83, 'Pique', 'pique', 'en');
 INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (83, 'פיקה', 'פיקה', 'he');
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (84, 'q_0084', 'CLUB_CONNECTION', 'TRANSFERS', 'HARD', 'איזה שחקן ברזילאי, המכונה ''הפנומנו'', שיחק גם באינטר מילאנו וגם במילאן היריבה?', 'רונאלדו הברזילאי שיחק באינטר מילאנו 1997-2002, ולאחר תקופה בריאל מדריד, סיים את הקריירה שלו באיטליה דווקא במילאן היריבה (2007-2008).', 1, 1, 'היסטוריית העברות', NULL, 0, NULL, 0);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (84, 'q_0084', 'CLUB_CONNECTION', 'TRANSFERS', 'NORMAL', 'איזה שחקן ברזילאי, המכונה ''הפנומנו'', שיחק גם באינטר מילאנו וגם במילאן היריבה?', 'רונאלדו הברזילאי שיחק באינטר מילאנו 1997-2002, ולאחר תקופה בריאל מדריד, סיים את הקריירה שלו באיטליה דווקא במילאן היריבה (2007-2008).', 1, 1, 'היסטוריית העברות', NULL, 0, NULL, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (84, 'רונאלדו (הפנומנו)', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (84, 'אדריאנו', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (84, 'רונאלדיניו', 0, 2);
@@ -1248,7 +1248,7 @@ INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (105, '
 INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (105, 'Arsenal', 'arsenal', 'en');
 INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (105, 'The Gunners', 'the gunners', 'en');
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (106, 'q_0106', 'GUESS_THE_CLUB', 'GUESS_THE_CLUB', 'HARD', 'איזו קבוצה זו: משחקת בסן סירו יחד עם יריבתה העירונית, צבעיה אדום-שחור, וכונה ''הרוסונרי''?', 'זהו מילאן (AC Milan) — הצבעים האדום-שחור נותנים לה את הכינוי ''רוסונרי''.', 1, 1, 'עובדות מועדונים', 'מילאן', 1, NULL, 0);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (106, 'q_0106', 'GUESS_THE_CLUB', 'GUESS_THE_CLUB', 'NORMAL', 'איזו קבוצה זו: משחקת בסן סירו יחד עם יריבתה העירונית, צבעיה אדום-שחור, וכונה ''הרוסונרי''?', 'זהו מילאן (AC Milan) — הצבעים האדום-שחור נותנים לה את הכינוי ''רוסונרי''.', 1, 1, 'עובדות מועדונים', 'מילאן', 1, NULL, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (106, 'מילאן', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (106, 'אינטר מילאנו', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (106, 'יובנטוס', 0, 2);
@@ -1359,7 +1359,7 @@ INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) 
 INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (114, 'REGION', 'EUROPE');
 INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (114, 'COMPETITION', 'EURO');
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (115, 'q_0115', 'CLASSIC', 'WORLD_CUP', 'HARD', 'מה היתה התוצאה במשחק חצי הגמר בין גרמניה לברזיל במונדיאל 2014?', 'גרמניה ניצחה 1:7 בבלו הוריזונטה — תבוסה היסטורית לברזיל המארחת שכונתה ''המינראסו''.', 1, 1, 'היסטוריית המונדיאל', NULL, 0, NULL, 0);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (115, 'q_0115', 'CLASSIC', 'WORLD_CUP', 'NORMAL', 'מה היתה התוצאה במשחק חצי הגמר בין גרמניה לברזיל במונדיאל 2014?', 'גרמניה ניצחה 1:7 בבלו הוריזונטה — תבוסה היסטורית לברזיל המארחת שכונתה ''המינראסו''.', 1, 1, 'היסטוריית המונדיאל', NULL, 0, NULL, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (115, '1:7 לגרמניה', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (115, '0:4 לגרמניה', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (115, '2:5 לגרמניה', 0, 2);
@@ -2428,6 +2428,8 @@ INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (100031
 INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (100031, 'Raphaël Varane', 'raphael varane', 'en');
 INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (100031, 'Varane', 'varane', 'en');
 INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (100031, 'ורן', 'ורן', 'he');
+INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (100031, 'רפאל וראן', 'רפאל וראן', 'he');
+INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (100031, 'וראן', 'וראן', 'he');
 INSERT INTO question_hints (question_id, text, order_index) VALUES (100031, 'הוא נולד בצרפת', 0);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (100031, 'הוא שיחק בעמדת מגן', 1);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (100031, 'השם מתחיל באות ר', 2);

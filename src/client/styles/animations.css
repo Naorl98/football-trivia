@@ -1,0 +1,241 @@
+/* ============================================================
+   Football IQ — motion library
+   ============================================================
+
+   Lots of small beats rather than a few big ones. Every animation here is
+   under 600ms, composited (transform/opacity only), and never blocks input.
+
+   Two global off-switches, both honoured by a single rule at the bottom:
+     * the OS `prefers-reduced-motion` setting
+     * `data-motion="off"` from the accessibility menu
+   When either is on, football-flavoured movement collapses to a plain fade.
+*/
+
+/* ---------- Entrances ---------- */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes pop-in {
+  0%   { opacity: 0; transform: scale(0.82); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.a-fade-up { animation: fade-up var(--t-3) var(--ease) both; }
+.a-fade    { animation: fade-in var(--t-2) var(--ease) both; }
+.a-pop     { animation: pop-in var(--t-3) var(--pop) both; }
+
+/* Children arrive one after another; set --i on each child. */
+.a-stagger > * {
+  animation: fade-up 380ms var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 55ms);
+}
+
+/* ---------- Button sheen ---------- */
+@keyframes sheen {
+  0%   { opacity: 0; transform: translateX(0) skewX(-18deg); }
+  18%  { opacity: 1; }
+  100% { opacity: 0; transform: translateX(320%) skewX(-18deg); }
+}
+
+/* ---------- Chip selection ---------- */
+@keyframes chip-pick {
+  0%   { transform: scale(0.9); }
+  55%  { transform: scale(1.07); }
+  100% { transform: scale(1); }
+}
+
+/* ============================================================
+   Question transitions — four styles, rotated so consecutive questions
+   never use the same one. All 200-550ms.
+   ============================================================ */
+
+/* 1. The ball rolls the question in from the touchline. */
+@keyframes q-roll {
+  0%   { opacity: 0; transform: translateX(-42px) rotate(-9deg); }
+  100% { opacity: 1; transform: none; }
+}
+
+/* 2. A scoreboard card flips over. */
+@keyframes q-flip {
+  0%   { opacity: 0; transform: perspective(900px) rotateX(-58deg); transform-origin: top center; }
+  100% { opacity: 1; transform: perspective(900px) rotateX(0deg); transform-origin: top center; }
+}
+
+/* 3. A tactical line is drawn across, revealing what sits behind it. */
+@keyframes q-draw {
+  0%   { opacity: 0.2; clip-path: inset(0 0 0 100%); }
+  100% { opacity: 1; clip-path: inset(0 0 0 0); }
+}
+
+/* 4. A match card slides up off the fourth official's board. */
+@keyframes q-card {
+  0%   { opacity: 0; transform: translateY(26px) scale(0.97); }
+  100% { opacity: 1; transform: none; }
+}
+
+.q-roll { animation: q-roll 420ms var(--ease) both; }
+.q-flip { animation: q-flip 380ms var(--ease) both; }
+.q-draw { animation: q-draw 460ms var(--ease) both; }
+.q-card { animation: q-card 340ms var(--pop) both; }
+
+/* ============================================================
+   Answer feedback
+   ============================================================ */
+
+/* Correct: the option pulses green and the score pops. */
+@keyframes correct-pulse {
+  0%   { transform: scale(1); box-shadow: 0 0 0 0 var(--green-wash); }
+  45%  { transform: scale(1.02); box-shadow: 0 0 0 10px transparent; }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 transparent; }
+}
+
+/* The net ripple: concentric rings leaving the struck option. */
+@keyframes net-ripple {
+  0%   { opacity: 0.55; transform: scale(0.6); }
+  100% { opacity: 0; transform: scale(1.9); }
+}
+
+@keyframes score-pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.32); color: var(--green-bright); }
+  100% { transform: scale(1); }
+}
+
+/* Wrong: a short shake, then a crossbar bounce — the ball comes back down. */
+@keyframes wrong-shake {
+  0%, 100% { transform: translateX(0); }
+  22%      { transform: translateX(-7px); }
+  48%      { transform: translateX(6px); }
+  74%      { transform: translateX(-3px); }
+}
+
+@keyframes crossbar {
+  0%   { transform: translateY(0); }
+  32%  { transform: translateY(-9px); }
+  58%  { transform: translateY(2px); }
+  78%  { transform: translateY(-3px); }
+  100% { transform: translateY(0); }
+}
+
+.a-correct  { animation: correct-pulse 420ms var(--ease); }
+.a-wrong    { animation: wrong-shake 340ms var(--ease); }
+.a-crossbar { animation: crossbar 460ms var(--ease); }
+.a-score-pop { animation: score-pop 420ms var(--pop); }
+
+/* ============================================================
+   Shout badges — GOAL!, מהיר!, streak calls
+   ============================================================ */
+@keyframes shout {
+  0%   { opacity: 0; transform: translate(-50%, 8px) scale(0.6) rotate(-6deg); }
+  22%  { opacity: 1; transform: translate(-50%, 0) scale(1.12) rotate(2deg); }
+  38%  { transform: translate(-50%, 0) scale(1) rotate(0deg); }
+  80%  { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -18px) scale(0.95); }
+}
+
+.a-shout { animation: shout 1100ms var(--ease) both; }
+
+/* ============================================================
+   Kickoff / full time
+   ============================================================ */
+@keyframes kick-ball {
+  0%   { transform: translateX(-46vw) rotate(0deg) scale(0.8); opacity: 0; }
+  18%  { opacity: 1; }
+  100% { transform: translateX(0) rotate(720deg) scale(1); opacity: 1; }
+}
+
+@keyframes whistle-ring {
+  0%   { opacity: 0.5; transform: scale(0.4); }
+  100% { opacity: 0; transform: scale(2.4); }
+}
+
+@keyframes curtain-out {
+  0%   { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.06); }
+}
+
+/* ============================================================
+   Ambient: slow floodlight sweep behind the hero. One element, one
+   transform, 18s — cheap enough to leave running.
+   ============================================================ */
+@keyframes floodlight {
+  0%   { transform: translate3d(-14%, 0, 0); opacity: 0.5; }
+  50%  { opacity: 0.85; }
+  100% { transform: translate3d(14%, 5%, 0); opacity: 0.5; }
+}
+
+@keyframes ball-float {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  50%      { transform: translateY(-14px) rotate(4deg); }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ============================================================
+   VAR check — used when a free-text answer is accepted by fuzzy match
+   ============================================================ */
+@keyframes var-scan {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes var-stamp {
+  0%   { opacity: 0; transform: scale(1.5) rotate(-8deg); }
+  60%  { opacity: 1; transform: scale(0.95) rotate(1deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
+/* ============================================================
+   The single reduced-motion contract
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* The accessibility menu's "turn off animations". Football-flavoured motion
+   is replaced by a plain fade rather than removed outright, so state changes
+   are still perceivable. */
+:root[data-motion="off"] .q-roll,
+:root[data-motion="off"] .q-flip,
+:root[data-motion="off"] .q-draw,
+:root[data-motion="off"] .q-card,
+:root[data-motion="off"] .a-pop,
+:root[data-motion="off"] .a-fade-up,
+:root[data-motion="off"] .a-stagger > * {
+  animation: fade-in 140ms linear both !important;
+}
+
+:root[data-motion="off"] .a-correct,
+:root[data-motion="off"] .a-wrong,
+:root[data-motion="off"] .a-crossbar,
+:root[data-motion="off"] .a-score-pop,
+:root[data-motion="off"] .a-shout {
+  animation: none !important;
+}
+
+:root[data-motion="off"] .btn:hover:not(:disabled),
+:root[data-motion="off"] .btn:active:not(:disabled) {
+  transform: none;
+}
+
+:root[data-motion="off"] .btn::after { display: none; }
+
+:root[data-motion="off"] [data-ambient] {
+  animation: none !important;
+  opacity: 0.35;
+}

@@ -6,22 +6,22 @@ import "./PrivacyGate.css";
 
 const OPEN_EVENT = "fiq:privacy-open";
 
-/** Lets any part of the app (footer link, results page) open the panel. */
+/** Lets any part of the app open the settings panel. */
 export function openPrivacySettings() {
   window.dispatchEvent(new Event(OPEN_EVENT));
 }
 
 /**
- * The consent banner plus the settings dialog.
+ * A slim bottom bar, never a blocking modal.
  *
- * The banner is non-blocking by design: nothing here is tracking, so holding
- * the game hostage behind a modal would be dishonest friction. It sits at the
- * bottom, is reachable by keyboard, and stays until answered.
+ * The app sets no cookies and runs no analytics, so holding the game behind a
+ * full-screen wall would be theatre. The bar states what is stored, offers the
+ * three real choices, and gets out of the way.
  */
 export function PrivacyGate() {
   const [state, setState] = useState<ConsentState>(privacy.get());
   const [panelOpen, setPanelOpen] = useState(false);
-  const bannerRef = useRef<HTMLElement | null>(null);
+  const barRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => privacy.subscribe(setState), []);
 
@@ -31,18 +31,17 @@ export function PrivacyGate() {
     return () => window.removeEventListener(OPEN_EVENT, open);
   }, []);
 
-  const showBanner = !state.decided && !panelOpen;
+  const showBar = !state.decided && !panelOpen;
 
-  // The banner and the builder's start bar both dock to the bottom edge. Rather
-  // than guess at a height, publish the banner's measured height as
-  // `--dock-offset` so anything else pinned to the bottom can sit above it.
+  // Publish the bar's height so anything else pinned to the bottom (the
+  // builder's start bar) can sit above it instead of underneath.
   useEffect(() => {
     const root = document.documentElement;
-    if (!showBanner) {
+    if (!showBar) {
       root.style.removeProperty("--dock-offset");
       return;
     }
-    const node = bannerRef.current;
+    const node = barRef.current;
     if (!node) return;
     const publish = () => root.style.setProperty("--dock-offset", `${node.offsetHeight}px`);
     publish();
@@ -52,35 +51,28 @@ export function PrivacyGate() {
       observer.disconnect();
       root.style.removeProperty("--dock-offset");
     };
-  }, [showBanner]);
+  }, [showBar]);
 
   return (
     <>
-      {showBanner && (
-        <section className="pv-banner" role="region" aria-label="הגדרות פרטיות" ref={bannerRef}>
-          <div className="pv-banner-inner">
-            <span className="pv-banner-mark" aria-hidden="true">
-              <Icon name="lock" size={22} />
-            </span>
-            <div className="pv-banner-copy">
-              <p className="pv-banner-title">אין כאן מעקב.</p>
-              <p className="pv-banner-text">
-                האתר לא משתמש בקובצי Cookie, לא באנליטיקס ולא בפרסום. כדי לשמור את החידון הפעיל,
-                את בחירת הצליל ואת השאלות שראיתם — נשתמש באחסון מקומי בדפדפן שלכם בלבד.{" "}
-                <Link to="/privacy" className="pv-link">
-                  מה בדיוק נשמר
-                </Link>
-              </p>
-            </div>
-            <div className="pv-banner-actions">
-              <button className="btn btn-ink btn-sm" onClick={() => privacy.acceptAll()}>
-                מאשר הכול
+      {showBar && (
+        <section className="pv-bar a-fade-up" role="region" aria-label="הגדרות פרטיות" ref={barRef}>
+          <div className="page-wide page pv-bar-inner">
+            <p className="pv-bar-text">
+              אין מעקב, אין Cookie ואין אנליטיקס. שומרים רק נתונים מקומיים בדפדפן כדי שהמשחק יעבוד.{" "}
+              <Link to="/privacy" className="pv-link">
+                עוד
+              </Link>
+            </p>
+            <div className="pv-bar-actions">
+              <button className="btn btn-primary btn-sm" onClick={() => privacy.acceptAll()}>
+                מאשר
               </button>
-              <button className="btn btn-outline btn-sm" onClick={() => privacy.rejectOptional()}>
-                רק ההכרחי
+              <button className="btn btn-ghost btn-sm" onClick={() => privacy.rejectOptional()}>
+                דוחה לא חיוני
               </button>
               <button className="btn btn-quiet btn-sm" onClick={() => setPanelOpen(true)}>
-                התאמה
+                הגדרות
               </button>
             </div>
           </div>
@@ -101,18 +93,14 @@ function PrivacyPanel({ state, onClose }: { state: ConsentState; onClose: () => 
   const dialogRef = useRef<HTMLDivElement>(null);
   const restoreFocusTo = useRef<Element | null>(null);
 
-  // Remember where focus came from, move it into the dialog, put it back on
-  // close. Without this a keyboard user is dropped at the top of the document.
   useEffect(() => {
     restoreFocusTo.current = document.activeElement;
-    const firstControl = dialogRef.current?.querySelector<HTMLElement>("button, input, a[href]");
-    firstControl?.focus();
+    dialogRef.current?.querySelector<HTMLElement>("button, input, a[href]")?.focus();
     return () => {
       if (restoreFocusTo.current instanceof HTMLElement) restoreFocusTo.current.focus();
     };
   }, []);
 
-  // Escape closes; Tab cycles inside the dialog.
   const onKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -124,7 +112,7 @@ function PrivacyPanel({ state, onClose }: { state: ConsentState; onClose: () => 
       const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
         'button:not([disabled]), input:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
       );
-      if (!focusable || focusable.length === 0) return;
+      if (!focusable?.length) return;
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
       if (event.shiftKey && document.activeElement === first) {
@@ -138,7 +126,6 @@ function PrivacyPanel({ state, onClose }: { state: ConsentState; onClose: () => 
     [onClose]
   );
 
-  // The page behind must not scroll while the dialog owns the screen.
   useEffect(() => {
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -167,112 +154,98 @@ function PrivacyPanel({ state, onClose }: { state: ConsentState; onClose: () => 
   return (
     <div className="pv-scrim" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div
-        className="pv-panel card"
+        className="pv-panel card a-pop"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="pv-panel-title"
+        aria-labelledby="pv-title"
         ref={dialogRef}
         onKeyDown={onKeyDown}
       >
-        <header className="pv-panel-head">
-          <p className="label">Football IQ — נתונים מקומיים</p>
-          <h2 id="pv-panel-title" className="pv-panel-title display">
-            מה נשמר אצלכם
+        <header className="pv-head">
+          <h2 id="pv-title" className="pv-panel-title">
+            נתונים מקומיים
           </h2>
-          <button className="pv-close" onClick={onClose} aria-label="סגור">
-            <Icon name="cross" size={20} />
+          <button className="icon-btn" onClick={onClose} aria-label="סגור">
+            <Icon name="cross" size={17} />
           </button>
         </header>
 
-        <hr className="rule-thin" />
+        <Row
+          title="הכרחי"
+          note="החידון הפעיל והתוצאה האחרונה. נמחק כשסוגרים את הכרטיסייה."
+          checked
+          locked
+        />
+        <Row
+          title="העדפות"
+          note="צלילים והגדרות נגישות. בלי אישור הבחירה עובדת אך לא נזכרת."
+          checked={preferences}
+          onChange={setPreferences}
+        />
+        <Row
+          title="היסטוריית שאלות"
+          note="מזהים של שאלות שראיתם, כדי להעדיף שאלות חדשות."
+          checked={history}
+          onChange={setHistory}
+        />
 
-        <div className="pv-rows">
-          <ConsentRow
-            title="הכרחי"
-            note="החידון שאתם משחקים כרגע והתוצאה האחרונה. נשמר ב-sessionStorage ונמחק כשסוגרים את הכרטיסייה. בלי זה רענון של הדף מאבד את המשחק."
-            keys="fiq_active_quiz, fiq_last_result"
-            checked
-            locked
-          />
-          <ConsentRow
-            title="העדפות"
-            note="האם הצלילים דלוקים. בלי אישור הבחירה עדיין עובדת — היא פשוט לא נזכרת בכניסה הבאה."
-            keys="fiq_sound_enabled"
-            checked={preferences}
-            onChange={setPreferences}
-          />
-          <ConsentRow
-            title="היסטוריית שאלות"
-            note="מזהים של עד 300 שאלות שראיתם, כדי שהחידון הבא יעדיף שאלות חדשות. בלי אישור ייתכנו חזרות."
-            keys="fiq_recent_questions"
-            checked={history}
-            onChange={setHistory}
-          />
-        </div>
-
-        <hr className="rule-thin" />
-
-        <p className="pv-fineprint">
-          אין קובצי Cookie, אין אנליטיקס, אין מזהי פרסום, ואין חשבונות. הציונים נרשמים בשרת בלי שם
-          ובלי מזהה אישי. הגופנים נטענים מ-Google Fonts, כך שכתובת ה-IP שלכם נחשפת אליהם בטעינה —{" "}
+        <p className="pv-note">
+          אין Cookie, אין אנליטיקס ואין חשבונות.{" "}
           <Link to="/privacy" className="pv-link" onClick={onClose}>
-            ההסבר המלא
+            הפירוט המלא
           </Link>
-          .
         </p>
 
-        <footer className="pv-panel-foot">
-          <button className="btn btn-ink" onClick={save}>
-            שמור בחירה
+        <div className="pv-foot">
+          <button className="btn btn-primary" onClick={save}>
+            שמור
           </button>
           <button
-            className={`btn btn-sm ${confirmingWipe ? "btn-spot" : "btn-quiet"}`}
+            className={`btn btn-sm ${confirmingWipe ? "btn-amber" : "btn-quiet"}`}
             onClick={wipe}
             onBlur={() => setConfirmingWipe(false)}
           >
-            {confirmingWipe ? "בטוחים? מחק הכול" : "מחק את כל הנתונים שלי"}
+            {confirmingWipe ? "בטוחים?" : "מחק את הנתונים שלי"}
           </button>
-        </footer>
+        </div>
 
-        {/* Announced to screen readers without stealing focus. */}
         <p className="pv-wiped" role="status">
-          {wiped ? "כל הנתונים המקומיים נמחקו." : ""}
+          {wiped ? "הנתונים נמחקו." : ""}
         </p>
       </div>
     </div>
   );
 }
 
-function ConsentRow({
+function Row({
   title,
   note,
-  keys,
   checked,
   onChange,
   locked = false,
 }: {
   title: string;
   note: string;
-  keys: string;
   checked: boolean;
   onChange?: (value: boolean) => void;
   locked?: boolean;
 }) {
   return (
-    <div className="pv-row">
-      <label className="pv-row-head">
-        <input
-          type="checkbox"
-          className="pv-switch"
-          checked={checked}
-          disabled={locked}
-          onChange={(e) => onChange?.(e.target.checked)}
-        />
-        <span className="pv-row-title">{title}</span>
-        {locked && <span className="stamp stamp-blue">תמיד פעיל</span>}
-      </label>
-      <p className="pv-row-note">{note}</p>
-      <code className="pv-row-keys">{keys}</code>
-    </div>
+    <label className="pv-row">
+      <span className="pv-row-body">
+        <span className="pv-row-title">
+          {title}
+          {locked && <span className="tag tag-blue">תמיד פעיל</span>}
+        </span>
+        <span className="pv-row-note">{note}</span>
+      </span>
+      <input
+        type="checkbox"
+        className="a11y-switch"
+        checked={checked}
+        disabled={locked}
+        onChange={(e) => onChange?.(e.target.checked)}
+      />
+    </label>
   );
 }

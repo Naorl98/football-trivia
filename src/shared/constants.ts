@@ -6,7 +6,7 @@ import type {
   GameMode,
   Region,
   RankLabel,
-} from "./types";
+} from "./types.ts";
 
 export const REGIONS: { code: Region; labelHe: string }[] = [
   { code: "WORLD", labelHe: "כל העולם" },

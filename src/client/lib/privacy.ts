@@ -30,8 +30,8 @@ export const CONSENT_STORAGE_KEY = "fiq_privacy_v1";
 
 /** Every localStorage/sessionStorage key the app owns, by category. */
 export const KEYS_BY_CATEGORY: Record<ConsentCategory, { local: string[]; session: string[] }> = {
-  essential: { local: [], session: ["fiq_active_quiz", "fiq_last_result", "fiq_intro_seen"] },
-  preferences: { local: ["fiq_sound_enabled"], session: [] },
+  essential: { local: [], session: ["fiq_active_quiz", "fiq_last_result"] },
+  preferences: { local: ["fiq_sound_enabled", "fiq_a11y_v1"], session: [] },
   history: { local: ["fiq_recent_questions"], session: [] },
 };
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DIFFICULTY_LABELS } from "../../shared/constants";
 import { computeScore } from "../../shared/scoring";
@@ -8,17 +8,22 @@ import { clearActiveQuiz, loadActiveQuiz, saveResult } from "../lib/quizSession"
 import { rememberQuestionIds } from "../lib/recentQuestions";
 import { sound } from "../lib/sound";
 import { FreeTextAnswer, type FreeTextResult } from "../components/FreeTextAnswer";
-import { Scoreboard } from "../components/Scoreboard";
+import { Hud } from "../components/Hud";
+import { Kickoff } from "../components/Kickoff";
 import { Icon } from "../components/Icon";
-import { isStreakMilestone } from "../lib/streak";
+import {
+  FAST_ANSWER_MS,
+  Shout,
+  isStreakMilestone,
+  streakCall,
+  type ShoutMessage,
+} from "../components/Shout";
 import "./QuizPage.css";
 
-// Entrance treatments, cycled so consecutive questions never repeat one. Each
-// is CSS-only and under 400ms, so they read as page turns rather than effects.
-const TRANSITIONS = ["t-turn", "t-slide", "t-settle", "t-wipe"] as const;
+// Four transition styles, rotated so consecutive questions never repeat one.
+const TRANSITIONS = ["q-roll", "q-flip", "q-draw", "q-card"] as const;
 
-// Answer letters, in Hebrew — the keyboard shortcuts map onto these positions.
-const OPTION_MARKS = ["א", "ב", "ג", "ד", "ה", "ו"];
+const OPTION_KEYS = ["א", "ב", "ג", "ד", "ה", "ו"];
 
 export function QuizPage() {
   const navigate = useNavigate();
@@ -30,31 +35,37 @@ export function QuizPage() {
   const [freeTextResult, setFreeTextResult] = useState<FreeTextResult | null>(null);
   const [questionStartedAt, setQuestionStartedAt] = useState(Date.now());
   const [finishing, setFinishing] = useState(false);
-  const [flash, setFlash] = useState<"correct" | "wrong" | null>(null);
+  const [shout, setShout] = useState<ShoutMessage | null>(null);
+  const [scoreBumped, setScoreBumped] = useState(false);
+  const [kickoffDone, setKickoffDone] = useState(false);
+  const shoutId = useRef(0);
 
-  // A stale or malformed stored session must not white-screen the app.
-  const sessionIsPlayable = !!session?.quiz?.questions?.length;
+  const playable = !!session?.quiz?.questions?.length;
 
   useEffect(() => {
-    if (!sessionIsPlayable) navigate("/build", { replace: true });
-  }, [sessionIsPlayable, navigate]);
+    if (!playable) navigate("/build", { replace: true });
+  }, [playable, navigate]);
 
   useEffect(() => {
     setQuestionStartedAt(Date.now());
   }, [index]);
 
-  // Remember what was served so the next quiz can prefer unseen questions.
   useEffect(() => {
     if (session) rememberQuestionIds(session.quiz.questions.map((q) => q.id));
   }, [session]);
 
-  const question = sessionIsPlayable ? session!.quiz.questions[index] : null;
+  // The opening whistle fires once the board is actually on screen.
+  useEffect(() => {
+    if (playable) sound.play("kickoff");
+  }, [playable]);
+
+  const question = playable ? session!.quiz.questions[index] : null;
   const isFreeText =
     !!question && session!.quiz.configuration.answerMode === "FREE_TEXT" && question.supportsFreeText;
   const answered = isFreeText ? freeTextResult !== null : selectedOptionId !== null;
 
-  // Number keys pick an answer: faster for everyone, and a real alternative to
-  // pointing for anyone who cannot use a mouse comfortably.
+  // Number keys pick an answer — faster for everyone, and a genuine
+  // alternative for anyone who cannot use a pointer comfortably.
   useEffect(() => {
     if (!question || answered || isFreeText) return;
     const onKey = (event: KeyboardEvent) => {
@@ -66,40 +77,53 @@ export function QuizPage() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-    // handleSelect is a hoisted declaration in this scope and always reads the
-    // current question, so it is intentionally not a dependency.
+    // handleSelect is hoisted and always reads the current question.
   }, [question, answered, isFreeText]);
 
-  if (!session || !sessionIsPlayable || !question) return null;
+  if (!session || !playable || !question) return null;
   const activeSession = session;
-
   const { quiz } = activeSession;
   const total = quiz.questions.length;
   const isLast = index === total - 1;
   const liveScore = computeScore(answers);
 
-  // Current streak, for the scoreboard.
   let currentStreak = 0;
   for (let i = answers.length - 1; i >= 0; i--) {
     if (answers[i].correct) currentStreak++;
     else break;
   }
 
-  const pipResults = answers.map((a): "hit" | "miss" => (a.correct ? "hit" : "miss"));
+  function callOut(text: string, tone: ShoutMessage["tone"]) {
+    shoutId.current += 1;
+    setShout({ id: shoutId.current, text, tone });
+  }
 
   function registerAnswer(record: AnswerRecord) {
-    setAnswers((prev) => {
-      const next = [...prev, record];
-      let streak = 0;
-      for (let i = next.length - 1; i >= 0; i--) {
-        if (next[i].correct) streak++;
-        else break;
+    const next = [...answers, record];
+    setAnswers(next);
+
+    let streak = 0;
+    for (let i = next.length - 1; i >= 0; i--) {
+      if (next[i].correct) streak++;
+      else break;
+    }
+
+    if (record.correct) {
+      setScoreBumped(true);
+      window.setTimeout(() => setScoreBumped(false), 450);
+
+      // One call-out at a time, most significant first: a streak name beats
+      // "fast", which beats a plain goal.
+      const milestone = isStreakMilestone(streak) ? streakCall(streak) : null;
+      if (milestone) {
+        sound.play("streak");
+        callOut(milestone, "streak");
+      } else if ((record.timeMs ?? Infinity) < FAST_ANSWER_MS) {
+        callOut("מהיר!", "fast");
+      } else {
+        callOut("GOAL!", "goal");
       }
-      if (record.correct && isStreakMilestone(streak)) sound.play("streak");
-      return next;
-    });
-    setFlash(record.correct ? "correct" : "wrong");
-    window.setTimeout(() => setFlash(null), 620);
+    }
   }
 
   function handleSelect(optionId: number) {
@@ -157,11 +181,10 @@ export function QuizPage() {
     navigate("/results");
   }
 
-  const isClueMode = question.mode === "WHO_AM_I" || question.mode === "CAREER_PATH";
+  const clueMode = question.mode === "WHO_AM_I" || question.mode === "CAREER_PATH";
   const transition = TRANSITIONS[index % TRANSITIONS.length];
   const chosen = question.options.find((o) => o.id === selectedOptionId);
 
-  // One sentence stating the outcome, for the live region below the answers.
   const verdict = !answered
     ? ""
     : isFreeText
@@ -174,44 +197,42 @@ export function QuizPage() {
 
   return (
     <div className="page quiz">
-      {flash && <div className={`flash flash-${flash}`} aria-hidden="true" />}
+      {!kickoffDone && <Kickoff onDone={() => setKickoffDone(true)} />}
+      <Shout message={shout} />
 
-      <Scoreboard
+      <Hud
         index={index}
         total={total}
-        results={pipResults}
         points={liveScore.points}
         streak={currentStreak}
         difficultyLabel={DIFFICULTY_LABELS[question.difficulty]}
-        freeText={isFreeText}
+        modeLabel={isFreeText ? "תשובה חופשית" : "אמריקאי"}
+        scoreBumped={scoreBumped}
       />
 
       <article key={question.id} className={`sheet ${transition}`}>
-        {isClueMode && question.clues.length > 0 && (
-          <div className={`clues ${question.mode === "CAREER_PATH" ? "clues-path" : ""}`}>
-            <p className="label clues-head">{question.mode === "CAREER_PATH" ? "מסלול" : "רמזים"}</p>
-            <ol className="clues-list">
-              {question.clues
-                .slice()
-                .sort((a, b) => a.order - b.order)
-                .map((clue, i) => (
-                  <li key={i} className="clue">
-                    <span className="clue-dot" aria-hidden="true" />
-                    <span className="clue-text">{clue.text}</span>
-                  </li>
-                ))}
-            </ol>
-          </div>
+        {clueMode && question.clues.length > 0 && (
+          <ol className={`clues ${question.mode === "CAREER_PATH" ? "clues-path" : ""}`}>
+            {question.clues
+              .slice()
+              .sort((a, b) => a.order - b.order)
+              .map((clue, i) => (
+                <li key={i} className="clue" style={{ "--i": i } as React.CSSProperties}>
+                  <span className="clue-dot" aria-hidden="true" />
+                  <span>{clue.text}</span>
+                </li>
+              ))}
+          </ol>
         )}
 
-        <h1 className="quiz-q display" id="quiz-question">
+        <h1 className="q" id="q">
           {question.questionHe}
         </h1>
 
         {isFreeText ? (
           <FreeTextAnswer question={question} onResolved={handleFreeText} resolved={freeTextResult} />
         ) : (
-          <div className="options" role="group" aria-labelledby="quiz-question">
+          <div className="options" role="group" aria-labelledby="q">
             {question.options.map((opt, i) => {
               const state = !answered
                 ? ""
@@ -220,22 +241,30 @@ export function QuizPage() {
                   : opt.id === selectedOptionId
                     ? "is-wrong"
                     : "is-out";
+              const beat =
+                answered && opt.isCorrect
+                  ? "a-correct"
+                  : answered && opt.id === selectedOptionId
+                    ? "a-wrong"
+                    : "";
               return (
                 <button
                   key={opt.id}
-                  className={`option ${state}`}
+                  className={`opt ${state} ${beat}`}
                   onClick={() => handleSelect(opt.id)}
                   disabled={answered}
                 >
-                  <span className="option-mark figures" aria-hidden="true">
-                    {OPTION_MARKS[i] ?? i + 1}
+                  <span className="opt-key" aria-hidden="true">
+                    {OPTION_KEYS[i] ?? i + 1}
                   </span>
-                  <span className="option-text">{opt.text}</span>
+                  <span className="opt-text">{opt.text}</span>
                   {answered && (opt.isCorrect || opt.id === selectedOptionId) && (
-                    <span className="option-verdict" aria-hidden="true">
-                      <Icon name={opt.isCorrect ? "check" : "cross"} size={19} strokeWidth={2.4} />
+                    <span className="opt-mark" aria-hidden="true">
+                      <Icon name={opt.isCorrect ? "check" : "cross"} size={17} strokeWidth={2.6} />
                     </span>
                   )}
+                  {/* The net taking the ball — rings leaving the struck option. */}
+                  {answered && opt.isCorrect && <span className="net" aria-hidden="true" />}
                   {answered && opt.isCorrect && <span className="sr-only">— התשובה הנכונה</span>}
                   {answered && !opt.isCorrect && opt.id === selectedOptionId && (
                     <span className="sr-only">— הבחירה שלכם, שגויה</span>
@@ -246,33 +275,26 @@ export function QuizPage() {
           </div>
         )}
 
-        {/* Announced once per answer, with the explanation folded in so a
-            screen-reader user gets the same payoff as a sighted one. */}
         <p className="sr-only" role="status" aria-live="polite">
           {answered ? `${verdict} ${question.explanationHe ?? ""}` : ""}
         </p>
 
         {answered && question.explanationHe && (
-          <aside className="note anim-rise">
-            <p className="label note-head">הרחבה</p>
-            <p className="note-text">{question.explanationHe}</p>
-          </aside>
+          <p className="why a-fade-up">{question.explanationHe}</p>
         )}
       </article>
 
       {answered && (
-        <div className="quiz-foot">
-          <button className="btn btn-ink btn-block" onClick={handleNext} disabled={finishing} autoFocus>
-            {finishing ? "שומר תוצאות…" : isLast ? "סיום וצפייה בתוצאות" : "לשאלה הבאה"}
+        <div className="quiz-next a-fade-up">
+          <button className="btn btn-primary btn-block btn-lg" onClick={handleNext} disabled={finishing} autoFocus>
+            {finishing ? "מסכם…" : isLast ? "לתוצאות" : "הבא"}
             {!finishing && <Icon name="arrow" size={18} />}
           </button>
         </div>
       )}
 
       {!answered && !isFreeText && (
-        <p className="quiz-hint">
-          טיפ: אפשר לבחור גם במקשי המספרים 1–{question.options.length}
-        </p>
+        <p className="quiz-tip">אפשר גם במקשים 1–{question.options.length}</p>
       )}
     </div>
   );

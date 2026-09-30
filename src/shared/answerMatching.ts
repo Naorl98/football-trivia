@@ -114,6 +114,41 @@ export function typoBudget(normalizedTarget: string): number {
   return 3;
 }
 
+/**
+ * Per-word typo budget, used alongside the whole-string one.
+ *
+ * The whole-string budget alone is too blunt for names built from a long
+ * first name and a short surname: "רפאל ורן" is 8 characters, so it allows two
+ * edits — and both of them can land on the four-letter surname, which is the
+ * only part that identifies the player. That is how "רפאל לאאן" came within
+ * budget of "רפאל וראן" while differing in the word that matters.
+ *
+ * Floors at one edit for any word of four characters or more, so legitimate
+ * Hebrew transliteration variance (an optional aleph or vav) still passes.
+ */
+export function tokenBudget(token: string): number {
+  if (token.length <= 3) return 0;
+  if (token.length <= 6) return 1;
+  return 2;
+}
+
+/**
+ * True when every word is individually within budget.
+ *
+ * Only meaningful when both sides have the same number of words; a different
+ * word count is a different shape of answer and is left to the whole-string
+ * budget and the declared aliases.
+ */
+function tokensWithinBudget(inputTokens: string[], candidateTokens: string[]): boolean {
+  if (inputTokens.length !== candidateTokens.length) return true;
+  for (let i = 0; i < candidateTokens.length; i++) {
+    const budget = tokenBudget(candidateTokens[i]);
+    const distance = damerauLevenshtein(inputTokens[i], candidateTokens[i], budget);
+    if (distance > budget) return false;
+  }
+  return true;
+}
+
 function tokenSetEquals(a: string[], b: string[]): boolean {
   if (a.length !== b.length) return false;
   const sortedA = [...a].sort();
@@ -166,7 +201,11 @@ export function matchAnswer(input: string, spec: AnswerSpec): MatchResult {
     // A length gap larger than the budget can never be closed.
     if (Math.abs(candidate.normalized.length - normalizedInput.length) > budget) continue;
     const distance = damerauLevenshtein(normalizedInput, candidate.normalized, budget);
-    if (distance <= budget && (best === null || distance < best.distance)) {
+    if (distance > budget) continue;
+    // The whole-string budget is necessary but not sufficient: the edits also
+    // have to be spread acceptably across the words.
+    if (!tokensWithinBudget(inputTokens, tokens(candidate.normalized))) continue;
+    if (best === null || distance < best.distance) {
       best = { candidate: candidate.raw, distance };
     }
   }

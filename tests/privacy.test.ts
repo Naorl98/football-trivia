@@ -75,6 +75,22 @@ describe("keysToPurge", () => {
     assert.deepEqual(purge, { local: [], session: [] });
   });
 
+  // Guards the pairing between this table and what the app actually writes:
+  // every key here must appear on /privacy, and vice versa.
+  it("declares exactly the keys the product writes", () => {
+    const all = Object.values(KEYS_BY_CATEGORY).flatMap((c) => [...c.local, ...c.session]);
+    assert.deepEqual(
+      [...all].sort(),
+      [
+        "fiq_a11y_v1",
+        "fiq_active_quiz",
+        "fiq_last_result",
+        "fiq_recent_questions",
+        "fiq_sound_enabled",
+      ].sort()
+    );
+  });
+
   it("purges a category's keys when it is withdrawn", () => {
     const purge = keysToPurge(
       { decided: true, preferences: true, history: true },
@@ -151,10 +167,11 @@ describe("ConsentStore", () => {
     const local = fakeStorage({
       [CONSENT_STORAGE_KEY]: JSON.stringify({ decided: true, preferences: true, history: true }),
       fiq_sound_enabled: "true",
+      fiq_a11y_v1: '{"textScale":1.15}',
       fiq_recent_questions: "[9]",
       unrelated_key: "keep me",
     });
-    const session = fakeStorage({ fiq_active_quiz: "{}", fiq_last_result: "{}", fiq_intro_seen: "true" });
+    const session = fakeStorage({ fiq_active_quiz: "{}", fiq_last_result: "{}" });
     const store = new ConsentStore(local, session);
 
     store.clearAllData();

@@ -4,6 +4,7 @@ import { GAME_MODE_LABELS } from "../../shared/constants";
 import type { Quiz } from "../../shared/types";
 import { fetchChallenge } from "../lib/api";
 import { saveActiveQuiz } from "../lib/quizSession";
+import { sound } from "../lib/sound";
 import { Icon } from "../components/Icon";
 import { Loading } from "../components/Loading";
 import "./IntroPage.css";
@@ -21,8 +22,9 @@ export function ChallengePage() {
       .catch(() => setError("האתגר הזה לא נמצא, ייתכן שפג תוקפו."));
   }, [publicId]);
 
-  function handleStart() {
+  function start() {
     if (!quiz || !publicId) return;
+    sound.play("click");
     saveActiveQuiz({ quiz, startedAt: Date.now(), challengePublicId: publicId });
     navigate("/play");
   }
@@ -30,14 +32,14 @@ export function ChallengePage() {
   return (
     <div className="page gate">
       {error && (
-        <div className="plate card">
+        <div className="plate a-pop">
           <span className="plate-mark">
-            <Icon name="target" size={26} />
+            <Icon name="target" size={23} />
           </span>
           <h1 className="plate-title">האתגר לא נמצא</h1>
           <p className="plate-text">{error}</p>
-          <button className="btn btn-ink" onClick={() => navigate("/build")}>
-            בנו מבחן משלכם
+          <button className="btn btn-primary" onClick={() => navigate("/build")}>
+            בנו חידון משלכם
           </button>
         </div>
       )}
@@ -45,22 +47,19 @@ export function ChallengePage() {
       {!error && !quiz && <Loading label="טוען את האתגר" />}
 
       {quiz && (
-        <div className="plate card">
+        <div className="plate a-pop">
           <span className="plate-mark">
-            <Icon name="target" size={26} />
+            <Icon name="target" size={23} />
           </span>
-          <p className="label plate-kicker">הוזמנתם לאתגר</p>
-          <h1 className="plate-title">אותן שאלות בדיוק. מי ייקח?</h1>
+          <h1 className="plate-title">הוזמנתם לאתגר</h1>
           <div className="plate-meta">
-            <span className="stamp stamp-solid">{GAME_MODE_LABELS[quiz.configuration.gameMode]}</span>
-            <span className="stamp">{quiz.questions.length} שאלות</span>
+            <span className="tag tag-green">{GAME_MODE_LABELS[quiz.configuration.gameMode]}</span>
+            <span className="tag">{quiz.questions.length} שאלות</span>
           </div>
-          <p className="plate-text">
-            מי ששלח לכם את הקישור כבר שיחק את הסבב הזה. אתם מקבלים את אותן שאלות, באותו סדר.
-          </p>
-          <button className="btn btn-ink" onClick={handleStart}>
+          <p className="plate-text">אותן שאלות בדיוק, באותו סדר. מי ייקח?</p>
+          <button className="btn btn-primary" onClick={start}>
             קבלו את האתגר
-            <Icon name="arrow" size={18} />
+            <Icon name="arrow" size={17} />
           </button>
         </div>
       )}

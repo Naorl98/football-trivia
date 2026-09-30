@@ -19,17 +19,6 @@ import "./BuilderPage.css";
 
 const DIFFICULTY_OPTIONS: (Difficulty | "MIXED")[] = ["MIXED", "EASY", "NORMAL", "HARD", "EXPERT", "IMPOSSIBLE"];
 
-// A one-line character note per level, so "בלתי אפשרי" means something before
-// you have played it.
-const DIFFICULTY_NOTES: Record<Difficulty | "MIXED", string> = {
-  MIXED: "תערובת של כל הרמות",
-  EASY: "שמות שכל אוהד מכיר",
-  NORMAL: "ידע כדורגל סביר",
-  HARD: "פרטים שדורשים מעקב אמיתי",
-  EXPERT: "עונות, גמרים ומעברים ספציפיים",
-  IMPOSSIBLE: "שאלות שגם פרשנים יפספסו",
-};
-
 export function BuilderPage() {
   const navigate = useNavigate();
 
@@ -60,21 +49,26 @@ export function BuilderPage() {
         .then((res) => !cancelled && setAvailableCount(res.availableCount))
         .catch(() => !cancelled && setAvailableCount(null))
         .finally(() => !cancelled && setCounting(false));
-    }, 250);
+    }, 220);
     return () => {
       cancelled = true;
       clearTimeout(timer);
     };
   }, [config]);
 
-  function toggle<T>(list: T[], value: T, setter: (v: T[]) => void) {
+  function pick<T>(list: T[], value: T, setter: (v: T[]) => void) {
+    sound.play("select");
     setter(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
+  }
+
+  function choose<T>(value: T, setter: (v: T) => void) {
+    sound.play("select");
+    setter(value);
   }
 
   async function handleStart() {
     setError(null);
     setStarting(true);
-    // First real gesture of the session — safe point to arm the audio context.
     sound.play("click");
     try {
       await startQuiz(navigate, config);
@@ -85,158 +79,130 @@ export function BuilderPage() {
     }
   }
 
-  const realCompetitions = COMPETITIONS.filter((c) => c.type !== "GROUP");
-  const groupCompetitions = COMPETITIONS.filter((c) => c.type === "GROUP");
-  const shortfall = availableCount !== null && availableCount > 0 && availableCount < questionCount;
+  const groups = COMPETITIONS.filter((c) => c.type === "GROUP");
+  const leagues = COMPETITIONS.filter((c) => c.type !== "GROUP");
+
+  const none = availableCount === 0;
+  const short = availableCount !== null && availableCount > 0 && availableCount < questionCount;
 
   return (
-    <div className="page builder">
-      <header className="builder-head">
-        <p className="label builder-kicker">טופס · בניית מבחן</p>
-        <h1 className="builder-title display">הרכיבו את המבחן שלכם</h1>
-        <p className="prose builder-lede">
-          כל שדה מצמצם את מאגר השאלות. המספר בתחתית המסך מתעדכן בזמן אמת, כך שתדעו בדיוק מה נשאר
-          לפני שמתחילים.
-        </p>
-      </header>
+    <div className="page build">
+      <h1 className="build-title a-fade-up">בנו חידון</h1>
 
-      <hr className="rule" />
-
-      <Field index="01" title="איך עונים?" hint="תשובה חופשית זמינה לשאלות עם תשובה יחידה וכינויים מוצהרים.">
-        <div className="mode-pair">
-          <ModeCard
-            active={answerMode === "MULTIPLE_CHOICE"}
-            icon="list"
-            title="אמריקאי"
-            sub="בוחרים מתוך ארבע אפשרויות"
-            onClick={() => setAnswerMode("MULTIPLE_CHOICE")}
+      <div className="build-rows a-stagger">
+        <Row index={0} label="אזור">
+          <Chips
+            items={REGIONS.map((r) => ({ key: r.code, label: r.labelHe }))}
+            on={(key) => region === key}
+            pick={(key) => choose(key as Region, setRegion)}
+            group="אזור"
           />
-          <ModeCard
-            active={answerMode === "FREE_TEXT"}
-            icon="keyboard"
-            title="תשובה חופשית"
-            sub="מקלידים בעצמכם, עם רמזים"
-            onClick={() => setAnswerMode("FREE_TEXT")}
+        </Row>
+
+        <Row index={1} label="מדינה / ליגות">
+          <Chips
+            items={groups.map((c) => ({ key: c.code, label: c.nameHe }))}
+            on={(key) => competitions.includes(key)}
+            pick={(key) => choose([key], setCompetitions)}
+            group="קבוצות ליגות"
           />
-        </div>
-      </Field>
+          <Chips
+            items={leagues.map((c) => ({ key: c.code, label: c.nameHe }))}
+            on={(key) => competitions.includes(key)}
+            pick={(key) =>
+              pick(
+                competitions.filter((code) => !groups.some((g) => g.code === code)),
+                key,
+                setCompetitions
+              )
+            }
+            group="ליגות"
+          />
+          <Chips
+            items={COUNTRIES.map((c) => ({ key: c.code, label: c.nameHe }))}
+            on={(key) => countries.includes(key)}
+            pick={(key) => pick(countries, key, setCountries)}
+            group="מדינות"
+          />
+        </Row>
 
-      <Field index="02" title="סוג משחק">
-        <ChipRow
-          items={ENABLED_GAME_MODES.map((mode) => ({ key: mode, label: GAME_MODE_LABELS[mode] }))}
-          isOn={(key) => gameMode === key}
-          onPick={(key) => setGameMode(key as GameMode)}
-          groupLabel="סוג משחק"
-        />
-      </Field>
+        <Row index={2} label="קטגוריה">
+          <Chips
+            items={CATEGORIES.map((c) => ({ key: c.code, label: c.labelHe }))}
+            on={(key) => categories.includes(key as Category)}
+            pick={(key) => pick(categories, key as Category, setCategories)}
+            group="קטגוריות"
+          />
+          <Chips
+            items={ENABLED_GAME_MODES.map((m) => ({ key: m, label: GAME_MODE_LABELS[m] }))}
+            on={(key) => gameMode === key}
+            pick={(key) => choose(key as GameMode, setGameMode)}
+            group="סוג משחק"
+          />
+        </Row>
 
-      <Field index="03" title="טווח גיאוגרפי">
-        <ChipRow
-          items={REGIONS.map((r) => ({ key: r.code, label: r.labelHe }))}
-          isOn={(key) => region === key}
-          onPick={(key) => setRegion(key as Region)}
-          groupLabel="טווח גיאוגרפי"
-        />
-      </Field>
+        <Row index={3} label="רמת קושי">
+          <Chips
+            items={DIFFICULTY_OPTIONS.map((d) => ({
+              key: d,
+              label: d === "MIXED" ? "מעורב" : DIFFICULTY_LABELS[d],
+            }))}
+            on={(key) => difficulty === key}
+            pick={(key) => choose(key as Difficulty | "MIXED", setDifficulty)}
+            group="רמת קושי"
+          />
+        </Row>
 
-      <Field index="04" title="מדינות" hint="אופציונלי — אפשר לבחור כמה.">
-        <ChipRow
-          items={COUNTRIES.map((c) => ({ key: c.code, label: c.nameHe }))}
-          isOn={(key) => countries.includes(key)}
-          onPick={(key) => toggle(countries, key, setCountries)}
-          groupLabel="מדינות"
-        />
-      </Field>
+        <Row index={4} label="מספר שאלות">
+          <Chips
+            items={QUESTION_COUNTS.map((n) => ({ key: String(n), label: String(n) }))}
+            on={(key) => questionCount === Number(key)}
+            pick={(key) => choose(Number(key) as (typeof QUESTION_COUNTS)[number], setQuestionCount)}
+            group="מספר שאלות"
+          />
+        </Row>
 
-      <Field index="05" title="ליגות ותחרויות">
-        <ChipRow
-          items={groupCompetitions.map((c) => ({ key: c.code, label: c.nameHe }))}
-          isOn={(key) => competitions.includes(key)}
-          onPick={(key) => setCompetitions([key])}
-          groupLabel="קבוצות ליגות"
-        />
-        <ChipRow
-          className="chip-row-second"
-          items={realCompetitions.map((c) => ({ key: c.code, label: c.nameHe }))}
-          isOn={(key) => competitions.includes(key)}
-          onPick={(key) =>
-            toggle(
-              competitions.filter((code) => !groupCompetitions.some((g) => g.code === code)),
-              key,
-              setCompetitions
-            )
-          }
-          groupLabel="תחרויות בודדות"
-        />
-      </Field>
+        <Row index={5} label="מצב תשובה">
+          <Chips
+            items={[
+              { key: "MULTIPLE_CHOICE", label: "אמריקאי" },
+              { key: "FREE_TEXT", label: "תשובה חופשית" },
+            ]}
+            on={(key) => answerMode === key}
+            pick={(key) => choose(key as AnswerMode, setAnswerMode)}
+            group="מצב תשובה"
+          />
+        </Row>
+      </div>
 
-      <Field index="06" title="קטגוריות" hint="אופציונלי — בלי בחירה מגיעות שאלות מכל הקטגוריות.">
-        <ChipRow
-          items={CATEGORIES.map((c) => ({ key: c.code, label: c.labelHe }))}
-          isOn={(key) => categories.includes(key as Category)}
-          onPick={(key) => toggle(categories, key as Category, setCategories)}
-          groupLabel="קטגוריות"
-        />
-      </Field>
-
-      <Field index="07" title="רמת קושי" hint={DIFFICULTY_NOTES[difficulty]}>
-        <div className="ladder" role="group" aria-label="רמת קושי">
-          {DIFFICULTY_OPTIONS.map((level, i) => (
-            <button
-              key={level}
-              className={`rung ${difficulty === level ? "on" : ""}`}
-              aria-pressed={difficulty === level}
-              onClick={() => setDifficulty(level)}
-            >
-              {/* A rising bar chart of five steps: the ladder is legible as a
-                  ladder, not just six words in a row. */}
-              <span className="rung-bars" aria-hidden="true">
-                {[0, 1, 2, 3, 4].map((bar) => (
-                  <span key={bar} className={`rung-bar ${i > 0 && bar < i ? "is-lit" : ""}`} />
-                ))}
-              </span>
-              <span className="rung-label">{level === "MIXED" ? "מעורב" : DIFFICULTY_LABELS[level]}</span>
-            </button>
-          ))}
-        </div>
-      </Field>
-
-      <Field index="08" title="מספר שאלות">
-        <ChipRow
-          items={QUESTION_COUNTS.map((n) => ({ key: String(n), label: String(n) }))}
-          isOn={(key) => questionCount === Number(key)}
-          onPick={(key) => setQuestionCount(Number(key) as (typeof QUESTION_COUNTS)[number])}
-          groupLabel="מספר שאלות"
-        />
-      </Field>
-
-      {/* ---------- Sticky start bar ---------- */}
-      <div className="builder-bar">
-        <div className="builder-bar-inner">
-          <p className="builder-count" role="status" aria-live="polite">
+      {/* Availability is stated plainly, and a filter that cannot fill the quiz
+          says so before the player commits — never silently after. */}
+      <div className="build-bar">
+        <div className="page build-bar-inner">
+          <p className="build-count" role="status" aria-live="polite">
             {counting ? (
-              <span className="ink-3">בודק זמינות…</span>
+              <span className="faint">בודק…</span>
             ) : availableCount === null ? (
-              <span className="ink-3">לא הצלחנו לבדוק זמינות</span>
-            ) : availableCount === 0 ? (
-              <span className="builder-count-zero">אין שאלות לסינון הזה — הרחיבו את הבחירה</span>
+              <span className="faint">לא הצלחנו לבדוק זמינות</span>
+            ) : none ? (
+              <span className="red">אין שאלות מתאימות — הרחיבו את הסינון</span>
+            ) : short ? (
+              <span className="amber">
+                יש <b className="num">{availableCount}</b> שאלות בלבד — החידון יהיה בן {availableCount}
+              </span>
             ) : (
-              <>
-                <strong className="figures builder-count-n">{availableCount}</strong>
-                <span className="ink-3"> שאלות זמינות</span>
-                {shortfall && (
-                  <span className="builder-count-warn"> · פחות מ-{questionCount}, המבחן יהיה קצר יותר</span>
-                )}
-              </>
+              <span className="muted">
+                <b className="num green">{availableCount}</b> שאלות זמינות
+              </span>
             )}
           </p>
-          <button className="btn btn-ink" disabled={starting || availableCount === 0} onClick={handleStart}>
-            {starting ? "יוצר מבחן…" : "התחילו"}
-            {!starting && <Icon name="arrow" size={18} />}
+          <button className="btn btn-primary" disabled={starting || none} onClick={handleStart}>
+            {starting ? "יוצר…" : "התחל משחק"}
+            {!starting && <Icon name="arrow" size={17} />}
           </button>
         </div>
         {error && (
-          <p className="builder-error" role="alert">
+          <p className="build-error" role="alert">
             {error}
           </p>
         )}
@@ -245,78 +211,36 @@ export function BuilderPage() {
   );
 }
 
-function Field({
-  index,
-  title,
-  hint,
-  children,
-}: {
-  index: string;
-  title: string;
-  hint?: string;
-  children: React.ReactNode;
-}) {
+function Row({ index, label, children }: { index: number; label: string; children: React.ReactNode }) {
   return (
-    <section className="field">
-      <div className="section-head">
-        <span className="section-index">{index}</span>
-        <h2 className="section-title">{title}</h2>
-      </div>
-      {hint && <p className="field-hint">{hint}</p>}
-      {children}
+    <section className="build-row" style={{ "--i": index } as React.CSSProperties}>
+      <h2 className="build-label">{label}</h2>
+      <div className="build-field">{children}</div>
     </section>
   );
 }
 
-function ChipRow({
+function Chips({
   items,
-  isOn,
-  onPick,
-  groupLabel,
-  className = "",
+  on,
+  pick,
+  group,
 }: {
   items: { key: string; label: string }[];
-  isOn: (key: string) => boolean;
-  onPick: (key: string) => void;
-  groupLabel: string;
-  className?: string;
+  on: (key: string) => boolean;
+  pick: (key: string) => void;
+  group: string;
 }) {
   return (
-    <div className={`chip-row ${className}`.trim()} role="group" aria-label={groupLabel}>
+    <div className="chips" role="group" aria-label={group}>
       {items.map((item) => (
-        <button
-          key={item.key}
-          className="chip"
-          aria-pressed={isOn(item.key)}
-          onClick={() => onPick(item.key)}
-        >
+        <button key={item.key} className="chip" aria-pressed={on(item.key)} onClick={() => pick(item.key)}>
+          <span className="chip-tick" aria-hidden="true">
+            <Icon name="check" size={12} strokeWidth={3} />
+          </span>
           {item.label}
         </button>
       ))}
     </div>
-  );
-}
-
-function ModeCard({
-  active,
-  icon,
-  title,
-  sub,
-  onClick,
-}: {
-  active: boolean;
-  icon: "list" | "keyboard";
-  title: string;
-  sub: string;
-  onClick: () => void;
-}) {
-  return (
-    <button className={`mode card card-pressable ${active ? "is-active" : ""}`} aria-pressed={active} onClick={onClick}>
-      <span className="mode-mark">
-        <Icon name={icon} size={24} />
-      </span>
-      <span className="mode-title">{title}</span>
-      <span className="mode-sub">{sub}</span>
-    </button>
   );
 }

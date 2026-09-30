@@ -1,117 +1,135 @@
 .policy {
-  padding-block: 40px 90px;
+  padding-block: 28px 56px;
 }
 
-.policy-head {
-  margin-bottom: 26px;
-}
+.policy-head { margin-bottom: 20px; }
 
 .policy-title {
-  font-size: clamp(34px, 7vw, 56px);
-  margin-block: 6px 14px;
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: clamp(1.6rem, 6vw, 2.2rem);
+  margin-block: 4px 10px;
 }
 
 .policy-lede {
-  font-size: clamp(16px, 2.2vw, 18px);
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: var(--text-2);
 }
 
 .policy-body {
   display: flex;
   flex-direction: column;
-  gap: 42px;
-  padding-block-start: 34px;
+  gap: 26px;
+  padding-block-start: 22px;
+  border-block-start: 1px solid var(--line);
 }
 
-.policy-clause .prose {
-  font-size: 15.5px;
+.policy-clause h2 {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 1.05rem;
+  margin-bottom: 9px;
 }
+
+.policy-clause p {
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: var(--text-2);
+}
+
+.policy-clause p + p { margin-block-start: 0.8em; }
 
 .policy-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 7px;
 }
 
-/* Inked tick instead of a bullet dot — same language as the answer marks. */
 .policy-list li {
   position: relative;
-  padding-inline-start: 24px;
+  padding-inline-start: 18px;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--text-2);
 }
 
 .policy-list li::before {
   content: "";
   position: absolute;
   inset-inline-start: 0;
-  inset-block-start: 0.62em;
-  width: 11px;
-  height: 2px;
-  background: var(--spot);
+  inset-block-start: 0.65em;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
 }
 
+/* ---------- Storage table ---------- */
 .policy-table {
-  margin-block: 18px;
-  border: var(--border-w) solid var(--ink);
-  border-radius: var(--r-xs);
-  background: var(--card);
+  margin-block: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  overflow: hidden;
 }
 
 .policy-row {
   display: grid;
-  grid-template-columns: minmax(150px, auto) auto 1fr auto;
+  grid-template-columns: minmax(130px, auto) auto 1fr auto;
   align-items: center;
-  gap: 12px;
-  padding: 11px 14px;
+  gap: 10px;
+  padding: 10px 13px;
 }
 
-.policy-row + .policy-row {
-  border-block-start: var(--border-w-thin) solid var(--rule-soft);
-}
+.policy-row + .policy-row { border-block-start: 1px solid var(--line); }
 
 .policy-key {
   font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-  font-size: 12.5px;
-  font-weight: 700;
+  font-size: 0.74rem;
+  font-weight: 600;
   direction: ltr;
   text-align: start;
-  color: var(--ink);
+  color: var(--text);
 }
 
 .policy-why {
-  font-size: 13.5px;
-  color: var(--ink-2);
-  line-height: 1.5;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--text-3);
 }
 
 .policy-cat {
-  color: var(--spot);
+  font-family: var(--font-head);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--green);
   white-space: nowrap;
 }
 
 .policy-note {
-  font-size: 13px;
-  color: var(--ink-3);
+  font-size: 0.8rem;
+  color: var(--text-3);
 }
 
 .policy-note code {
   font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-  font-size: 12px;
+  font-size: 0.74rem;
   direction: ltr;
   display: inline-block;
 }
 
 .policy-actions {
   display: flex;
-  gap: 11px;
+  gap: 9px;
   flex-wrap: wrap;
-  margin-block-start: 20px;
+  margin-block-start: 16px;
 }
 
-@media (max-width: 680px) {
+@media (max-width: 620px) {
   .policy-row {
     grid-template-columns: 1fr auto;
-    row-gap: 6px;
+    row-gap: 5px;
   }
-  .policy-why {
-    grid-column: 1 / -1;
-  }
+  .policy-why { grid-column: 1 / -1; }
 }

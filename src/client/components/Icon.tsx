@@ -35,7 +35,8 @@ export type IconName =
   | "target"
   | "sliders"
   | "stadium"
-  | "route";
+  | "route"
+  | "accessibility";
 
 interface Props {
   name: IconName;
@@ -199,6 +200,14 @@ const PATHS: Record<IconName, React.ReactNode> = {
       <circle cx="6.5" cy="6" r="2.5" />
       <circle cx="17.5" cy="18" r="2.5" />
       <path d="M6.5 8.5v4a3 3 0 003 3h5a3 3 0 013 3v-.5" />
+    </>
+  ),
+  /* The standard "person" accessibility figure, drawn in this set's stroke. */
+  accessibility: (
+    <>
+      <circle cx="12" cy="4.4" r="1.9" />
+      <path d="M4.5 8.2c2.4.8 4.9 1.2 7.5 1.2s5.1-.4 7.5-1.2" />
+      <path d="M12 9.4v5.2M12 14.6l-3.2 5M12 14.6l3.2 5" />
     </>
   ),
 };

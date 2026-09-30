@@ -4,29 +4,26 @@ import { Icon } from "../components/Icon";
 import "./PrivacyPage.css";
 
 /**
- * The full disclosure, written to be read rather than to be survived.
+ * The full disclosure.
  *
- * Everything here is checkable against the code: the storage keys are the ones
- * in `lib/privacy.ts`, and the "no cookies / no analytics" claim holds because
- * the app ships no third-party script beyond the Google Fonts stylesheet, which
- * is disclosed below rather than glossed over.
+ * Every row below is checkable against `lib/privacy.ts` — these are the exact
+ * keys the app writes, and nothing else. The Google Fonts request is listed
+ * rather than glossed over, because "no third parties" would not be true.
  */
 export function PrivacyPage() {
   return (
     <div className="page policy">
       <header className="policy-head">
-        <p className="label">מסמך</p>
-        <h1 className="policy-title display">פרטיות, בלי אותיות קטנות</h1>
-        <p className="policy-lede prose">
-          Football IQ הוא משחק חידונים. אין בו חשבונות, אין בו התחברות, ואין לנו שום דרך לדעת מי
-          אתם. הדף הזה מפרט בדיוק מה כן נשמר — גם כשזה מעט.
+        <p className="tiny">מסמך</p>
+        <h1 className="policy-title">פרטיות</h1>
+        <p className="policy-lede">
+          Football IQ הוא משחק חידונים. אין חשבונות, אין התחברות, ואין לנו דרך לדעת מי אתם. הדף הזה
+          מפרט בדיוק מה כן נשמר.
         </p>
       </header>
 
-      <hr className="rule" />
-
       <div className="policy-body">
-        <Clause index="01" title="מה אנחנו לא עושים">
+        <Clause title="מה אנחנו לא עושים">
           <ul className="policy-list">
             <li>לא מציבים קובצי Cookie. אף אחד.</li>
             <li>לא מריצים אנליטיקס — לא Google Analytics ולא חלופה.</li>
@@ -36,84 +33,54 @@ export function PrivacyPage() {
           </ul>
         </Clause>
 
-        <Clause index="02" title="מה נשמר בדפדפן שלכם">
+        <Clause title="מה נשמר בדפדפן שלכם">
           <p>
-            כל מה שהמשחק זוכר נשמר אצלכם מקומית, לא אצלנו. אתם יכולים לכבות את הקטגוריות
-            האופציונליות או למחוק הכול בכל רגע.
+            כל מה שהמשחק זוכר נשמר אצלכם מקומית, לא אצלנו. אפשר לכבות את הקטגוריות האופציונליות או
+            למחוק הכול בכל רגע.
           </p>
           <div className="policy-table">
-            <Row
-              k="fiq_active_quiz"
-              scope="sessionStorage"
-              why="החידון שאתם משחקים כרגע, כדי שרענון של הדף לא יאבד אותו"
-              cat="הכרחי"
-            />
-            <Row
-              k="fiq_last_result"
-              scope="sessionStorage"
-              why="התוצאה האחרונה, כדי להציג את מסך הסיכום"
-              cat="הכרחי"
-            />
-            <Row
-              k="fiq_intro_seen"
-              scope="sessionStorage"
-              why="שהאנימציה הפותחת תופיע פעם אחת בכרטיסייה"
-              cat="הכרחי"
-            />
-            <Row k="fiq_sound_enabled" scope="localStorage" why="אם הצלילים דלוקים או כבויים" cat="העדפות" />
-            <Row
-              k="fiq_recent_questions"
-              scope="localStorage"
-              why="מזהים של עד 300 שאלות שראיתם, כדי להעדיף שאלות חדשות"
-              cat="היסטוריה"
-            />
-            <Row
-              k="fiq_privacy_v1"
-              scope="localStorage"
-              why="הבחירה שלכם בדף הזה, כדי שלא נשאל בכל כניסה"
-              cat="הכרחי"
-            />
+            <Row k="fiq_active_quiz" scope="session" why="החידון שאתם משחקים כרגע, כדי שרענון לא יאבד אותו" cat="הכרחי" />
+            <Row k="fiq_last_result" scope="session" why="התוצאה האחרונה, כדי להציג את מסך הסיכום" cat="הכרחי" />
+            <Row k="fiq_privacy_v1" scope="local" why="הבחירה שלכם בדף הזה, כדי שלא נשאל בכל כניסה" cat="הכרחי" />
+            <Row k="fiq_sound_enabled" scope="local" why="אם הצלילים דלוקים או כבויים" cat="העדפות" />
+            <Row k="fiq_a11y_v1" scope="local" why="הגדרות הנגישות: גודל טקסט, ניגודיות, אנימציות, קישורים" cat="העדפות" />
+            <Row k="fiq_recent_questions" scope="local" why="מזהים של שאלות שראיתם, כדי להעדיף שאלות חדשות" cat="היסטוריה" />
           </div>
           <p className="policy-note">
             כל מה שב-<code>sessionStorage</code> נמחק לבד כשסוגרים את הכרטיסייה.
           </p>
         </Clause>
 
-        <Clause index="03" title="מה נשמר בשרת">
+        <Clause title="מה נשמר בשרת">
           <p>
-            כשמסיימים חידון נרשמת שורה אנונימית: מספר השאלות, כמה נכונות, כמה זמן זה לקח ואיזו
-            תצורה שיחקתם. אין בה כתובת IP, אין מזהה דפדפן ואין שום דבר שמחבר בין שתי הרצות שלכם.
-            היא משמשת אותנו כדי לדעת אם שאלה מסוימת קשה מדי — לא כדי לעקוב אחרי שחקנים.
+            כשמסיימים חידון נרשמת שורה אנונימית: מספר השאלות, כמה נכונות, כמה זמן זה לקח ואיזו תצורה
+            שיחקתם. אין בה כתובת IP, אין מזהה דפדפן ואין שום דבר שמחבר בין שתי הרצות שלכם.
           </p>
           <p>
-            קישור אתגר שאתם מייצרים נשמר כדי שהחברים שלכם יקבלו בדיוק את אותן שאלות. הוא מכיל את
-            תצורת החידון, לא אתכם.
-          </p>
-        </Clause>
-
-        <Clause index="04" title="צדדים שלישיים">
-          <p>
-            הגופנים (Frank Ruhl Libre ו-Heebo) נטענים מ-Google Fonts. זאת אומרת שבטעינת הדף הדפדפן
-            שלכם פונה לשרת של Google, ולכן כתובת ה-IP שלכם נחשפת אליו. זה הצד השלישי היחיד, והוא
-            מוזכר כאן כי אמירה כמו &rdquo;אפס צדדים שלישיים&ldquo; הייתה לא נכונה.
-          </p>
-          <p>
-            האפליקציה מתארחת ב-Cloudflare Workers. Cloudflare מעבדת את הבקשות כספקית תשתית, לפי
-            תנאיה.
+            קישור אתגר שאתם מייצרים נשמר כדי שהחברים שלכם יקבלו את אותן שאלות. הוא מכיל את תצורת
+            החידון, לא אתכם.
           </p>
         </Clause>
 
-        <Clause index="05" title="השליטה שלכם">
+        <Clause title="צדדים שלישיים">
           <p>
-            בלחיצה אחת אפשר לשנות קטגוריות או למחוק כל מה שנשמר מקומית. מחיקה היא מיידית ומלאה —
-            כולל רשומת ההסכמה עצמה, כך שתישאלו מחדש בפעם הבאה.
+            הגופנים (Rubik ו-Assistant) נטענים מ-Google Fonts, ולכן כתובת ה-IP שלכם נחשפת אליהם
+            בטעינת הדף. זה הצד השלישי היחיד, והוא מוזכר כאן כי &rdquo;אפס צדדים שלישיים&ldquo; לא
+            היה נכון. האפליקציה מתארחת ב-Cloudflare Workers, שמעבדת את הבקשות כספקית תשתית.
+          </p>
+        </Clause>
+
+        <Clause title="השליטה שלכם">
+          <p>
+            אפשר לשנות קטגוריות או למחוק כל מה שנשמר מקומית. המחיקה מיידית ומלאה — כולל רשומת
+            ההסכמה עצמה, כך שתישאלו מחדש בפעם הבאה.
           </p>
           <div className="policy-actions">
-            <button className="btn btn-ink" onClick={openPrivacySettings}>
-              <Icon name="sliders" size={18} />
-              פתח הגדרות פרטיות
+            <button className="btn btn-primary" onClick={openPrivacySettings}>
+              <Icon name="sliders" size={16} />
+              הגדרות נתונים
             </button>
-            <Link to="/" className="btn btn-outline">
+            <Link to="/" className="btn btn-ghost">
               חזרה למשחק
             </Link>
           </div>
@@ -123,14 +90,11 @@ export function PrivacyPage() {
   );
 }
 
-function Clause({ index, title, children }: { index: string; title: string; children: React.ReactNode }) {
+function Clause({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="policy-clause">
-      <div className="section-head">
-        <span className="section-index">{index}</span>
-        <h2 className="section-title">{title}</h2>
-      </div>
-      <div className="prose">{children}</div>
+      <h2>{title}</h2>
+      {children}
     </section>
   );
 }
@@ -139,9 +103,9 @@ function Row({ k, scope, why, cat }: { k: string; scope: string; why: string; ca
   return (
     <div className="policy-row">
       <code className="policy-key">{k}</code>
-      <span className="stamp">{scope}</span>
+      <span className="tag">{scope}</span>
       <span className="policy-why">{why}</span>
-      <span className="policy-cat label">{cat}</span>
+      <span className="policy-cat">{cat}</span>
     </div>
   );
 }

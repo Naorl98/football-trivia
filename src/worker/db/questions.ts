@@ -6,8 +6,8 @@ import type {
   Question,
   QuestionClue,
   QuestionOption,
-} from "../../shared/types";
-import { expandCompetitionCodes } from "../../shared/constants";
+} from "../../shared/types.ts";
+import { expandCompetitionCodes } from "../../shared/constants.ts";
 
 export interface QuestionFilter {
   region: string | null;
@@ -37,7 +37,7 @@ interface QuestionRow {
 // filters. Scope matching is "match ANY requested scope" via EXISTS, and is
 // skipped entirely when the caller did not narrow by region/country/competition
 // (i.e. "all of football" requests never filter on question_scopes).
-function buildWhere(filter: QuestionFilter): { where: string; params: unknown[] } {
+export function buildWhere(filter: QuestionFilter): { where: string; params: unknown[] } {
   const clauses = ["q.active = 1", "q.mode = ?"];
   const params: unknown[] = [filter.gameMode];
 
@@ -96,6 +96,32 @@ export async function countAvailableQuestions(db: D1Database, filter: QuestionFi
   return row?.cnt ?? 0;
 }
 
+/**
+ * D1 rejects any statement with more than 100 bound parameters:
+ *   D1_ERROR: too many SQL variables ... SQLITE_ERROR
+ *
+ * That ceiling is shared by the whole statement, so the filter's own parameters
+ * and anything else bound alongside them compete for the same budget.
+ */
+export const D1_MAX_BOUND_PARAMS = 100;
+
+/**
+ * Renders question ids as SQL integer literals.
+ *
+ * These ids are the ONLY values in this module that are inlined rather than
+ * bound, because binding them is what broke quiz creation: the recently-seen
+ * list grows to hundreds of ids and blew the 100-parameter ceiling. Inlining is
+ * safe here and nowhere else — every element is proven to be a finite integer
+ * first, and anything else is dropped rather than coerced, so no caller-supplied
+ * string can reach the SQL text.
+ */
+function toIdList(ids: number[]): string {
+  return ids
+    .filter((id) => Number.isInteger(id) && Number.isFinite(id))
+    .map((id) => String(Math.trunc(id)))
+    .join(",");
+}
+
 // Selects up to `limit` matching, active question ids at random. Never
 // duplicates: SQLite RANDOM() ordering over distinct rows guarantees uniqueness.
 //
@@ -111,23 +137,17 @@ export async function pickQuestionIds(
 ): Promise<number[]> {
   const { where, params } = buildWhere(filter);
 
-  if (excludeIds.length === 0) {
-    const { results } = await db
-      .prepare(`SELECT q.id FROM questions q WHERE ${where} ORDER BY RANDOM() LIMIT ?`)
-      .bind(...params, limit)
-      .all<{ id: number }>();
-    return results.map((r) => r.id);
-  }
+  const idList = toIdList(excludeIds);
+  // `limit` is bound; the filter's params are bound; the exclude ids are not.
+  const ordering = idList
+    ? `(CASE WHEN q.id IN (${idList}) THEN 1 ELSE 0 END), RANDOM()`
+    : `RANDOM()`;
 
-  const placeholders = excludeIds.map(() => "?").join(",");
   const { results } = await db
-    .prepare(
-      `SELECT q.id FROM questions q WHERE ${where}
-       ORDER BY (CASE WHEN q.id IN (${placeholders}) THEN 1 ELSE 0 END), RANDOM()
-       LIMIT ?`
-    )
-    .bind(...params, ...excludeIds, limit)
+    .prepare(`SELECT q.id FROM questions q WHERE ${where} ORDER BY ${ordering} LIMIT ?`)
+    .bind(...params, limit)
     .all<{ id: number }>();
+
   return results.map((r) => r.id);
 }
 

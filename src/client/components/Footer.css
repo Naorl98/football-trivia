@@ -1,65 +1,40 @@
-.colophon {
+.foot {
+  flex: none;
   margin-block-start: auto;
-  padding-block-end: 28px;
+  padding-block: 18px 26px;
 }
 
-.colophon-inner {
+.foot-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-block-start: 14px;
+  border-block-start: 1px solid var(--line);
+}
+
+.foot-text {
+  font-size: 0.76rem;
+  color: var(--text-3);
+}
+
+.foot-nav {
+  display: flex;
+  align-items: center;
   gap: 14px;
-  flex-wrap: wrap;
-  padding-block-start: 16px;
 }
 
-.colophon-line {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  font-size: 12.5px;
-  color: var(--ink-3);
-}
-
-.colophon-mark {
-  font-family: var(--font-ui);
-  font-weight: 900;
-  font-size: 12px;
-  letter-spacing: 0.04em;
-  color: var(--ink);
-}
-
-.colophon-sep {
-  color: var(--ink-4);
-}
-
-.colophon-nav {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.colophon-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12.5px;
-  font-weight: 700;
-  color: var(--ink-2);
-  border-block-end: 1.5px solid transparent;
-  transition: color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
-}
-
-.colophon-link:hover {
-  color: var(--spot);
-  border-block-end-color: var(--spot);
-}
-
-.colophon-btn {
+.foot-link {
   background: none;
-  border-inline: 0;
-  border-block-start: 0;
+  border: 0;
   padding: 0;
+  font-family: var(--font-head);
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-3);
   cursor: pointer;
-  font-family: inherit;
+  transition: color var(--t-2) var(--ease);
 }
+
+.foot-link:hover { color: var(--green); }

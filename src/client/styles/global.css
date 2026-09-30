@@ -1,8 +1,9 @@
-@import url("https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;800;900&family=Heebo:wght@400;500;700;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800;900&family=Assistant:wght@400;500;600;700&display=swap");
 @import "./tokens.css";
+@import "./animations.css";
 
 /* ============================================================
-   Reset + page ground
+   Reset
    ============================================================ */
 *,
 *::before,
@@ -18,30 +19,18 @@ body {
 
 html {
   -webkit-text-size-adjust: 100%;
+  /* The accessibility menu drives this; every rem-based size follows. */
+  font-size: calc(100% * var(--text-scale));
 }
 
 body {
   min-height: 100dvh;
-  background: var(--paper);
-  color: var(--ink);
-  font-family: var(--font-ui);
-  font-size: 16px;
-  line-height: 1.55;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-}
-
-/* Newsprint grain: a fixed halftone dot grid, almost subliminal. It is the
-   only "texture" in the system and replaces the old ambient glow layers. */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.5;
-  background-image: radial-gradient(var(--rule-soft) 0.5px, transparent 0.5px);
-  background-size: 4px 4px;
 }
 
 #root {
@@ -50,24 +39,14 @@ body::before {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  /* Reserve room for whatever is docked to the bottom edge (the privacy
-     banner), so it never covers the end of the page. */
   padding-block-end: var(--dock-offset, 0px);
 }
 
-h1,
-h2,
-h3,
-h4,
-p,
-figure,
-ul,
-ol {
+h1, h2, h3, h4, p, figure, ul, ol, dl, dd {
   margin: 0;
 }
 
-ul,
-ol {
+ul, ol {
   padding: 0;
   list-style: none;
 }
@@ -77,87 +56,75 @@ a {
   text-decoration: none;
 }
 
-button,
-input,
-select,
-textarea {
+button, input, select, textarea {
   font: inherit;
   color: inherit;
 }
 
-img,
-svg {
+img, svg {
   display: block;
   max-width: 100%;
 }
 
 ::selection {
-  background: var(--spot);
-  color: #fff;
+  background: var(--green);
+  color: var(--on-green);
 }
 
 /* ============================================================
-   Typography
+   Type
    ============================================================ */
-.display {
-  font-family: var(--font-display);
-  font-weight: 900;
-  line-height: 1.02;
-  letter-spacing: -0.015em;
-}
-
-/* Small caps-ish label: the programme's running heads and field labels.
-   Hebrew has no small caps, so this leans on weight + tracking + size. */
-.label {
-  font-family: var(--font-ui);
+h1, h2, h3, h4,
+.head {
+  font-family: var(--font-head);
   font-weight: 700;
-  font-size: 11.5px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ink-3);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
 }
 
-/* Tabular figures for anything that counts or changes in place. */
-.figures {
+/* Anything that counts, ticks or scores. Tabular so digits never jitter. */
+.num {
+  font-family: var(--font-head);
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
   letter-spacing: -0.02em;
 }
 
-.prose {
-  max-width: var(--measure);
-  line-height: 1.7;
-  color: var(--ink-2);
+.tiny {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-3);
+  letter-spacing: 0.02em;
 }
 
-.prose p + p {
-  margin-top: 1em;
-}
-
-.ink-2 { color: var(--ink-2); }
-.ink-3 { color: var(--ink-3); }
-.spot { color: var(--spot); }
-.pitch { color: var(--pitch); }
-
-/* Hand-inked emphasis: a thick spot underline that sits under the baseline
-   rather than a coloured glow. */
-.marked {
-  text-decoration: underline;
-  text-decoration-color: var(--spot);
-  text-decoration-thickness: 0.16em;
-  text-underline-offset: 0.12em;
-  text-decoration-skip-ink: none;
-}
+.muted { color: var(--text-2); }
+.faint { color: var(--text-3); }
+.green { color: var(--green); }
+.amber { color: var(--amber); }
+.red    { color: var(--red); }
 
 /* ============================================================
    Layout
    ============================================================ */
 .page {
   width: 100%;
-  max-width: var(--page-max);
+  max-width: var(--page);
   margin-inline: auto;
   padding-inline: var(--gutter);
 }
+
+.page-wide { max-width: var(--page-wide); }
+
+.col { display: flex; flex-direction: column; }
+.row { display: flex; align-items: center; }
+.wrap { flex-wrap: wrap; }
+.between { justify-content: space-between; }
+.mid { justify-content: center; }
+.g1 { gap: 4px; }
+.g2 { gap: 8px; }
+.g3 { gap: 12px; }
+.g4 { gap: 18px; }
+.g5 { gap: 26px; }
 
 .app-main {
   flex: 1;
@@ -165,277 +132,266 @@ svg {
   flex-direction: column;
 }
 
-/* The <main> takes focus from the skip link; it must not draw a ring for that. */
-.app-main:focus {
-  outline: none;
-}
-
-.stack { display: flex; flex-direction: column; }
-.row { display: flex; align-items: center; }
-.wrap { flex-wrap: wrap; }
-.between { justify-content: space-between; }
-.center { justify-content: center; }
-.g1 { gap: 4px; }
-.g2 { gap: 8px; }
-.g3 { gap: 12px; }
-.g4 { gap: 18px; }
-.g5 { gap: 28px; }
-
-/* A full-bleed inked rule, the programme's main separator. */
-.rule {
-  border: 0;
-  border-top: var(--border-w) solid var(--rule);
-  margin: 0;
-}
-
-.rule-thin {
-  border: 0;
-  border-top: var(--border-w-thin) solid var(--rule-soft);
-  margin: 0;
-}
-
-/* Numbered section head: "01 — קטגוריות" with a rule running to the edge.
-   The index is what makes a long settings page read as an edited document. */
-.section-head {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-
-.section-index {
-  font-family: var(--font-ui);
-  font-weight: 900;
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  color: var(--spot);
-  font-variant-numeric: tabular-nums;
-  flex: none;
-  padding-block-start: 2px;
-}
-
-.section-title {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: clamp(19px, 2.4vw, 23px);
-  line-height: 1.2;
-  flex: none;
-}
-
-.section-head::after {
-  content: "";
-  flex: 1;
-  height: 0;
-  border-top: var(--border-w-thin) solid var(--rule-soft);
-  transform: translateY(-4px);
-}
-
-/* ============================================================
-   Cards — inked rectangles with a hard offset shadow
-   ============================================================ */
-.card {
-  background: var(--card);
-  border: var(--border-w) solid var(--ink);
-  border-radius: var(--r-xs);
-  box-shadow: var(--lift-1);
-}
-
-.card-flat {
-  background: var(--card);
-  border: var(--border-w-thin) solid var(--rule-soft);
-  border-radius: var(--r-xs);
-}
-
-.card-pressable {
-  cursor: pointer;
-  text-align: start;
-  transition:
-    transform var(--t-fast) var(--ease),
-    box-shadow var(--t-fast) var(--ease),
-    background-color var(--t-fast) var(--ease);
-}
-
-/* Hover lifts the card off the page; press slams it back down. Because the
-   shadow is solid, the motion reads as physical rather than as a fade. */
-.card-pressable:hover:not(:disabled) {
-  transform: translate(-2px, -2px);
-  box-shadow: var(--lift-2);
-  background: var(--card-2);
-}
-
-.card-pressable:active:not(:disabled) {
-  transform: translate(1px, 1px);
-  box-shadow: 1px 1px 0 var(--ink);
-}
-
-.card-pressable:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
+.app-main:focus { outline: none; }
 
 /* ============================================================
    Buttons
    ============================================================ */
 .btn {
-  --btn-bg: var(--card);
-  --btn-fg: var(--ink);
-  --btn-shadow: var(--ink);
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 9px;
-  background: var(--btn-bg);
-  color: var(--btn-fg);
-  border: var(--border-w) solid var(--ink);
-  border-radius: var(--r-xs);
-  box-shadow: 3px 3px 0 var(--btn-shadow);
-  font-family: var(--font-ui);
-  font-weight: 700;
-  font-size: 16px;
-  line-height: 1.2;
-  padding: 13px 24px;
+  padding: 12px 22px;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 0.97rem;
+  line-height: 1.25;
   cursor: pointer;
+  overflow: hidden;
   -webkit-tap-highlight-color: transparent;
   transition:
-    transform var(--t-fast) var(--ease),
-    box-shadow var(--t-fast) var(--ease),
-    background-color var(--t-fast) var(--ease);
+    transform var(--t-1) var(--ease),
+    background-color var(--t-2) var(--ease),
+    box-shadow var(--t-2) var(--ease),
+    border-color var(--t-2) var(--ease),
+    opacity var(--t-2) var(--ease);
+}
+
+/* A quick sheen that sweeps across on hover. Purely a highlight — it is
+   masked to the button and never tints the colour underneath. */
+.btn::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: -60%;
+  width: 45%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.16), transparent);
+  transform: skewX(-18deg);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.btn:hover:not(:disabled)::after {
+  animation: sheen 620ms var(--ease);
 }
 
 .btn:hover:not(:disabled) {
-  transform: translate(-2px, -2px);
-  box-shadow: 5px 5px 0 var(--btn-shadow);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-2);
 }
 
 .btn:active:not(:disabled) {
-  transform: translate(1.5px, 1.5px);
-  box-shadow: 1px 1px 0 var(--btn-shadow);
+  transform: translateY(1px) scale(0.985);
+  box-shadow: none;
+  transition-duration: 60ms;
 }
 
 .btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
-  box-shadow: 2px 2px 0 var(--btn-shadow);
-  transform: none;
 }
 
-/* Primary: a solid ink block. The most confident thing on the page. */
-.btn-ink {
-  --btn-bg: var(--ink);
-  --btn-fg: var(--on-ink);
-  --btn-shadow: var(--spot);
+.btn-primary {
+  background: var(--green);
+  color: var(--on-green);
+  font-weight: 700;
 }
 
-/* Secondary emphasis: the spot colour, used for share/celebrate moments. */
-.btn-spot {
-  --btn-bg: var(--spot);
-  --btn-fg: #fff;
-  --btn-shadow: var(--ink);
-  border-color: var(--ink);
+.btn-primary:hover:not(:disabled) {
+  background: var(--green-bright);
 }
 
-.btn-outline {
-  --btn-bg: transparent;
-  --btn-fg: var(--ink);
-  --btn-shadow: var(--ink);
+.btn-amber {
+  background: var(--amber);
+  color: var(--on-amber);
+  font-weight: 700;
+}
+
+.btn-amber:hover:not(:disabled) { background: var(--amber-bright); }
+
+.btn-ghost {
+  background: transparent;
+  border-color: var(--line-strong);
+  color: var(--text);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: var(--surface-2);
+  border-color: var(--line-strong);
 }
 
 .btn-quiet {
-  border-color: var(--rule-soft);
-  box-shadow: none;
   background: transparent;
-  font-weight: 500;
+  color: var(--text-2);
+  padding-inline: 12px;
 }
 
 .btn-quiet:hover:not(:disabled) {
+  background: var(--surface-2);
+  color: var(--text);
   transform: none;
   box-shadow: none;
-  background: var(--card-2);
-  border-color: var(--ink);
 }
 
-.btn-quiet:active:not(:disabled) {
-  transform: translateY(1px);
-  box-shadow: none;
+.btn-lg {
+  padding: 16px 30px;
+  font-size: 1.06rem;
+  border-radius: var(--r-md);
+}
+
+.btn-sm {
+  padding: 8px 14px;
+  font-size: 0.87rem;
+  border-radius: var(--r-xs);
 }
 
 .btn-block { width: 100%; }
 
-.btn-sm {
-  padding: 8px 15px;
-  font-size: 14px;
-  box-shadow: 2px 2px 0 var(--btn-shadow);
+/* ============================================================
+   Cards
+   ============================================================ */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
 }
 
-.btn-sm:hover:not(:disabled) { box-shadow: 3.5px 3.5px 0 var(--btn-shadow); }
+.card-2 {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+}
 
 /* ============================================================
-   Chips (filters) — the one place with rounded geometry, because they
-   behave like tags clipped from the page.
+   Chips — the builder's selection control
    ============================================================ */
 .chip {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
   background: transparent;
-  color: var(--ink-2);
-  border: var(--border-w-thin) solid var(--rule-soft);
-  border-radius: var(--r-chip);
-  padding: 8px 15px;
+  color: var(--text-2);
+  font-family: var(--font-head);
   font-weight: 500;
-  font-size: 14.5px;
+  font-size: 0.88rem;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition:
-    background-color var(--t-fast) var(--ease),
-    border-color var(--t-fast) var(--ease),
-    color var(--t-fast) var(--ease),
-    transform var(--t-fast) var(--ease);
+    background-color var(--t-2) var(--ease),
+    border-color var(--t-2) var(--ease),
+    color var(--t-2) var(--ease),
+    transform var(--t-1) var(--ease);
 }
 
 .chip:hover {
-  border-color: var(--ink);
-  color: var(--ink);
+  color: var(--text);
+  border-color: var(--text-3);
+  background: var(--surface-2);
 }
 
-.chip:active { transform: scale(0.97); }
+.chip:active { transform: scale(0.94); }
 
-.chip[aria-pressed="true"],
-.chip.on {
-  background: var(--ink);
-  border-color: var(--ink);
-  color: var(--on-ink);
+.chip[aria-pressed="true"] {
+  background: var(--green-wash);
+  border-color: var(--green);
+  color: var(--green-bright);
   font-weight: 700;
+  animation: chip-pick var(--t-3) var(--pop);
+}
+
+/* The tick that slides in on selection. */
+.chip-tick {
+  display: grid;
+  place-items: center;
+  width: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: width var(--t-2) var(--ease), opacity var(--t-2) var(--ease);
+}
+
+.chip[aria-pressed="true"] .chip-tick {
+  width: 13px;
+  opacity: 1;
 }
 
 /* ============================================================
-   Stamps — inline metadata, set like a rubber stamp rather than a pill
+   Tags — tiny inline labels
    ============================================================ */
-.stamp {
+.tag {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  border: var(--border-w-thin) solid currentColor;
-  border-radius: var(--r-xs);
-  padding: 3px 8px;
-  font-family: var(--font-ui);
-  font-weight: 700;
-  font-size: 11.5px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-  background: transparent;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 0.72rem;
   white-space: nowrap;
 }
 
-.stamp-spot { color: var(--spot); }
-.stamp-pitch { color: var(--pitch); }
-.stamp-blue { color: var(--stamp); }
+.tag-green { background: var(--green-wash); color: var(--green-bright); }
+.tag-amber { background: var(--amber-wash); color: var(--amber-bright); }
+.tag-blue  { background: var(--blue-wash);  color: var(--blue); }
 
-.stamp-solid {
-  background: var(--ink);
-  color: var(--on-ink);
-  border-color: var(--ink);
+/* ============================================================
+   Thin progress bar
+   ============================================================ */
+.bar {
+  position: relative;
+  width: 100%;
+  height: 4px;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  overflow: hidden;
+}
+
+/* `display: block` matters: this is used on a <span> in the results
+   breakdown, and an inline box ignores width and height entirely. */
+.bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--green);
+  transition: width var(--t-3) var(--ease);
+}
+
+/* ============================================================
+   Text input
+   ============================================================ */
+.input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 1.05rem;
+  transition: border-color var(--t-2) var(--ease), background-color var(--t-2) var(--ease);
+}
+
+.input::placeholder {
+  color: var(--text-3);
+  font-weight: 400;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--green);
+  background: var(--surface-2);
 }
 
 /* ============================================================
@@ -453,112 +409,65 @@ svg {
   border: 0;
 }
 
-/* Keyboard users land here first. It stays off-screen until focused. */
 .skip-link {
   position: fixed;
-  inset-block-start: 8px;
-  inset-inline-start: 8px;
-  z-index: 200;
-  transform: translateY(-160%);
-  background: var(--ink);
-  color: var(--on-ink);
-  border: var(--border-w) solid var(--spot);
-  padding: 10px 18px;
+  inset-block-start: 10px;
+  inset-inline-start: 10px;
+  z-index: 300;
+  transform: translateY(-180%);
+  padding: 11px 18px;
+  border-radius: var(--r-sm);
+  background: var(--green);
+  color: var(--on-green);
+  font-family: var(--font-head);
   font-weight: 700;
-  border-radius: var(--r-xs);
-  transition: transform var(--t-mid) var(--ease);
+  transition: transform var(--t-2) var(--ease);
 }
 
-.skip-link:focus-visible {
-  transform: translateY(0);
-}
+.skip-link:focus-visible { transform: translateY(0); }
 
-/* One focus treatment across the whole product: a spot-coloured ring with
-   an ink halo, legible on both paper and ink grounds. */
+/* One focus ring for the whole product. */
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
-  outline: 3px solid var(--spot);
+  outline: 3px solid var(--green-bright);
   outline-offset: 2px;
   border-radius: var(--r-xs);
 }
 
 /* ============================================================
-   Motion
+   Pitch ground — a very faint halfway line and centre circle behind
+   everything. Static, cheap, and invisible enough not to compete.
    ============================================================ */
-@keyframes rise {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: translateY(0); }
+.pitch-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
 }
 
-@keyframes stamp-in {
-  0% { opacity: 0; transform: scale(1.18) rotate(-2.5deg); }
-  60% { opacity: 1; }
-  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+.pitch-bg::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 50%;
+  height: 1px;
+  background: var(--line);
 }
 
-@keyframes wipe-in {
-  from { clip-path: inset(0 0 0 100%); }
-  to { clip-path: inset(0 0 0 0); }
+/* Centre circle. Uses physical `left` on purpose: this is a centred decoration,
+   not a start-aligned one, and `inset-inline-start` would flip it in RTL. */
+.pitch-bg::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(60vw, 420px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border: 1px solid var(--line);
+  border-radius: 50%;
 }
 
-.anim-rise { animation: rise var(--t-mid) var(--ease) both; }
-.anim-stamp { animation: stamp-in 320ms var(--ease-out-back) both; }
-
-/* Scroll-reveal contract used by <Reveal>: hidden until observed. */
-.reveal {
-  opacity: 0;
-  transform: translateY(18px);
-  transition:
-    opacity 480ms var(--ease),
-    transform 480ms var(--ease);
-}
-
-.reveal.is-in {
-  opacity: 1;
-  transform: none;
-}
-
-/* Staggered children, driven by an inline --i index. */
-.stagger > * {
-  animation: rise 420ms var(--ease) both;
-  animation-delay: calc(var(--i, 0) * 60ms);
-}
-
-/* Honour the OS setting once, globally, rather than per component. */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-
-  .reveal {
-    opacity: 1;
-    transform: none;
-  }
-
-  /* Hover lifts are position changes, not decoration — drop them too. */
-  .btn:hover:not(:disabled),
-  .card-pressable:hover:not(:disabled) {
-    transform: none;
-  }
-}
-
-/* ============================================================
-   High-contrast / forced-colors: let the OS palette win, keep structure
-   ============================================================ */
-@media (forced-colors: active) {
-  .card,
-  .btn,
-  .chip,
-  .stamp {
-    border: 2px solid CanvasText;
-    box-shadow: none;
-  }
-}
-
-@media (max-width: 520px) {
+@media (max-width: 560px) {
   :root { --gutter: 16px; }
 }

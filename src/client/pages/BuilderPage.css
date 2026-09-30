@@ -1,258 +1,113 @@
-.builder {
-  padding-block: 32px 0;
-  /* Room for the sticky start bar. */
-  padding-block-end: 118px;
+.build {
+  padding-block: 24px 0;
+  /* Clears the fixed start bar. */
+  padding-block-end: 96px;
 }
 
-.builder-head {
-  margin-bottom: 22px;
+.build-title {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: clamp(1.5rem, 5.5vw, 2rem);
+  margin-bottom: 20px;
 }
 
-.builder-kicker {
-  color: var(--spot);
-  margin-bottom: 10px;
+.build-rows {
+  display: flex;
+  flex-direction: column;
 }
 
-.builder-title {
-  font-size: clamp(30px, 6.4vw, 50px);
-  margin-bottom: 14px;
+/* A row is a label and its controls — no cards, no borders around each block.
+   The separators alone are enough structure at this density. */
+.build-row {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  align-items: start;
+  gap: 14px;
+  padding-block: 15px;
+  border-block-start: 1px solid var(--line);
 }
 
-.builder-lede {
-  font-size: 15.5px;
+.build-row:first-child { border-block-start: 0; padding-block-start: 0; }
+
+.build-label {
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 0.86rem;
+  color: var(--text-3);
+  padding-block-start: 8px;
 }
 
-/* ============================================================
-   Fields
-   ============================================================ */
-.field {
-  padding-block: 26px;
+.build-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
 }
 
-.field + .field {
-  border-block-start: var(--border-w-thin) solid var(--rule-soft);
-}
-
-.field-hint {
-  font-size: 13.5px;
-  color: var(--ink-3);
-  margin-block: -6px 14px;
-  line-height: 1.5;
-}
-
-.chip-row {
+.chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
-.chip-row-second {
-  margin-block-start: 9px;
-  padding-block-start: 9px;
-  border-block-start: var(--border-w-thin) dashed var(--rule-soft);
+/* Secondary chip groups inside one row read as a continuation, not a new
+   section, so they are only separated by their own wrapping. */
+.build-field .chips + .chips {
+  padding-block-start: 8px;
+  border-block-start: 1px dashed var(--line);
 }
 
-/* ============================================================
-   Answer-mode pair
-   ============================================================ */
-.mode-pair {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.mode {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 3px;
-  padding: 16px 16px 18px;
-}
-
-.mode-mark {
-  color: var(--spot);
-  margin-bottom: 8px;
-}
-
-.mode-title {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 18px;
-}
-
-.mode-sub {
-  font-size: 13px;
-  color: var(--ink-3);
-  line-height: 1.45;
-}
-
-/* Selection is a full ink inversion — unmistakable at a glance and in
-   grayscale, which a tinted border is not. */
-.mode.is-active {
-  background: var(--ink);
-  color: var(--on-ink);
-  box-shadow: var(--lift-spot);
-}
-
-.mode.is-active .mode-sub {
-  color: color-mix(in srgb, var(--on-ink) 70%, transparent);
-}
-
-.mode.is-active .mode-mark {
-  color: var(--spot);
-}
-
-@media (max-width: 520px) {
-  .mode-pair {
+@media (max-width: 560px) {
+  .build-row {
     grid-template-columns: 1fr;
+    gap: 8px;
   }
+  .build-label { padding-block-start: 0; }
 }
 
 /* ============================================================
-   Difficulty ladder
+   Start bar
    ============================================================ */
-.ladder {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 7px;
-}
-
-.rung {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 11px 5px 10px;
-  background: var(--card);
-  border: var(--border-w-thin) solid var(--rule-soft);
-  border-radius: var(--r-xs);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition:
-    border-color var(--t-fast) var(--ease),
-    background-color var(--t-fast) var(--ease),
-    color var(--t-fast) var(--ease);
-}
-
-.rung:hover {
-  border-color: var(--ink);
-}
-
-.rung.on {
-  background: var(--ink);
-  border-color: var(--ink);
-  color: var(--on-ink);
-  box-shadow: 3px 3px 0 var(--spot);
-}
-
-/* Five stepped bars: how many are lit encodes the level. */
-.rung-bars {
-  display: flex;
-  align-items: flex-end;
-  gap: 2px;
-  height: 20px;
-}
-
-.rung-bar {
-  width: 4px;
-  background: var(--rule-soft);
-  transition: background-color var(--t-fast) var(--ease);
-}
-
-.rung-bar:nth-child(1) { height: 25%; }
-.rung-bar:nth-child(2) { height: 42%; }
-.rung-bar:nth-child(3) { height: 59%; }
-.rung-bar:nth-child(4) { height: 78%; }
-.rung-bar:nth-child(5) { height: 100%; }
-
-.rung-bar.is-lit {
-  background: var(--ink-3);
-}
-
-.rung.on .rung-bar {
-  background: color-mix(in srgb, var(--on-ink) 28%, transparent);
-}
-
-.rung.on .rung-bar.is-lit {
-  background: var(--spot);
-}
-
-.rung-label {
-  font-size: 12px;
-  font-weight: 700;
-  text-align: center;
-  line-height: 1.25;
-}
-
-@media (max-width: 620px) {
-  .ladder {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-/* ============================================================
-   Sticky start bar
-   ============================================================ */
-/* Sits above the privacy banner when one is docked — see --dock-offset in
-   PrivacyGate. */
-.builder-bar {
+.build-bar {
   position: fixed;
   inset-inline: 0;
   inset-block-end: var(--dock-offset, 0px);
   z-index: 60;
-  background: var(--card);
-  border-block-start: var(--border-w) solid var(--ink);
-  transition: inset-block-end var(--t-mid) var(--ease);
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(8px);
+  border-block-start: 1px solid var(--line-strong);
+  transition: inset-block-end var(--t-3) var(--ease);
 }
 
-.builder-bar-inner {
-  max-width: var(--page-max);
-  margin-inline: auto;
-  padding: 13px var(--gutter);
+.build-bar-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
+  gap: 12px;
+  padding-block: 11px;
 }
 
-.builder-count {
-  font-size: 14px;
+.build-count {
+  font-size: 0.85rem;
   line-height: 1.4;
 }
 
-.builder-count-n {
-  font-family: var(--font-ui);
-  font-weight: 900;
-  font-size: 22px;
-  color: var(--ink);
-}
+.build-count b { font-size: 1.05rem; font-weight: 800; }
 
-.builder-count-zero {
-  color: var(--spot);
-  font-weight: 700;
-}
-
-.builder-count-warn {
-  color: var(--ink-3);
-  font-size: 12.5px;
-}
-
-.builder-error {
-  max-width: var(--page-max);
+.build-error {
+  max-width: var(--page);
   margin-inline: auto;
-  padding: 0 var(--gutter) 12px;
-  color: var(--spot);
-  font-weight: 700;
-  font-size: 13.5px;
+  padding: 0 var(--gutter) 10px;
+  color: var(--red);
+  font-size: 0.82rem;
+  font-weight: 600;
 }
 
-@media (max-width: 520px) {
-  .builder-bar-inner {
+@media (max-width: 480px) {
+  .build-bar-inner {
     flex-direction: column;
     align-items: stretch;
-    gap: 9px;
+    gap: 8px;
   }
-  .builder-count {
-    text-align: center;
-  }
+  .build-count { text-align: center; }
 }

@@ -5,15 +5,15 @@ import type { Category } from "../../shared/types";
 import { createChallenge, fetchQuiz } from "../lib/api";
 import { loadResult, saveActiveQuiz } from "../lib/quizSession";
 import { getRecentQuestionIds } from "../lib/recentQuestions";
-import { IqMeter } from "../components/IqMeter";
+import { ScoreRing } from "../components/ScoreRing";
 import { Confetti } from "../components/Confetti";
 import { Icon, FlameMark } from "../components/Icon";
 import { sound } from "../lib/sound";
 import "./ResultsPage.css";
 
-function formatDuration(totalSeconds: number): string {
-  const m = Math.floor(totalSeconds / 60);
-  const s = totalSeconds % 60;
+function mmss(total: number): string {
+  const m = Math.floor(total / 60);
+  const s = total % 60;
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
@@ -30,7 +30,7 @@ export function ResultsPage() {
     if (!result) navigate("/", { replace: true });
   }, [result, navigate]);
 
-  const categoryBreakdown = useMemo(() => {
+  const breakdown = useMemo(() => {
     if (!result) return [];
     const map = new Map<Category, { correct: number; total: number }>();
     for (const answer of result.answers) {
@@ -41,25 +41,21 @@ export function ResultsPage() {
       if (answer.correct) entry.correct += 1;
       map.set(question.category, entry);
     }
-    // Strongest categories first: the report should open with what went well.
     return [...map.entries()].sort((a, b) => b[1].correct / b[1].total - a[1].correct / a[1].total);
   }, [result]);
 
   if (!result) return null;
-
   const { quiz, score, durationSeconds } = result;
 
   async function handleReplay() {
     setReplaying(true);
     sound.play("click");
     try {
-      // Ask for questions the player has not just seen.
-      const fresh = await fetchQuiz({
-        ...quiz.configuration,
-        excludeQuestionIds: getRecentQuestionIds(),
-      });
+      const fresh = await fetchQuiz({ ...quiz.configuration, excludeQuestionIds: getRecentQuestionIds() });
       saveActiveQuiz({ quiz: fresh, startedAt: Date.now() });
       navigate("/play");
+    } catch {
+      setShareMessage("לא הצלחנו לטעון סבב חדש, נסו שוב.");
     } finally {
       setReplaying(false);
     }
@@ -68,146 +64,103 @@ export function ResultsPage() {
   async function handleShare() {
     setSharing(true);
     setShareMessage(null);
+    sound.play("click");
     try {
       const { challenge } = await createChallenge(quiz.configuration);
       const url = `${window.location.origin}/challenge/${challenge.publicId}`;
-      const shareData = {
+      const data = {
         title: "Football IQ",
         text: `קיבלתי ${score.points}/${score.total} ב-Football IQ. מוכנים להתמודד?`,
         url,
       };
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else {
+      if (navigator.share) await navigator.share(data);
+      else {
         await navigator.clipboard.writeText(url);
-        setShareMessage("הקישור הועתק ללוח.");
+        setShareMessage("הקישור הועתק.");
       }
     } catch {
-      setShareMessage("לא הצלחנו ליצור קישור שיתוף, נסו שוב.");
+      setShareMessage("לא הצלחנו ליצור קישור, נסו שוב.");
     } finally {
       setSharing(false);
     }
   }
 
-  const tally = [
-    { value: score.correct, label: "נכונות", tone: "pitch" },
-    { value: score.incorrect, label: "שגויות", tone: "spot" },
-    ...(score.revealed > 0 ? [{ value: score.revealed, label: "נחשפו", tone: "ink" }] : []),
-    { value: `${score.accuracy}%`, label: "דיוק", tone: "ink" },
+  const stats = [
+    { value: score.correct, label: "נכונות", cls: "green" },
+    { value: score.incorrect, label: "שגויות", cls: "red" },
+    ...(score.revealed > 0 ? [{ value: score.revealed, label: "נחשפו", cls: "amber" }] : []),
+    { value: `${score.accuracy}%`, label: "דיוק", cls: "" },
   ];
 
   return (
     <div className="page results">
       <Confetti active={score.footballIq >= 75} />
 
-      {/* ---------- The stub: score + rating ---------- */}
-      <section className="stub" aria-labelledby="results-heading">
-        <header className="stub-head">
-          <p className="label">דוח סיכום</p>
-          <span className="stub-rule" aria-hidden="true" />
-          <p className="label stub-meta">
-            {quiz.questions.length} שאלות · {formatDuration(durationSeconds)}
-          </p>
-        </header>
-
-        <h1 id="results-heading" className="sr-only">
-          התוצאות שלכם: {score.correct} מתוך {score.total} נכונות, ציון Football IQ {score.footballIq}
-        </h1>
-
-        <IqMeter value={score.footballIq} label={score.rank} />
-
-        {/* Forced LTR: a score is read "2/10" in every language, and bidi would
-            otherwise render the pair as "10/2" inside this RTL page. */}
-        <p className="stub-score figures" dir="ltr" aria-hidden="true">
-          <span className="stub-score-correct">{score.correct}</span>
-          <span className="stub-score-slash">/</span>
-          <span className="stub-score-total">{score.total}</span>
+      <div className="res-top a-pop">
+        <ScoreRing value={score.footballIq} label={score.rank} />
+        <p className="res-rank">{score.rank}</p>
+        <p className="res-score num" dir="ltr">
+          {score.correct}<span className="faint">/{score.total}</span>
         </p>
+        <div className="res-meta">
+          <span className="tag">
+            <Icon name="clock" size={12} /> {mmss(durationSeconds)}
+          </span>
+          {score.bestStreak >= 2 && (
+            <span className="tag tag-amber">
+              <FlameMark size={11} /> {score.bestStreak} ברצף
+            </span>
+          )}
+        </div>
+      </div>
 
-        {score.bestStreak >= 2 && (
-          <p className="stub-streak">
-            <FlameMark size={15} />
-            הרצף הארוך שלכם: <strong className="figures">{score.bestStreak}</strong>
-          </p>
-        )}
-
-        {/* Perforated tear line, then the tally — a ticket you rip in half. */}
-        <div className="perf" aria-hidden="true" />
-
-        <dl className="tally">
-          {tally.map((cell) => (
-            <div className="tally-cell" key={cell.label}>
-              <dt className={`tally-value figures tone-${cell.tone}`}>{cell.value}</dt>
-              <dd className="tally-label label">{cell.label}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
-
-      {/* ---------- Category breakdown ---------- */}
-      {categoryBreakdown.length > 0 && (
-        <section className="results-block" aria-labelledby="breakdown-title">
-          <div className="section-head">
-            <span className="section-index">01</span>
-            <h2 id="breakdown-title" className="section-title">
-              פילוח לפי קטגוריה
-            </h2>
+      <dl className="res-stats a-stagger">
+        {stats.map((stat, i) => (
+          <div className="res-stat" key={stat.label} style={{ "--i": i } as React.CSSProperties}>
+            <dt className={`res-stat-value num ${stat.cls}`}>{stat.value}</dt>
+            <dd className="res-stat-label">{stat.label}</dd>
           </div>
+        ))}
+      </dl>
 
-          <table className="breakdown">
-            <thead className="sr-only">
-              <tr>
-                <th scope="col">קטגוריה</th>
-                <th scope="col">נכונות מתוך סך השאלות</th>
-              </tr>
-            </thead>
-            <tbody>
-              {categoryBreakdown.map(([cat, stats], i) => {
-                const pct = Math.round((stats.correct / stats.total) * 100);
-                return (
-                  <tr key={cat} className="breakdown-row">
-                    <th scope="row" className="breakdown-name">
-                      {CATEGORY_LABELS[cat] ?? cat}
-                    </th>
-                    <td className="breakdown-meter">
-                      {/* A ruled bar, not a rounded pill — it shares the
-                          scoreboard's language. */}
-                      <span className="meter" aria-hidden="true">
-                        <span
-                          className="meter-fill"
-                          style={{ width: `${pct}%`, animationDelay: `${i * 70}ms` }}
-                        />
-                      </span>
-                      <span className="breakdown-count figures">
-                        {stats.correct}/{stats.total}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+      {breakdown.length > 0 && (
+        <section className="res-cats" aria-label="פילוח לפי קטגוריה">
+          {breakdown.map(([cat, s], i) => {
+            const pct = Math.round((s.correct / s.total) * 100);
+            return (
+              <div className="res-cat" key={cat}>
+                <span className="res-cat-name">{CATEGORY_LABELS[cat] ?? cat}</span>
+                <span className="bar res-cat-bar" aria-hidden="true">
+                  <span
+                    className="bar-fill"
+                    style={{ width: `${pct}%`, transitionDelay: `${i * 60}ms` }}
+                  />
+                </span>
+                <span className="res-cat-count num">
+                  {s.correct}/{s.total}
+                </span>
+              </div>
+            );
+          })}
         </section>
       )}
 
-      {/* ---------- Actions ----------
-          Deliberately not scroll-revealed: these are the only way out of this
-          screen, and gating them behind an IntersectionObserver would leave a
-          player stranded if it never fires. */}
-      <div className="results-actions">
-        <button className="btn btn-ink btn-block" disabled={replaying} onClick={handleReplay}>
-          <Icon name="replay" size={18} />
+      <div className="res-actions">
+        <button className="btn btn-primary btn-block" disabled={replaying} onClick={handleReplay}>
+          <Icon name="replay" size={17} />
           {replaying ? "טוען…" : "סבב נוסף"}
         </button>
-        <button className="btn btn-spot btn-block" disabled={sharing} onClick={handleShare}>
-          <Icon name="share" size={18} />
-          {sharing ? "יוצר קישור…" : "אתגרו חברים"}
-        </button>
-        <button className="btn btn-outline btn-block" onClick={() => navigate("/build")}>
-          <Icon name="sliders" size={18} />
-          בנו מבחן חדש
-        </button>
-        <p className="results-share-msg" role="status">
+        <div className="res-actions-row">
+          <button className="btn btn-ghost" disabled={sharing} onClick={handleShare}>
+            <Icon name="share" size={16} />
+            {sharing ? "יוצר…" : "אתגרו חברים"}
+          </button>
+          <button className="btn btn-ghost" onClick={() => navigate("/build")}>
+            <Icon name="sliders" size={16} />
+            חידון חדש
+          </button>
+        </div>
+        <p className="res-msg" role="status">
           {shareMessage ?? ""}
         </p>
       </div>

@@ -1,81 +1,58 @@
-/* ---------- Banner ---------- */
-.pv-banner {
+/* ---------- Bottom bar ---------- */
+.pv-bar {
   position: fixed;
   inset-inline: 0;
   inset-block-end: 0;
   z-index: 90;
-  background: var(--card);
-  border-block-start: var(--border-w) solid var(--ink);
-  animation: rise var(--t-mid) var(--ease) both;
+  background: var(--surface);
+  border-block-start: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-3);
 }
 
-.pv-banner-inner {
-  max-width: var(--page-max);
-  margin-inline: auto;
-  padding: 16px var(--gutter);
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: 16px;
-}
-
-.pv-banner-mark {
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border: var(--border-w) solid var(--ink);
-  border-radius: var(--r-xs);
-  color: var(--spot);
-}
-
-.pv-banner-title {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 17px;
-}
-
-.pv-banner-text {
-  font-size: 13.5px;
-  line-height: 1.55;
-  color: var(--ink-2);
-  max-width: 62ch;
-}
-
-.pv-banner-actions {
+.pv-bar-inner {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding-block: 11px;
+}
+
+.pv-bar-text {
+  font-size: 0.83rem;
+  line-height: 1.5;
+  color: var(--text-2);
+  max-width: 60ch;
+}
+
+.pv-bar-actions {
+  display: flex;
+  gap: 7px;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  flex: none;
 }
 
 .pv-link {
-  color: var(--spot);
+  color: var(--green);
   font-weight: 700;
-  text-decoration: underline;
-  text-underline-offset: 2px;
 }
 
-@media (max-width: 760px) {
-  .pv-banner-inner {
-    grid-template-columns: auto 1fr;
-    gap: 12px;
+.pv-link:hover { text-decoration: underline; }
+
+@media (max-width: 700px) {
+  .pv-bar-inner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
   }
-  .pv-banner-actions {
-    grid-column: 1 / -1;
-    justify-content: stretch;
-  }
-  .pv-banner-actions .btn {
-    flex: 1;
-  }
+  .pv-bar-actions .btn { flex: 1; }
 }
 
-/* ---------- Dialog ---------- */
+/* ---------- Settings dialog ---------- */
 .pv-scrim {
   position: fixed;
   inset: 0;
-  z-index: 120;
-  background: color-mix(in srgb, var(--ink) 55%, transparent);
+  z-index: 200;
+  background: rgba(4, 8, 14, 0.7);
   display: grid;
   place-items: center;
   padding: var(--gutter);
@@ -83,172 +60,79 @@
 }
 
 .pv-panel {
-  position: relative;
   width: 100%;
-  max-width: 560px;
-  padding: 22px;
-  box-shadow: var(--lift-2);
-  animation: rise var(--t-mid) var(--ease) both;
+  max-width: 460px;
+  padding: 18px;
+  background: var(--surface-2);
+  box-shadow: var(--shadow-3);
   max-height: calc(100dvh - 2 * var(--gutter));
   overflow-y: auto;
 }
 
-.pv-panel-head {
-  padding-inline-end: 44px;
-  margin-bottom: 14px;
+.pv-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
 }
 
 .pv-panel-title {
-  font-size: clamp(24px, 5vw, 31px);
-  margin-block-start: 2px;
-}
-
-.pv-close {
-  position: absolute;
-  inset-block-start: 18px;
-  inset-inline-end: 18px;
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  background: transparent;
-  border: var(--border-w-thin) solid var(--rule-soft);
-  border-radius: var(--r-xs);
-  cursor: pointer;
-  transition: border-color var(--t-fast) var(--ease), background-color var(--t-fast) var(--ease);
-}
-
-.pv-close:hover {
-  border-color: var(--ink);
-  background: var(--card-2);
-}
-
-.pv-rows {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding-block: 6px;
+  font-size: 1.15rem;
+  font-weight: 700;
 }
 
 .pv-row {
-  padding-block: 14px;
-}
-
-.pv-row + .pv-row {
-  border-block-start: var(--border-w-thin) solid var(--rule-soft);
-}
-
-.pv-row-head {
   display: flex;
   align-items: center;
-  gap: 11px;
+  justify-content: space-between;
+  gap: 14px;
+  padding-block: 12px;
+  border-block-start: 1px solid var(--line);
   cursor: pointer;
+}
+
+.pv-row-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
 }
 
 .pv-row-title {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 17px;
-}
-
-/* A drawn switch rather than the OS checkbox, so it matches the ink language.
-   It is still a real <input type=checkbox>, so keyboard and AT behaviour are
-   the platform's. */
-.pv-switch {
-  appearance: none;
-  flex: none;
-  position: relative;
-  width: 44px;
-  height: 24px;
-  border: var(--border-w) solid var(--ink);
-  border-radius: var(--r-chip);
-  background: var(--paper-sunk);
-  cursor: pointer;
-  transition: background-color var(--t-fast) var(--ease);
-}
-
-.pv-switch::after {
-  content: "";
-  position: absolute;
-  inset-block-start: 2px;
-  inset-inline-start: 2px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--ink);
-  transition: transform var(--t-mid) var(--ease);
-}
-
-.pv-switch:checked {
-  background: var(--pitch);
-}
-
-.pv-switch:checked::after {
-  background: #fff;
-  /* RTL-safe: translate along the inline axis. */
-  transform: translateX(-20px);
-}
-
-:root:dir(ltr) .pv-switch:checked::after {
-  transform: translateX(20px);
-}
-
-.pv-switch:disabled {
-  cursor: default;
-  opacity: 0.75;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 0.93rem;
 }
 
 .pv-row-note {
-  font-size: 13.5px;
-  line-height: 1.6;
-  color: var(--ink-2);
-  margin-block-start: 7px;
-  padding-inline-start: 55px;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--text-3);
 }
 
-.pv-row-keys {
-  display: block;
-  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-  font-size: 11.5px;
-  color: var(--ink-3);
-  margin-block-start: 5px;
-  padding-inline-start: 55px;
-  direction: ltr;
-  text-align: start;
-  word-break: break-all;
+.pv-note {
+  font-size: 0.78rem;
+  color: var(--text-3);
+  padding-block: 12px;
+  border-block-start: 1px solid var(--line);
 }
 
-.pv-fineprint {
-  font-size: 12.5px;
-  line-height: 1.65;
-  color: var(--ink-3);
-  padding-block: 14px;
-}
-
-.pv-panel-foot {
+.pv-foot {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
   flex-wrap: wrap;
-  justify-content: space-between;
-  border-block-start: var(--border-w) solid var(--ink);
-  padding-block-start: 16px;
 }
 
 .pv-wiped {
-  font-size: 13px;
+  font-size: 0.8rem;
   font-weight: 700;
-  color: var(--pitch);
+  color: var(--green);
   min-height: 1.2em;
   margin-block-start: 8px;
-}
-
-@media (max-width: 520px) {
-  .pv-row-note,
-  .pv-row-keys {
-    padding-inline-start: 0;
-  }
-  .pv-panel-foot .btn {
-    width: 100%;
-  }
 }

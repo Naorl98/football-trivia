@@ -1,42 +1,39 @@
 import { Link, useLocation } from "react-router-dom";
-import { SoundToggle } from "./SoundToggle";
 import { BallMark } from "./BallMark";
+import { SoundToggle } from "./SoundToggle";
+import { A11yMenu } from "./A11yMenu";
 import "./Header.css";
 
 /**
- * The programme masthead.
- *
- * Set like the top of a printed matchday programme rather than a web app bar:
- * a drawn wordmark, an issue line carrying the edition metadata, and a heavy
- * ink rule closing it off. No blur, no sticky translucency.
+ * A thin, quiet bar: the mark, and the two controls a player might reach for
+ * mid-game. Everything else lives on the pages themselves — a trivia game does
+ * not need navigation.
  */
 export function Header() {
   const { pathname } = useLocation();
-  const onDaily = pathname === "/daily";
+  const playing = pathname === "/play";
 
   return (
-    <header className="masthead">
-      <div className="page masthead-inner">
-        <Link to="/" className="wordmark" aria-label="Football IQ — לעמוד הבית">
-          <BallMark size={30} />
-          <span className="wordmark-text">
-            <span className="wordmark-main">FOOTBALL</span>
-            <span className="wordmark-iq">IQ</span>
+    <header className="topbar">
+      <div className="page-wide page topbar-inner">
+        <Link to="/" className="mark" aria-label="Football IQ — לעמוד הבית">
+          <BallMark size={26} />
+          <span className="mark-text">
+            Football <span className="green">IQ</span>
           </span>
         </Link>
 
-        <p className="masthead-issue label" aria-hidden="true">
-          חידון עברית · מהדורה ראשונה
-        </p>
-
-        <nav className="masthead-nav" aria-label="ניווט ראשי">
+        <div className="row g2">
+          {/* Hidden mid-quiz: the daily link is a trap door out of a run. */}
+          {!playing && (
+            <Link to="/daily" className="topbar-link">
+              אתגר יומי
+            </Link>
+          )}
           <SoundToggle />
-          <Link to="/daily" className={`masthead-link ${onDaily ? "is-current" : ""}`} aria-current={onDaily ? "page" : undefined}>
-            אתגר יומי
-          </Link>
-        </nav>
+          <A11yMenu />
+        </div>
       </div>
-      <hr className="rule" />
     </header>
   );
 }

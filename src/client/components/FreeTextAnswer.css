@@ -1,171 +1,135 @@
 .ft {
   display: flex;
   flex-direction: column;
-  gap: 13px;
-}
-
-/* ---------- Hints: stacked marginalia ---------- */
-.ft-hints {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.ft-hint {
-  display: flex;
-  align-items: baseline;
   gap: 11px;
-  padding: 10px 13px;
-  background: var(--card-2);
-  border-inline-start: 3px solid var(--ink-4);
-  border-radius: 0 var(--r-xs) var(--r-xs) 0;
-  font-size: 14.5px;
-  line-height: 1.5;
 }
 
-.ft-hint-index {
-  flex: none;
-  color: var(--spot);
-  font-size: 10px;
-}
-
-.ft-hint-text {
-  color: var(--ink-2);
-}
-
-/* ---------- Input ---------- */
-.ft-form {
-  display: flex;
-  gap: 9px;
-}
-
-/* An underlined field rather than a rounded box: it reads as a line on a form
-   you fill in, which is exactly what it is. */
-.ft-input {
-  flex: 1;
-  min-width: 0;
-  background: var(--card);
-  border: var(--border-w) solid var(--ink);
-  border-radius: var(--r-xs);
-  box-shadow: inset 0 -3px 0 var(--spot);
-  padding: 13px 15px;
-  font-size: 17px;
-  font-weight: 700;
-  transition: box-shadow var(--t-fast) var(--ease);
-}
-
-.ft-input::placeholder {
-  color: var(--ink-4);
-  font-weight: 400;
-}
-
-.ft-input:focus {
-  outline: none;
-  box-shadow: inset 0 -3px 0 var(--spot), 0 0 0 3px color-mix(in srgb, var(--spot) 35%, transparent);
-}
-
-.ft-submit {
-  flex: none;
-}
-
-.ft-shake {
-  animation: ft-shake 380ms var(--ease) both;
-}
-
-@keyframes ft-shake {
-  0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-7px); }
-  50% { transform: translateX(6px); }
-  80% { transform: translateX(-3px); }
-}
-
-.ft-tolerance {
-  font-size: 12.5px;
-  color: var(--ink-4);
-  line-height: 1.5;
-}
-
-.ft-actions {
-  display: flex;
-  gap: 9px;
-  flex-wrap: wrap;
-}
-
-/* ---------- Resolved ---------- */
-.ft-result {
-  border: var(--border-w) solid var(--ink);
-  border-radius: var(--r-xs);
-  padding: 15px 17px;
+/* ---------- Hints ---------- */
+.ft-hints {
   display: flex;
   flex-direction: column;
   gap: 7px;
 }
 
-.ft-result-head {
+.ft-hint {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  font-family: var(--font-display);
-  font-weight: 900;
-  font-size: 21px;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 9px 12px;
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  border-inline-start: 3px solid var(--amber);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--text-2);
 }
 
-.ft-result-icon {
+.ft-hint svg { color: var(--amber); margin-block-start: 2px; flex: none; }
+
+/* ---------- Input ---------- */
+.ft-form {
+  display: flex;
+  gap: 8px;
+}
+
+.ft-form .input { flex: 1; }
+.ft-form .btn { flex: none; }
+
+.ft-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* ============================================================
+   VAR check
+   ============================================================ */
+.var-card {
+  position: relative;
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 30px;
-  flex: none;
-  border: var(--border-w) solid currentColor;
-  border-radius: var(--r-xs);
+  min-height: 64px;
+  border: 1px solid var(--blue);
+  border-radius: var(--r-md);
+  background: var(--blue-wash);
+  overflow: hidden;
+  transition: background-color var(--t-3) var(--ease), border-color var(--t-3) var(--ease);
 }
 
-.ft-result.is-correct {
-  background: var(--pitch-wash);
-  border-color: var(--pitch);
-  box-shadow: 4px 4px 0 var(--pitch);
-}
-.ft-result.is-correct .ft-result-head { color: var(--pitch); }
-
-.ft-result.is-wrong {
-  background: var(--spot-wash);
-  border-color: var(--spot);
-  box-shadow: 4px 4px 0 var(--spot);
-}
-.ft-result.is-wrong .ft-result-head { color: var(--spot); }
-
-.ft-result.is-revealed {
-  background: var(--card-2);
-  border-color: var(--ink);
-  box-shadow: 4px 4px 0 var(--ink);
-}
-.ft-result.is-revealed .ft-result-head { color: var(--ink-2); }
-
-.ft-typed,
-.ft-canonical {
-  font-size: 15px;
-  line-height: 1.5;
-  color: var(--ink-2);
+.var-card.is-approved {
+  border-color: var(--green);
+  background: var(--green-wash);
 }
 
-.ft-typed .label,
-.ft-canonical .label {
-  display: inline-block;
-  margin-inline-end: 6px;
+/* The scan line sweeping the monitor. */
+.var-scan {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 42%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+  animation: var-scan 780ms var(--ease) infinite;
 }
 
-.ft-canonical strong {
-  font-family: var(--font-display);
+.var-card.is-approved .var-scan { display: none; }
+
+.var-text {
+  position: relative;
+  font-family: var(--font-head);
   font-weight: 800;
-  font-size: 18px;
-  color: var(--ink);
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
+  color: var(--blue);
 }
 
-@media (max-width: 480px) {
-  .ft-form {
-    flex-direction: column;
-  }
-  .ft-submit {
-    width: 100%;
-  }
+.var-card.is-approved .var-text { color: var(--green); }
+
+.var-stamp { animation: var-stamp 280ms var(--pop) both; }
+
+/* ============================================================
+   Result
+   ============================================================ */
+.ft-out {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 14px 16px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+}
+
+.ft-out-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 1.1rem;
+}
+
+.ft-out.is-correct { border-color: var(--green); background: var(--green-wash); }
+.ft-out.is-correct .ft-out-head { color: var(--green); }
+
+.ft-out.is-wrong { border-color: var(--red); background: var(--red-wash); }
+.ft-out.is-wrong .ft-out-head { color: var(--red); }
+
+.ft-out.is-revealed { border-color: var(--amber); background: var(--amber-wash); }
+.ft-out.is-revealed .ft-out-head { color: var(--amber); }
+
+.ft-out-line {
+  font-size: 0.9rem;
+  color: var(--text-2);
+}
+
+.ft-out-line b {
+  font-family: var(--font-head);
+  font-weight: 800;
+  color: var(--text);
+}
+
+@media (max-width: 460px) {
+  .ft-form { flex-direction: column; }
+  .ft-form .btn { width: 100%; }
 }

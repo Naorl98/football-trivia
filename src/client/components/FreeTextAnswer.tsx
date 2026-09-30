@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Question } from "../../shared/types";
 import { matchAnswer } from "../../shared/answerMatching";
 import { sound } from "../lib/sound";
+import { motionAllowed } from "../lib/a11y";
 import { Icon } from "./Icon";
 import "./FreeTextAnswer.css";
 
@@ -18,26 +19,27 @@ interface Props {
   resolved: FreeTextResult | null;
 }
 
+/** How long the VAR card is held before the answer resolves. */
+const VAR_MS = 850;
+
 export function FreeTextAnswer({ question, onResolved, resolved }: Props) {
   const [value, setValue] = useState("");
   const [hintsShown, setHintsShown] = useState(0);
   const [confirmingReveal, setConfirmingReveal] = useState(false);
   const [shake, setShake] = useState(false);
+  const [varCheck, setVarCheck] = useState<"checking" | "approved" | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Reset for each new question, and put the caret straight in the field on
-  // desktop. Mobile keyboards are left to the player so the viewport does not
-  // jump on every question.
   useEffect(() => {
     setValue("");
     setHintsShown(0);
     setConfirmingReveal(false);
-    const isCoarsePointer = window.matchMedia?.("(pointer: coarse)").matches;
-    if (!isCoarsePointer) inputRef.current?.focus();
+    setVarCheck(null);
+    if (!window.matchMedia?.("(pointer: coarse)").matches) inputRef.current?.focus();
   }, [question.id]);
 
   function submit() {
-    if (resolved) return;
+    if (resolved || varCheck) return;
     const typed = value.trim();
     if (!typed) {
       setShake(true);
@@ -45,10 +47,28 @@ export function FreeTextAnswer({ question, onResolved, resolved }: Props) {
       inputRef.current?.focus();
       return;
     }
+
     const result = matchAnswer(typed, {
       canonical: question.canonicalAnswer ?? "",
       aliases: question.aliases,
     });
+
+    // A spelling that only got through on tolerance gets a VAR check: it tells
+    // the player their answer was borderline and was given, without ever
+    // showing them an edit distance. Exact and alias hits skip it — there is
+    // nothing to review.
+    const borderline = result.correct && (result.kind === "fuzzy" || result.kind === "token");
+
+    if (borderline && motionAllowed()) {
+      setVarCheck("checking");
+      window.setTimeout(() => setVarCheck("approved"), VAR_MS * 0.62);
+      window.setTimeout(() => {
+        sound.play("correct");
+        onResolved({ correct: true, revealed: false, typed, hintsUsed: hintsShown });
+      }, VAR_MS);
+      return;
+    }
+
     sound.play(result.correct ? "correct" : "wrong");
     onResolved({ correct: result.correct, revealed: false, typed, hintsUsed: hintsShown });
   }
@@ -76,18 +96,29 @@ export function FreeTextAnswer({ question, onResolved, resolved }: Props) {
       {hintsShown > 0 && (
         <ol className="ft-hints">
           {question.hints.slice(0, hintsShown).map((hint, i) => (
-            <li key={i} className="ft-hint anim-rise">
-              <span className="ft-hint-index label">רמז {i + 1}</span>
-              <span className="ft-hint-text">{hint}</span>
+            <li key={i} className="ft-hint a-fade-up">
+              <Icon name="bulb" size={14} />
+              <span>{hint}</span>
             </li>
           ))}
         </ol>
       )}
 
-      {!resolved && (
+      {varCheck && (
+        <div className={`var-card ${varCheck === "approved" ? "is-approved" : ""}`} role="status">
+          <span className="var-scan" aria-hidden="true" />
+          {varCheck === "checking" ? (
+            <span className="var-text">בדיקת VAR…</span>
+          ) : (
+            <span className="var-text var-stamp">מאושר!</span>
+          )}
+        </div>
+      )}
+
+      {!resolved && !varCheck && (
         <>
           <form
-            className={`ft-form ${shake ? "ft-shake" : ""}`}
+            className={`ft-form ${shake ? "a-wrong" : ""}`}
             onSubmit={(e) => {
               e.preventDefault();
               submit();
@@ -99,7 +130,7 @@ export function FreeTextAnswer({ question, onResolved, resolved }: Props) {
             <input
               id="ft-input"
               ref={inputRef}
-              className="ft-input"
+              className="input"
               type="text"
               value={value}
               onChange={(e) => setValue(e.target.value)}
@@ -111,26 +142,24 @@ export function FreeTextAnswer({ question, onResolved, resolved }: Props) {
               enterKeyHint="send"
               dir="auto"
             />
-            <button className="btn btn-ink ft-submit" type="submit">
+            <button className="btn btn-primary" type="submit">
               שליחה
             </button>
           </form>
 
-          <p className="ft-tolerance">עברית או אנגלית, עם כינויים — ושגיאות הקלדה סבירות מתקבלות.</p>
-
           <div className="ft-actions">
             <button type="button" className="btn btn-quiet btn-sm" onClick={showNextHint} disabled={hintsLeft === 0}>
-              <Icon name="bulb" size={16} />
-              {hintsLeft === 0 ? "אין רמזים נוספים" : `רמז (${hintsLeft})`}
+              <Icon name="bulb" size={15} />
+              {hintsLeft === 0 ? "אין רמזים" : `רמז (${hintsLeft})`}
             </button>
             <button
               type="button"
-              className={`btn btn-sm ${confirmingReveal ? "btn-spot" : "btn-quiet"}`}
+              className={`btn btn-sm ${confirmingReveal ? "btn-amber" : "btn-quiet"}`}
               onClick={reveal}
               onBlur={() => setConfirmingReveal(false)}
             >
-              <Icon name="eye" size={16} />
-              {confirmingReveal ? "בטוחים? חשוף" : "חשוף תשובה"}
+              <Icon name="eye" size={15} />
+              {confirmingReveal ? "בטוחים?" : "גלה תשובה"}
             </button>
           </div>
         </>
@@ -138,27 +167,23 @@ export function FreeTextAnswer({ question, onResolved, resolved }: Props) {
 
       {resolved && (
         <div
-          className={`ft-result anim-stamp ${
+          className={`ft-out a-pop ${
             resolved.correct ? "is-correct" : resolved.revealed ? "is-revealed" : "is-wrong"
           }`}
         >
-          <p className="ft-result-head">
-            <span className="ft-result-icon">
-              <Icon
-                name={resolved.correct ? "check" : resolved.revealed ? "eye" : "cross"}
-                size={20}
-                strokeWidth={2.4}
-              />
-            </span>
+          <p className="ft-out-head">
+            <Icon
+              name={resolved.correct ? "check" : resolved.revealed ? "eye" : "cross"}
+              size={19}
+              strokeWidth={2.6}
+            />
             {resolved.correct ? "נכון" : resolved.revealed ? "נחשף" : "לא נכון"}
           </p>
           {!resolved.correct && resolved.typed && (
-            <p className="ft-typed">
-              <span className="label">כתבתם</span> {resolved.typed}
-            </p>
+            <p className="ft-out-line faint">כתבתם: {resolved.typed}</p>
           )}
-          <p className="ft-canonical">
-            <span className="label">התשובה</span> <strong>{question.canonicalAnswer}</strong>
+          <p className="ft-out-line">
+            התשובה: <b>{question.canonicalAnswer}</b>
           </p>
         </div>
       )}

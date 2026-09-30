@@ -1,30 +1,52 @@
-// Football IQ sound design.
+// Football IQ audio manager.
 //
-// Sounds are synthesised with the Web Audio API rather than shipped as audio
-// files. That keeps the bundle at zero extra bytes, means nothing to preload or
-// cache, and lets every cue be tuned in code. The palette is deliberately
-// broadcast-like — short filtered tones and a crowd-ish noise swell — rather
-// than arcade blips.
+// Sounds are synthesised with the Web Audio API rather than shipped as files:
+// zero extra bytes, nothing to preload, and every cue can be tuned in code.
+// The palette is broadcast-like — a referee's whistle, a net ripple, a crowd
+// swell — not arcade blips or casino chimes.
 //
-// Rules this module guarantees:
-//   * nothing is created until the player's first gesture (autoplay policy)
-//   * the preference persists in localStorage ONLY with "preferences" consent;
-//     without it the toggle still works, it just lives for the session
-//   * any audio failure is swallowed — sound must never break gameplay
+// WHAT WAS WRONG BEFORE
+//
+// `unlock()` bailed out on `if (this.unlocked) return`, and set `unlocked` even
+// when the context came back suspended. Browsers create a SUSPENDED context
+// whenever construction happens outside a user gesture — which is exactly what
+// happened, because the first `play()` often ran after an `await`, by which
+// point the gesture had expired. From then on `resume()` was never retried and
+// the app was silent for the rest of the session, with no error anywhere.
+//
+// The fix has three parts:
+//   1. creating the context and resuming it are separate steps; resume is
+//      retried on every play and on every user gesture until it sticks
+//   2. real gesture listeners arm the context on the first interaction,
+//      whatever it is, rather than relying on a play() call landing inside one
+//   3. the context is created lazily but resumed eagerly, so Safari and mobile
+//      Chrome both get a running context from the first tap
+//
+// Overlap is bounded too: a compressor sits before the destination, voices are
+// capped, and repeat plays of the same cue inside a short window are dropped —
+// rapid clicking cannot turn into noise.
 
-import { privacy } from "./privacy";
+import { privacy } from "./privacy.ts";
 
 export type SoundName =
   | "click"
+  | "select"
+  | "kickoff"
   | "correct"
   | "wrong"
   | "next"
   | "streak"
-  | "complete"
   | "reveal"
-  | "hint";
+  | "hint"
+  | "complete";
 
 const STORAGE_KEY = "fiq_sound_enabled";
+
+/** Minimum gap between two plays of the same cue, in ms. */
+const REPEAT_GUARD_MS = 70;
+
+/** Hard ceiling on simultaneously scheduled voices. */
+const MAX_VOICES = 14;
 
 function readPreference(): boolean {
   if (!privacy.allows("preferences")) return true;
@@ -36,12 +58,19 @@ function readPreference(): boolean {
   }
 }
 
-class SoundEngine {
+type Ctor = typeof AudioContext;
+
+class AudioManager {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
   private enabled = readPreference();
-  private unlocked = false;
+  private volume = 0.3;
   private listeners = new Set<(enabled: boolean) => void>();
+  private lastPlayedAt = new Map<SoundName, number>();
+  private voices = 0;
+  private gestureBound = false;
+
+  // ---------------------------------------------------------------- state
 
   isEnabled(): boolean {
     return this.enabled;
@@ -54,38 +83,117 @@ class SoundEngine {
 
   setEnabled(enabled: boolean) {
     this.enabled = enabled;
-    // No "preferences" consent means the choice is honoured for this session
-    // but never written to disk.
     if (privacy.allows("preferences")) {
       try {
         localStorage.setItem(STORAGE_KEY, String(enabled));
       } catch {
-        // Private mode / blocked storage — the session still honours the toggle.
+        // Private mode — the session still honours the toggle.
       }
     }
     this.listeners.forEach((l) => l(enabled));
-    if (enabled) this.unlock();
+    if (enabled) this.arm();
   }
 
   toggle() {
     this.setEnabled(!this.enabled);
   }
 
-  /** Called on the first real user gesture; browsers require this. */
-  unlock() {
-    if (this.unlocked) return;
-    try {
-      const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-      if (!Ctor) return;
-      this.ctx = new Ctor();
-      this.master = this.ctx.createGain();
-      this.master.gain.value = 0.28;
-      this.master.connect(this.ctx.destination);
-      this.unlocked = true;
-    } catch {
-      this.ctx = null;
+  /** 0..1. Applied immediately if the context is already up. */
+  setVolume(value: number) {
+    this.volume = Math.min(1, Math.max(0, value));
+    if (this.master && this.ctx) {
+      this.master.gain.setTargetAtTime(this.volume, this.ctx.currentTime, 0.02);
     }
-    void this.ctx?.resume().catch(() => {});
+  }
+
+  /** Diagnostics — used by the browser QA pass to prove audio is really live. */
+  state(): { created: boolean; contextState: string | null; enabled: boolean; voices: number } {
+    return {
+      created: this.ctx !== null,
+      contextState: this.ctx?.state ?? null,
+      enabled: this.enabled,
+      voices: this.voices,
+    };
+  }
+
+  // ------------------------------------------------------------- lifecycle
+
+  /**
+   * Attaches one-time gesture listeners. Safe to call repeatedly and before
+   * the user has done anything.
+   */
+  bindGestures() {
+    if (this.gestureBound || typeof window === "undefined") return;
+    this.gestureBound = true;
+    const arm = () => this.arm();
+    // `pointerdown` covers mouse, pen and touch; `touchstart` is the belt and
+    // braces for older iOS; `keydown` covers keyboard-only players.
+    window.addEventListener("pointerdown", arm, { passive: true });
+    window.addEventListener("touchstart", arm, { passive: true });
+    window.addEventListener("keydown", arm);
+  }
+
+  /**
+   * Creates the context if needed and resumes it if it is suspended.
+   *
+   * Both halves run on every call. That is the whole point: a context created
+   * outside a gesture comes back suspended, and the only way to revive it is to
+   * call resume() from inside a later one.
+   *
+   * `allowCreate` is false for calls that are not user-initiated. Constructing
+   * a context outside a gesture yields a suspended one AND logs a console
+   * warning in Chrome, so cues fired from an effect (the kickoff whistle on
+   * mount) wait for the context the first gesture will make instead.
+   */
+  arm(allowCreate = true): void {
+    if (typeof window === "undefined") return;
+
+    if (!this.ctx) {
+      if (!allowCreate) return;
+      try {
+        const Ctor: Ctor | undefined =
+          window.AudioContext ??
+          (window as unknown as { webkitAudioContext?: Ctor }).webkitAudioContext;
+        if (!Ctor) return;
+
+        const ctx = new Ctor();
+        const master = ctx.createGain();
+        master.gain.value = this.volume;
+
+        // Keeps overlapping cues from clipping, which is what makes layered
+        // synth audio sound cheap.
+        const compressor = ctx.createDynamicsCompressor();
+        compressor.threshold.value = -14;
+        compressor.knee.value = 22;
+        compressor.ratio.value = 9;
+        compressor.attack.value = 0.003;
+        compressor.release.value = 0.2;
+
+        master.connect(compressor);
+        compressor.connect(ctx.destination);
+
+        this.ctx = ctx;
+        this.master = master;
+      } catch {
+        this.ctx = null;
+        this.master = null;
+        return;
+      }
+    }
+
+    if (this.ctx.state !== "running") {
+      void this.ctx.resume().catch(() => {});
+    }
+  }
+
+  // ------------------------------------------------------------ primitives
+
+  private track(stopAt: number) {
+    this.voices++;
+    const ms = Math.max(0, (stopAt - (this.ctx?.currentTime ?? 0)) * 1000) + 60;
+    window.setTimeout(() => {
+      this.voices = Math.max(0, this.voices - 1);
+    }, ms);
   }
 
   private tone(opts: {
@@ -96,7 +204,7 @@ class SoundEngine {
     gain?: number;
     sweepTo?: number;
   }) {
-    if (!this.ctx || !this.master) return;
+    if (!this.ctx || !this.master || this.voices >= MAX_VOICES) return;
     const { freq, type = "sine", start = 0, duration = 0.18, gain = 0.6, sweepTo } = opts;
     const t0 = this.ctx.currentTime + start;
 
@@ -106,7 +214,7 @@ class SoundEngine {
     osc.frequency.setValueAtTime(freq, t0);
     if (sweepTo) osc.frequency.exponentialRampToValueAtTime(Math.max(1, sweepTo), t0 + duration);
 
-    // Short attack, exponential release — reads as a soft mallet rather than a beep.
+    // Short attack, exponential release — a soft mallet rather than a beep.
     env.gain.setValueAtTime(0.0001, t0);
     env.gain.exponentialRampToValueAtTime(gain, t0 + 0.012);
     env.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
@@ -115,14 +223,22 @@ class SoundEngine {
     env.connect(this.master);
     osc.start(t0);
     osc.stop(t0 + duration + 0.02);
+    this.track(t0 + duration);
   }
 
-  /** Filtered noise burst — stands in for a crowd swell or a net ripple. */
-  private noise(opts: { start?: number; duration?: number; gain?: number; freq?: number; q?: number }) {
-    if (!this.ctx || !this.master) return;
-    const { start = 0, duration = 0.5, gain = 0.25, freq = 900, q = 0.9 } = opts;
+  /** Filtered noise — a crowd swell, a net ripple, or the air in a whistle. */
+  private noise(opts: {
+    start?: number;
+    duration?: number;
+    gain?: number;
+    freq?: number;
+    q?: number;
+    type?: BiquadFilterType;
+  }) {
+    if (!this.ctx || !this.master || this.voices >= MAX_VOICES) return;
+    const { start = 0, duration = 0.5, gain = 0.25, freq = 900, q = 0.9, type = "bandpass" } = opts;
     const t0 = this.ctx.currentTime + start;
-    const frames = Math.floor(this.ctx.sampleRate * duration);
+    const frames = Math.max(1, Math.floor(this.ctx.sampleRate * duration));
     const buffer = this.ctx.createBuffer(1, frames, this.ctx.sampleRate);
     const data = buffer.getChannelData(0);
     for (let i = 0; i < frames; i++) data[i] = Math.random() * 2 - 1;
@@ -131,13 +247,13 @@ class SoundEngine {
     src.buffer = buffer;
 
     const filter = this.ctx.createBiquadFilter();
-    filter.type = "bandpass";
+    filter.type = type;
     filter.frequency.setValueAtTime(freq, t0);
     filter.Q.value = q;
 
     const env = this.ctx.createGain();
     env.gain.setValueAtTime(0.0001, t0);
-    env.gain.exponentialRampToValueAtTime(gain, t0 + duration * 0.35);
+    env.gain.exponentialRampToValueAtTime(gain, t0 + duration * 0.3);
     env.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
 
     src.connect(filter);
@@ -145,51 +261,97 @@ class SoundEngine {
     env.connect(this.master);
     src.start(t0);
     src.stop(t0 + duration + 0.02);
+    this.track(t0 + duration);
   }
+
+  /**
+   * A referee's whistle: two detuned high tones warbling against each other,
+   * over a band of air. That beat between the tones is what makes a whistle
+   * sound like a whistle rather than a tone generator.
+   */
+  private whistle(opts: { start?: number; duration?: number; gain?: number } = {}) {
+    const { start = 0, duration = 0.34, gain = 0.3 } = opts;
+    this.tone({ freq: 2350, type: "sine", start, duration, gain });
+    this.tone({ freq: 2480, type: "sine", start, duration, gain: gain * 0.8 });
+    this.noise({ start, duration: duration * 0.9, gain: gain * 0.28, freq: 2400, q: 6 });
+  }
+
+  // ----------------------------------------------------------------- play
 
   play(name: SoundName) {
     if (!this.enabled) return;
-    this.unlock();
-    if (!this.ctx) return;
+
+    // Drop a repeat of the same cue fired within the guard window, so a burst
+    // of clicks is one sound rather than a pile-up.
+    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+    const last = this.lastPlayedAt.get(name) ?? -Infinity;
+    if (now - last < REPEAT_GUARD_MS) return;
+    this.lastPlayedAt.set(name, now);
+
+    // Never constructs a context: only a gesture may do that. If one already
+    // exists but has been suspended, this revives it.
+    this.arm(false);
+    if (!this.ctx || this.ctx.state !== "running") return;
+
     try {
       switch (name) {
         case "click":
-          this.tone({ freq: 520, type: "triangle", duration: 0.06, gain: 0.22 });
+          this.tone({ freq: 520, type: "triangle", duration: 0.055, gain: 0.2 });
           break;
+
+        case "select":
+          // A touch brighter than click, so choosing feels different from tapping.
+          this.tone({ freq: 660, type: "triangle", duration: 0.06, gain: 0.22 });
+          this.tone({ freq: 990, type: "sine", start: 0.04, duration: 0.07, gain: 0.12 });
+          break;
+
+        case "kickoff":
+          // Whistle, then the thud of the first touch.
+          this.whistle({ duration: 0.4, gain: 0.32 });
+          this.tone({ freq: 150, type: "sine", start: 0.4, duration: 0.16, gain: 0.5, sweepTo: 70 });
+          this.noise({ start: 0.4, duration: 0.26, gain: 0.14, freq: 320, q: 0.7 });
+          break;
+
         case "correct":
-          // Rising third + crowd swell.
-          this.tone({ freq: 523.25, type: "triangle", duration: 0.16, gain: 0.5 });
-          this.tone({ freq: 659.25, type: "triangle", start: 0.09, duration: 0.2, gain: 0.45 });
-          this.tone({ freq: 783.99, type: "sine", start: 0.17, duration: 0.3, gain: 0.35 });
-          this.noise({ start: 0.05, duration: 0.55, gain: 0.1, freq: 1400, q: 0.6 });
+          // Rising third, then the net taking the ball.
+          this.tone({ freq: 523.25, type: "triangle", duration: 0.15, gain: 0.46 });
+          this.tone({ freq: 659.25, type: "triangle", start: 0.085, duration: 0.19, gain: 0.42 });
+          this.tone({ freq: 783.99, type: "sine", start: 0.16, duration: 0.28, gain: 0.32 });
+          this.noise({ start: 0.05, duration: 0.5, gain: 0.09, freq: 1500, q: 0.6 });
           break;
+
         case "wrong":
-          // Soft, low, restrained — a miss should not feel punishing.
-          this.tone({ freq: 220, type: "sine", duration: 0.22, gain: 0.4, sweepTo: 150 });
-          this.tone({ freq: 164, type: "sine", start: 0.06, duration: 0.26, gain: 0.3 });
+          // Low, short, unpunishing — a miss, not a buzzer.
+          this.tone({ freq: 220, type: "sine", duration: 0.2, gain: 0.36, sweepTo: 150 });
+          this.tone({ freq: 164, type: "sine", start: 0.055, duration: 0.24, gain: 0.26 });
           break;
+
         case "next":
-          this.tone({ freq: 380, type: "sine", duration: 0.1, gain: 0.25, sweepTo: 520 });
+          this.tone({ freq: 380, type: "sine", duration: 0.09, gain: 0.22, sweepTo: 520 });
           break;
+
         case "reveal":
-          this.tone({ freq: 440, type: "sine", duration: 0.14, gain: 0.3, sweepTo: 330 });
+          this.tone({ freq: 440, type: "sine", duration: 0.13, gain: 0.26, sweepTo: 330 });
           break;
+
         case "hint":
-          this.tone({ freq: 880, type: "sine", duration: 0.1, gain: 0.22 });
+          this.tone({ freq: 880, type: "sine", duration: 0.09, gain: 0.2 });
           break;
+
         case "streak":
-          // Bright ascending arpeggio for a milestone.
           [659.25, 783.99, 987.77].forEach((f, i) =>
-            this.tone({ freq: f, type: "triangle", start: i * 0.07, duration: 0.18, gain: 0.4 })
+            this.tone({ freq: f, type: "triangle", start: i * 0.065, duration: 0.17, gain: 0.36 })
           );
-          this.noise({ start: 0.05, duration: 0.4, gain: 0.08, freq: 2000, q: 0.5 });
+          this.noise({ start: 0.04, duration: 0.38, gain: 0.07, freq: 2000, q: 0.5 });
           break;
+
         case "complete":
-          // Short stadium celebration: fanfare over a crowd wash.
+          // Full time: the long whistle, then a short fanfare over the crowd.
+          this.whistle({ duration: 0.6, gain: 0.3 });
           [523.25, 659.25, 783.99, 1046.5].forEach((f, i) =>
-            this.tone({ freq: f, type: "triangle", start: i * 0.1, duration: 0.3, gain: 0.42 })
+            this.tone({ freq: f, type: "triangle", start: 0.55 + i * 0.095, duration: 0.28, gain: 0.36 })
           );
-          this.noise({ start: 0, duration: 1.1, gain: 0.13, freq: 1100, q: 0.4 });
+          this.noise({ start: 0.5, duration: 1.1, gain: 0.11, freq: 1100, q: 0.4 });
           break;
       }
     } catch {
@@ -198,4 +360,4 @@ class SoundEngine {
   }
 }
 
-export const sound = new SoundEngine();
+export const sound = new AudioManager();

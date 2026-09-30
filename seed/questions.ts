@@ -103,7 +103,7 @@ export const seedQuestions: SeedQuestion[] = [
     scopes: [WORLD, comp("WORLD_CUP"), country("GER")], sourceLabel: "היסטוריית המונדיאל",
   },
   {
-    mode: "CLASSIC", category: "WORLD_CUP", difficulty: "HARD",
+    mode: "CLASSIC", category: "WORLD_CUP", difficulty: "NORMAL",
     questionHe: "מי היה מלך השערים של מונדיאל 2022, עם 8 שערים?",
     explanationHe: "קיליאן אמבפה כבש 8 שערים במונדיאל 2022, כולל שלישייה בגמר מול ארגנטינה, וזכה בנעל הזהב.",
     options: ["קיליאן אמבפה", "ליאו מסי", "אוליבייה ז'ירו", "חוליאן אלווארס"], correctIndex: 0,
@@ -145,7 +145,7 @@ export const seedQuestions: SeedQuestion[] = [
     scopes: [WORLD, comp("WORLD_CUP")], sourceLabel: "היסטוריית המונדיאל",
   },
   {
-    mode: "CLASSIC", category: "WORLD_CUP", difficulty: "HARD",
+    mode: "CLASSIC", category: "WORLD_CUP", difficulty: "NORMAL",
     questionHe: "איזו נבחרת זכתה במונדיאל 1990 באיטליה?",
     explanationHe: "מערב גרמניה זכתה בתואר השלישי שלה, בניצחון 0:1 על ארגנטינה בגמר.",
     options: ["מערב גרמניה", "ארגנטינה", "איטליה", "אנגליה"], correctIndex: 0,
@@ -217,14 +217,14 @@ export const seedQuestions: SeedQuestion[] = [
     scopes: [EUROPE, comp("UCL"), country("ENG")], sourceLabel: "היסטוריית ליגת האלופות",
   },
   {
-    mode: "CLASSIC", category: "CHAMPIONS_LEAGUE", difficulty: "HARD",
+    mode: "CLASSIC", category: "CHAMPIONS_LEAGUE", difficulty: "NORMAL",
     questionHe: "איזו קבוצה ביצעה את 'הנס איסטנבול' ב-2005, כשהשלימה מפנה מ-0:3 לניצחון בפנדלים?",
     explanationHe: "ליברפול פיגרה 0:3 למילאן במחצית הגמר ב-2005, השוותה ל-3:3 וניצחה בפנדלים.",
     options: ["ליברפול", "ניוקאסל יונייטד", "צ'לסי", "אברטון"], correctIndex: 0,
     scopes: [EUROPE, comp("UCL"), country("ENG")], sourceLabel: "היסטוריית ליגת האלופות",
   },
   {
-    mode: "CLASSIC", category: "CHAMPIONS_LEAGUE", difficulty: "HARD",
+    mode: "CLASSIC", category: "CHAMPIONS_LEAGUE", difficulty: "NORMAL",
     questionHe: "איזו קבוצה זכתה בליגת האלופות 2012, לאחר ניצחון בפנדלים על באיירן מינכן במינכן עצמה?",
     explanationHe: "צ'לסי ניצחה את באיירן מינכן בפנדלים על מגרשה של באיירן, ה-Allianz Arena, וזכתה בתואר הראשון שלה.",
     options: ["צ'לסי", "באיירן מינכן", "ריאל מדריד", "ברצלונה"], correctIndex: 0,
@@ -387,7 +387,7 @@ export const seedQuestions: SeedQuestion[] = [
     scopes: [SOUTH_AMERICA, country("ARG")], sourceLabel: "עובדות מועדונים",
   },
   {
-    mode: "CLASSIC", category: "CLUBS", difficulty: "HARD",
+    mode: "CLASSIC", category: "CLUBS", difficulty: "NORMAL",
     questionHe: "בין אילו שתי קבוצות מתקיים ה'אולד פירם' הסקוטי?",
     explanationHe: "האולד פירם הוא הדרבי בין סלטיק לריינג'רס בגלזגו, אחד הדרבים העתיקים והנטענים בעולם.",
     options: ["סלטיק וריינג'רס", "הרטס והייברניאן", "אברדין ודנדי יונייטד", "קילמרנוק ומות'רוול"], correctIndex: 0,
@@ -642,7 +642,7 @@ export const seedQuestions: SeedQuestion[] = [
     scopes: [EUROPE, country("ENG"), country("ESP")], sourceLabel: "היסטוריית העברות",
   },
   {
-    mode: "CLUB_CONNECTION", category: "TRANSFERS", difficulty: "HARD",
+    mode: "CLUB_CONNECTION", category: "TRANSFERS", difficulty: "NORMAL",
     questionHe: "איזה שחקן ברזילאי, המכונה 'הפנומנו', שיחק גם באינטר מילאנו וגם במילאן היריבה?",
     explanationHe: "רונאלדו הברזילאי שיחק באינטר מילאנו 1997-2002, ולאחר תקופה בריאל מדריד, סיים את הקריירה שלו באיטליה דווקא במילאן היריבה (2007-2008).",
     options: ["רונאלדו (הפנומנו)", "אדריאנו", "רונאלדיניו", "פאביו קנאבארו"], correctIndex: 0,
@@ -818,7 +818,7 @@ export const seedQuestions: SeedQuestion[] = [
     scopes: [EUROPE, comp("PREMIER_LEAGUE"), country("ENG")], sourceLabel: "עובדות מועדונים",
   },
   {
-    mode: "GUESS_THE_CLUB", category: "GUESS_THE_CLUB", difficulty: "HARD",
+    mode: "GUESS_THE_CLUB", category: "GUESS_THE_CLUB", difficulty: "NORMAL",
     questionHe: "איזו קבוצה זו: משחקת בסן סירו יחד עם יריבתה העירונית, צבעיה אדום-שחור, וכונה 'הרוסונרי'?",
     explanationHe: "זהו מילאן (AC Milan) — הצבעים האדום-שחור נותנים לה את הכינוי 'רוסונרי'.",
     options: ["מילאן", "אינטר מילאנו", "יובנטוס", "נאפולי"], correctIndex: 0,
@@ -883,7 +883,7 @@ export const seedQuestions: SeedQuestion[] = [
     scopes: [EUROPE, comp("EURO")], sourceLabel: "היסטוריית היורו",
   },
   {
-    mode: "CLASSIC", category: "WORLD_CUP", difficulty: "HARD",
+    mode: "CLASSIC", category: "WORLD_CUP", difficulty: "NORMAL",
     questionHe: "מה היתה התוצאה במשחק חצי הגמר בין גרמניה לברזיל במונדיאל 2014?",
     explanationHe: "גרמניה ניצחה 1:7 בבלו הוריזונטה — תבוסה היסטורית לברזיל המארחת שכונתה 'המינראסו'.",
     options: ["1:7 לגרמניה", "0:4 לגרמניה", "2:5 לגרמניה", "1:3 לגרמניה"], correctIndex: 0,

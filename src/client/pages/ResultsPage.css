@@ -1,260 +1,124 @@
 .results {
-  padding-block: 26px 46px;
-  max-width: 720px;
+  padding-block: 26px 44px;
   display: flex;
   flex-direction: column;
-  gap: 34px;
+  gap: 24px;
 }
 
-/* ============================================================
-   The stub
-   ============================================================ */
-.stub {
-  position: relative;
-  background: var(--card);
-  border: var(--border-w) solid var(--ink);
-  border-radius: var(--r-xs);
-  box-shadow: var(--lift-2);
-  padding: 20px 22px 0;
+/* ---------- Score ---------- */
+.res-top {
   display: flex;
   flex-direction: column;
   align-items: center;
-  animation: stamp-in 400ms var(--ease-out-back) both;
-}
-
-.stub-head {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  margin-bottom: 8px;
-}
-
-.stub-head .label {
-  color: var(--spot);
-  flex: none;
-}
-
-.stub-rule {
-  flex: 1;
-  height: 0;
-  border-block-start: var(--border-w-thin) solid var(--rule-soft);
-}
-
-.stub-meta {
-  flex: none;
-  color: var(--ink-4);
-}
-
-/* The headline score, set like a football result. */
-.stub-score {
-  display: flex;
-  align-items: baseline;
   gap: 4px;
-  font-family: var(--font-ui);
-  font-weight: 900;
-  line-height: 1;
-  margin-block-start: 14px;
 }
 
-.stub-score-correct {
-  font-size: clamp(38px, 9vw, 52px);
-  color: var(--ink);
+.res-rank {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 1.35rem;
+  color: var(--green);
+  margin-block-start: 6px;
 }
 
-.stub-score-slash {
-  font-size: clamp(24px, 5vw, 32px);
-  color: var(--ink-4);
+.res-score {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text);
 }
 
-.stub-score-total {
-  font-size: clamp(24px, 5vw, 32px);
-  color: var(--ink-3);
-}
-
-.stub-streak {
+.res-meta {
   display: flex;
-  align-items: center;
   gap: 7px;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--spot);
+  flex-wrap: wrap;
+  justify-content: center;
   margin-block-start: 8px;
 }
 
-.stub-streak strong {
-  font-weight: 900;
-  font-size: 16px;
-}
-
-/* ---------- Perforation ----------
-   A punched tear line: a dashed rule with round "holes" notched into the card
-   edges. This is the one decorative flourish in the design, and it earns its
-   place because the results screen really is the thing you tear off and share. */
-.perf {
-  position: relative;
-  width: calc(100% + 44px);
-  margin-block: 22px 0;
-  margin-inline: -22px;
-  height: 0;
-  border-block-start: var(--border-w-thin) dashed var(--ink-4);
-}
-
-.perf::before,
-.perf::after {
-  content: "";
-  position: absolute;
-  inset-block-start: -9px;
-  width: 18px;
-  height: 18px;
-  background: var(--paper);
-  border: var(--border-w) solid var(--ink);
-  border-radius: 50%;
-}
-
-.perf::before {
-  inset-inline-start: -11px;
-}
-
-.perf::after {
-  inset-inline-end: -11px;
-}
-
-/* ---------- Tally ---------- */
-.tally {
+/* ---------- Stats ---------- */
+.res-stats {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
-  width: 100%;
   margin: 0;
-}
-
-.tally-cell {
-  padding: 15px 8px 17px;
-  text-align: center;
-}
-
-.tally-cell + .tally-cell {
-  border-inline-start: var(--border-w-thin) solid var(--rule-soft);
-}
-
-.tally-value {
-  font-family: var(--font-ui);
-  font-weight: 900;
-  font-size: clamp(22px, 5vw, 30px);
-  line-height: 1;
-}
-
-.tone-pitch { color: var(--pitch); }
-.tone-spot { color: var(--spot); }
-.tone-ink { color: var(--ink); }
-
-.tally-label {
-  margin: 6px 0 0;
-  font-size: 10px;
-  color: var(--ink-3);
-}
-
-/* ============================================================
-   Breakdown table
-   ============================================================ */
-.breakdown {
-  width: 100%;
-  border-collapse: collapse;
-  border-block-start: var(--border-w) solid var(--ink);
-}
-
-.breakdown-row {
-  border-block-end: var(--border-w-thin) solid var(--rule-soft);
-}
-
-.breakdown-row:last-child {
-  border-block-end: var(--border-w) solid var(--ink);
-}
-
-.breakdown-name {
-  text-align: start;
-  font-weight: 700;
-  font-size: 15px;
-  padding: 12px 8px 12px 0;
-  white-space: nowrap;
-}
-
-.breakdown-meter {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 0;
-}
-
-.meter {
-  flex: 1;
-  height: 10px;
-  min-width: 60px;
-  background: var(--paper-sunk);
-  border: var(--border-w-thin) solid var(--rule-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
   overflow: hidden;
 }
 
-.meter-fill {
-  display: block;
-  height: 100%;
-  background: var(--pitch);
-  /* Grows from the inline-start edge. `transform-origin` has no logical
-     keyword, so the document direction is matched explicitly. */
-  animation: meter-grow 720ms var(--ease) both;
-  transform-origin: right;
+.res-stat {
+  padding: 13px 8px;
+  text-align: center;
 }
 
-:root:dir(ltr) .meter-fill {
-  transform-origin: left;
+.res-stat + .res-stat { border-inline-start: 1px solid var(--line); }
+
+.res-stat-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text);
 }
 
-@keyframes meter-grow {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
+.res-stat-label {
+  margin-block-start: 4px;
+  font-size: 0.72rem;
+  color: var(--text-3);
 }
 
-.breakdown-count {
-  flex: none;
-  font-weight: 900;
-  font-size: 13.5px;
-  color: var(--ink-2);
-  min-width: 46px;
+/* ---------- Categories ---------- */
+.res-cats {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.res-cat {
+  display: grid;
+  grid-template-columns: minmax(84px, auto) 1fr auto;
+  align-items: center;
+  gap: 11px;
+}
+
+.res-cat-name {
+  font-size: 0.85rem;
+  color: var(--text-2);
+}
+
+.res-cat-bar { height: 6px; }
+
+.res-cat-count {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-3);
+  min-width: 36px;
   text-align: end;
 }
 
-/* ============================================================
-   Actions
-   ============================================================ */
-.results-actions {
+/* ---------- Actions ---------- */
+.res-actions {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 9px;
 }
 
-.results-share-msg {
+.res-actions-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+}
+
+.res-msg {
   text-align: center;
-  font-size: 13.5px;
-  font-weight: 700;
-  color: var(--pitch);
-  min-height: 1.3em;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--green);
+  min-height: 1.2em;
 }
 
-@media (max-width: 460px) {
-  .tally {
-    grid-auto-flow: row;
-    grid-template-columns: repeat(2, 1fr);
-    grid-auto-columns: auto;
-  }
-  .tally-cell:nth-child(odd) {
-    border-inline-start: 0;
-  }
-  .tally-cell:nth-child(n + 3) {
-    border-block-start: var(--border-w-thin) solid var(--rule-soft);
-  }
-  .breakdown-name {
-    font-size: 14px;
-    white-space: normal;
-  }
+@media (max-width: 430px) {
+  .res-stats { grid-auto-flow: row; grid-template-columns: repeat(2, 1fr); grid-auto-columns: auto; }
+  .res-stat:nth-child(odd) { border-inline-start: 0; }
+  .res-stat:nth-child(n + 3) { border-block-start: 1px solid var(--line); }
 }
