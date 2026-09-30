@@ -14,6 +14,7 @@ export const DAILY_CONFIG: QuizConfiguration = {
   difficulty: "MIXED",
   questionCount: 10,
   gameMode: "CLASSIC",
+  answerMode: "MULTIPLE_CHOICE",
 };
 
 async function selectDaily(db: D1Database, date: string): Promise<DailyChallengeRow | null> {
@@ -57,6 +58,7 @@ export async function getOrCreateDailyChallenge(db: D1Database, date: string): P
         categories: DAILY_CONFIG.categories,
         difficulty: DAILY_CONFIG.difficulty,
         gameMode: DAILY_CONFIG.gameMode,
+        answerMode: DAILY_CONFIG.answerMode,
       },
       DAILY_CONFIG.questionCount
     );
@@ -76,6 +78,7 @@ export async function getOrCreateDailyChallenge(db: D1Database, date: string): P
       categories: DAILY_CONFIG.categories,
       difficulty: DAILY_CONFIG.difficulty,
       gameMode: DAILY_CONFIG.gameMode,
+      answerMode: DAILY_CONFIG.answerMode,
     },
     DAILY_CONFIG.questionCount
   );

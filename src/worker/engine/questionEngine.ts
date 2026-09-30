@@ -9,6 +9,7 @@ function toFilter(config: QuizConfiguration): QuestionFilter {
     categories: config.categories ?? [],
     difficulty: config.difficulty,
     gameMode: config.gameMode,
+    answerMode: config.answerMode,
   };
 }
 
@@ -19,7 +20,7 @@ function toFilter(config: QuizConfiguration): QuestionFilter {
 export async function buildQuiz(db: D1Database, config: QuizConfiguration): Promise<Quiz> {
   const filter = toFilter(config);
   const availableCount = await countAvailableQuestions(db, filter);
-  const ids = await pickQuestionIds(db, filter, config.questionCount);
+  const ids = await pickQuestionIds(db, filter, config.questionCount, config.excludeQuestionIds ?? []);
   const questions = await hydrateQuestions(db, ids);
 
   return {

@@ -51,6 +51,11 @@ export interface QuestionClue {
   order: number;
 }
 
+// How the player gives their answer. Multiple choice is the original mode and
+// works for every question; free text needs a question with a single
+// unambiguous canonical answer plus accepted aliases.
+export type AnswerMode = "MULTIPLE_CHOICE" | "FREE_TEXT";
+
 // The shape returned to the client. isCorrect is stripped for options that are
 // sent to the client BEFORE an answer is submitted; the full record (with
 // correctness + explanation) is only sent once an answer is locked in, OR the
@@ -69,6 +74,12 @@ export interface Question {
   clues: QuestionClue[];
   verified: boolean;
   sourceLabel: string | null;
+  // Free-text support. `aliases` are every accepted spelling; the matcher
+  // never infers extra ones.
+  supportsFreeText: boolean;
+  canonicalAnswer: string | null;
+  aliases: string[];
+  hints: string[];
 }
 
 export interface QuizConfiguration {
@@ -79,6 +90,10 @@ export interface QuizConfiguration {
   difficulty: Difficulty | "MIXED";
   questionCount: 5 | 10 | 20 | 30 | 50;
   gameMode: GameMode;
+  answerMode: AnswerMode;
+  // Question ids the player has seen recently. The engine de-prioritises them
+  // so repeat sessions feel fresh; it never excludes them permanently.
+  excludeQuestionIds?: number[];
 }
 
 export interface Quiz {
@@ -100,17 +115,27 @@ export interface QuizChallenge {
 export interface AnswerRecord {
   questionId: number;
   selectedOptionId: number | null;
+  /** What the player typed, for free-text answers. */
+  typedAnswer?: string;
   correct: boolean;
+  /** Player gave up and asked to see the answer — scored as not correct. */
+  revealed?: boolean;
+  /** How many hints were opened before answering. */
+  hintsUsed?: number;
   timeMs: number;
 }
 
 export interface ScoreBreakdown {
   correct: number;
   incorrect: number;
+  revealed: number;
   total: number;
   accuracy: number; // 0-100
   points: number;
+  /** Deterministic 0-100 rating shown as "Football IQ". */
+  footballIq: number;
   rank: RankLabel;
+  bestStreak: number;
 }
 
 export type RankLabel = "צופה מזדמן" | "אוהד" | "פרשן" | "מומחה" | "אגדה";

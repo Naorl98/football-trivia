@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { SoundToggle } from "./SoundToggle";
 import "./Header.css";
 
 export function Header() {
@@ -11,9 +12,12 @@ export function Header() {
             Football <span className="text-green">IQ</span>
           </span>
         </Link>
-        <Link to="/daily" className="badge badge-gold">
-          אתגר יומי
-        </Link>
+        <span className="row gap-2">
+          <SoundToggle />
+          <Link to="/daily" className="badge badge-gold">
+            אתגר יומי
+          </Link>
+        </span>
       </div>
     </header>
   );

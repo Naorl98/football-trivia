@@ -12,6 +12,7 @@ const base = {
   countries: [] as string[],
   questionCount: 10 as const,
   difficulty: "MIXED" as const,
+  answerMode: "MULTIPLE_CHOICE" as const,
 };
 
 export const QUICK_PRESETS: QuickPreset[] = [

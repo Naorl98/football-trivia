@@ -4,6 +4,10 @@ import { CATEGORIES } from "../../shared/constants";
 import type { Category } from "../../shared/types";
 import { createChallenge, fetchQuiz } from "../lib/api";
 import { loadResult, saveActiveQuiz } from "../lib/quizSession";
+import { getRecentQuestionIds } from "../lib/recentQuestions";
+import { IqMeter } from "../components/IqMeter";
+import { Confetti } from "../components/Confetti";
+import { sound } from "../lib/sound";
 import "./ResultsPage.css";
 
 function formatDuration(totalSeconds: number): string {
@@ -44,8 +48,13 @@ export function ResultsPage() {
 
   async function handleReplay() {
     setReplaying(true);
+    sound.play("click");
     try {
-      const fresh = await fetchQuiz(quiz.configuration);
+      // Ask for questions the player has not just seen.
+      const fresh = await fetchQuiz({
+        ...quiz.configuration,
+        excludeQuestionIds: getRecentQuestionIds(),
+      });
       saveActiveQuiz({ quiz: fresh, startedAt: Date.now() });
       navigate("/play");
     } finally {
@@ -79,14 +88,17 @@ export function ResultsPage() {
 
   return (
     <div className="container results-page">
+      <Confetti active={score.footballIq >= 75} />
+
       <div className="results-hero animate-pop">
+        <IqMeter value={score.footballIq} label={score.rank} />
         <div className="results-score">
           {score.correct} <span className="text-dim">/ {score.total}</span>
         </div>
         <div className="results-accuracy text-green">{score.accuracy}% הצלחה</div>
-        <div className="row gap-2" style={{ justifyContent: "center", marginTop: 10 }}>
-          <span className="badge badge-gold">{score.rank}</span>
+        <div className="row gap-2" style={{ justifyContent: "center", marginTop: 10, flexWrap: "wrap" }}>
           <span className="badge">{formatDuration(durationSeconds)}</span>
+          {score.bestStreak >= 2 && <span className="badge badge-gold">🔥 {score.bestStreak} ברצף</span>}
         </div>
       </div>
 
@@ -102,6 +114,15 @@ export function ResultsPage() {
           </span>
           <span className="stat-label text-dim">שגויות</span>
         </div>
+        {score.revealed > 0 && (
+          <>
+            <div className="stat-divider" />
+            <div className="stat">
+              <span className="stat-value text-gold">{score.revealed}</span>
+              <span className="stat-label text-dim">נחשפו</span>
+            </div>
+          </>
+        )}
         <div className="stat-divider" />
         <div className="stat">
           <span className="stat-value text-gold">{score.points}</span>

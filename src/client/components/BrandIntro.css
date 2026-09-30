@@ -1,0 +1,89 @@
+.intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 40%, rgba(29, 185, 84, 0.16), transparent 70%),
+    var(--bg);
+  animation: intro-in 0.25s ease both;
+}
+
+.intro-leaving {
+  animation: intro-out 0.36s cubic-bezier(0.4, 0, 0.9, 0.4) both;
+}
+
+@keyframes intro-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes intro-out {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(1.06); }
+}
+
+.intro-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.intro-ball {
+  width: 116px;
+  height: 116px;
+  filter: drop-shadow(0 0 24px rgba(29, 185, 84, 0.35));
+  animation: ball-roll 0.85s cubic-bezier(0.24, 0.9, 0.3, 1) both;
+}
+
+/* Rolls in from the start side, settling in the centre. */
+@keyframes ball-roll {
+  from { opacity: 0; transform: translateX(120px) rotate(-220deg); }
+  to   { opacity: 1; transform: translateX(0) rotate(0deg); }
+}
+
+/* Neural lines draw themselves on once the ball has settled. */
+.intro-net path {
+  stroke-dasharray: 220;
+  stroke-dashoffset: 220;
+  animation: net-draw 0.7s ease-out 0.5s both;
+}
+
+@keyframes net-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+.intro-nodes circle {
+  opacity: 0;
+  animation: node-pop 0.4s ease-out both;
+}
+.intro-nodes circle:nth-child(1) { animation-delay: 0.72s; }
+.intro-nodes circle:nth-child(2) { animation-delay: 0.79s; }
+.intro-nodes circle:nth-child(3) { animation-delay: 0.86s; }
+.intro-nodes circle:nth-child(4) { animation-delay: 0.93s; }
+.intro-nodes circle:nth-child(5) { animation-delay: 1s; }
+.intro-nodes circle:nth-child(6) { animation-delay: 1.07s; }
+
+@keyframes node-pop {
+  from { opacity: 0; transform: scale(0.2); transform-origin: center; }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.intro-wordmark {
+  font-size: clamp(26px, 7vw, 38px);
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  animation: word-in 0.5s cubic-bezier(0.2, 0.85, 0.3, 1) 0.9s both;
+}
+
+@keyframes word-in {
+  from { opacity: 0; transform: translateY(14px); letter-spacing: 3px; }
+  to   { opacity: 1; transform: translateY(0); letter-spacing: -0.5px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-overlay { display: none; }
+}

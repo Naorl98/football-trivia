@@ -21687,7 +21687,7 @@ INSERT INTO question_hints (question_id, text, order_index) VALUES (101233, 'ה�
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101233, 'האצטדיון הביתי: פארק דה פראנס', 1);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101233, 'השם מתחיל באות פ', 2);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101234, 'g_101234', 'CLASSIC', 'TITLES', 'HARD', 'כמה פעמים זכתה אתלטיקו מדריד בהליגה האירופית?', 'אתלטיקו מדריד זכתה בהליגה האירופית 3 פעמים.', 1, 1, 'טבלת גמרי הליגה האירופית', NULL, 0, 'uel_count:atletico', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101234, 'g_101234', 'CLASSIC', 'TITLES', 'HARD', 'כמה פעמים זכתה אתלטיקו מדריד בליגה האירופית?', 'אתלטיקו מדריד זכתה בליגה האירופית 3 פעמים.', 1, 1, 'טבלת גמרי הליגה האירופית', NULL, 0, 'uel_count:atletico', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101234, '3', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101234, '4', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101234, '2', 0, 2);
@@ -21696,7 +21696,7 @@ INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (10123
 INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (101234, 'COMPETITION', 'UEL');
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101234, 'מדובר במספר חד-ספרתי או דו-ספרתי נמוך', 0);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101235, 'g_101235', 'CLASSIC', 'TITLES', 'HARD', 'כמה פעמים זכתה אינטר מילאנו בהליגה האירופית?', 'אינטר מילאנו זכתה בהליגה האירופית 3 פעמים.', 1, 1, 'טבלת גמרי הליגה האירופית', NULL, 0, 'uel_count:inter', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101235, 'g_101235', 'CLASSIC', 'TITLES', 'HARD', 'כמה פעמים זכתה אינטר מילאנו בליגה האירופית?', 'אינטר מילאנו זכתה בליגה האירופית 3 פעמים.', 1, 1, 'טבלת גמרי הליגה האירופית', NULL, 0, 'uel_count:inter', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101235, '3', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101235, '4', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101235, '2', 0, 2);
@@ -21705,7 +21705,7 @@ INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (10123
 INSERT INTO question_scopes (question_id, scope_type, scope_value) VALUES (101235, 'COMPETITION', 'UEL');
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101235, 'מדובר במספר חד-ספרתי או דו-ספרתי נמוך', 0);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101236, 'g_101236', 'CLASSIC', 'TITLES', 'NORMAL', 'כמה פעמים זכתה סביליה בהליגה האירופית?', 'סביליה זכתה בהליגה האירופית 7 פעמים.', 1, 1, 'טבלת גמרי הליגה האירופית', NULL, 0, 'uel_count:sevilla', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101236, 'g_101236', 'CLASSIC', 'TITLES', 'NORMAL', 'כמה פעמים זכתה סביליה בליגה האירופית?', 'סביליה זכתה בליגה האירופית 7 פעמים.', 1, 1, 'טבלת גמרי הליגה האירופית', NULL, 0, 'uel_count:sevilla', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101236, '7', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101236, '8', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101236, '6', 0, 2);
@@ -22180,7 +22180,7 @@ INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (101270
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101270, 'המועדון פועל במדינה: גרמניה', 0);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101270, 'השם מתחיל באות פ', 1);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101271, 'g_101271', 'CLASSIC', 'TITLES', 'EXPERT', 'איזו קבוצה זכתה בהליגה האירופית בשנת 1990?', 'יובנטוס זכתה בהליגה האירופית 1990 בגמר מול פיורנטינה.', 1, 1, 'טבלת גמרי הליגה האירופית', 'יובנטוס', 1, 'uel_winner:1990', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101271, 'g_101271', 'CLASSIC', 'TITLES', 'EXPERT', 'איזו קבוצה זכתה בליגה האירופית בשנת 1990?', 'יובנטוס זכתה בליגה האירופית 1990 בגמר מול פיורנטינה.', 1, 1, 'טבלת גמרי הליגה האירופית', 'יובנטוס', 1, 'uel_winner:1990', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101271, 'יובנטוס', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101271, 'שאלקה 04', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101271, 'אייאקס', 0, 2);
@@ -22194,7 +22194,7 @@ INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (101271
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101271, 'המועדון פועל במדינה: איטליה', 0);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101271, 'השם מתחיל באות י', 1);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101272, 'g_101272', 'CLASSIC', 'TITLES', 'EXPERT', 'איזו קבוצה זכתה בהליגה האירופית בשנת 1991?', 'אינטר מילאנו זכתה בהליגה האירופית 1991 בגמר מול רומא.', 1, 1, 'טבלת גמרי הליגה האירופית', 'אינטר מילאנו', 1, 'uel_winner:1991', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101272, 'g_101272', 'CLASSIC', 'TITLES', 'EXPERT', 'איזו קבוצה זכתה בליגה האירופית בשנת 1991?', 'אינטר מילאנו זכתה בליגה האירופית 1991 בגמר מול רומא.', 1, 1, 'טבלת גמרי הליגה האירופית', 'אינטר מילאנו', 1, 'uel_winner:1991', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101272, 'אינטר מילאנו', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101272, 'ויאריאל', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101272, 'ליברפול', 0, 2);
@@ -22210,7 +22210,7 @@ INSERT INTO question_hints (question_id, text, order_index) VALUES (101272, 'ה�
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101272, 'האצטדיון הביתי: סן סירו', 1);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101272, 'השם מתחיל באות א', 2);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101273, 'g_101273', 'CLASSIC', 'TITLES', 'HARD', 'איזו קבוצה זכתה בהליגה האירופית בשנת 1992?', 'אייאקס זכתה בהליגה האירופית 1992 בגמר מול טורינו.', 1, 1, 'טבלת גמרי הליגה האירופית', 'אייאקס', 1, 'uel_winner:1992', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101273, 'g_101273', 'CLASSIC', 'TITLES', 'HARD', 'איזו קבוצה זכתה בליגה האירופית בשנת 1992?', 'אייאקס זכתה בליגה האירופית 1992 בגמר מול טורינו.', 1, 1, 'טבלת גמרי הליגה האירופית', 'אייאקס', 1, 'uel_winner:1992', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101273, 'אייאקס', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101273, 'פיינורד', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101273, 'שחטאר דונייצק', 0, 2);
@@ -22225,7 +22225,7 @@ INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (101273
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101273, 'המועדון פועל במדינה: הולנד', 0);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101273, 'השם מתחיל באות א', 1);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101274, 'g_101274', 'CLASSIC', 'TITLES', 'HARD', 'איזו קבוצה זכתה בהליגה האירופית בשנת 1993?', 'יובנטוס זכתה בהליגה האירופית 1993 בגמר מול בורוסיה דורטמונד.', 1, 1, 'טבלת גמרי הליגה האירופית', 'יובנטוס', 1, 'uel_winner:1993', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101274, 'g_101274', 'CLASSIC', 'TITLES', 'HARD', 'איזו קבוצה זכתה בליגה האירופית בשנת 1993?', 'יובנטוס זכתה בליגה האירופית 1993 בגמר מול בורוסיה דורטמונד.', 1, 1, 'טבלת גמרי הליגה האירופית', 'יובנטוס', 1, 'uel_winner:1993', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101274, 'יובנטוס', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101274, 'אתלטיקו מדריד', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101274, 'גלאטסראי', 0, 2);
@@ -22239,7 +22239,7 @@ INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (101274
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101274, 'המועדון פועל במדינה: איטליה', 0);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101274, 'השם מתחיל באות י', 1);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101275, 'g_101275', 'CLASSIC', 'TITLES', 'HARD', 'איזו קבוצה זכתה בהליגה האירופית בשנת 1994?', 'אינטר מילאנו זכתה בהליגה האירופית בשנת 1994.', 1, 1, 'טבלת גמרי הליגה האירופית', 'אינטר מילאנו', 1, 'uel_winner:1994', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101275, 'g_101275', 'CLASSIC', 'TITLES', 'HARD', 'איזו קבוצה זכתה בליגה האירופית בשנת 1994?', 'אינטר מילאנו זכתה בליגה האירופית בשנת 1994.', 1, 1, 'טבלת גמרי הליגה האירופית', 'אינטר מילאנו', 1, 'uel_winner:1994', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101275, 'אינטר מילאנו', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101275, 'אייאקס', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101275, 'פורטו', 0, 2);
@@ -22255,7 +22255,7 @@ INSERT INTO question_hints (question_id, text, order_index) VALUES (101275, 'ה�
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101275, 'האצטדיון הביתי: סן סירו', 1);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101275, 'השם מתחיל באות א', 2);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101276, 'g_101276', 'CLASSIC', 'TITLES', 'HARD', 'איזו קבוצה זכתה בהליגה האירופית בשנת 1995?', 'פארמה זכתה בהליגה האירופית 1995 בגמר מול יובנטוס.', 1, 1, 'טבלת גמרי הליגה האירופית', 'פארמה', 1, 'uel_winner:1995', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101276, 'g_101276', 'CLASSIC', 'TITLES', 'HARD', 'איזו קבוצה זכתה בליגה האירופית בשנת 1995?', 'פארמה זכתה בליגה האירופית 1995 בגמר מול יובנטוס.', 1, 1, 'טבלת גמרי הליגה האירופית', 'פארמה', 1, 'uel_winner:1995', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101276, 'פארמה', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101276, 'אסטון וילה', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101276, 'זניט סנט פטרסבורג', 0, 2);
@@ -22267,7 +22267,7 @@ INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (101276
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101276, 'המועדון פועל במדינה: איטליה', 0);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101276, 'השם מתחיל באות פ', 1);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101277, 'g_101277', 'CLASSIC', 'TITLES', 'HARD', 'איזו קבוצה זכתה בהליגה האירופית בשנת 1996?', 'באיירן מינכן זכתה בהליגה האירופית 1996 בגמר מול בורדו.', 1, 1, 'טבלת גמרי הליגה האירופית', 'באיירן מינכן', 1, 'uel_winner:1996', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101277, 'g_101277', 'CLASSIC', 'TITLES', 'HARD', 'איזו קבוצה זכתה בליגה האירופית בשנת 1996?', 'באיירן מינכן זכתה בליגה האירופית 1996 בגמר מול בורדו.', 1, 1, 'טבלת גמרי הליגה האירופית', 'באיירן מינכן', 1, 'uel_winner:1996', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101277, 'באיירן מינכן', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101277, 'פורטו', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101277, 'צ''לסי', 0, 2);
@@ -22282,7 +22282,7 @@ INSERT INTO question_hints (question_id, text, order_index) VALUES (101277, 'ה�
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101277, 'האצטדיון הביתי: אליאנץ ארנה', 1);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101277, 'השם מתחיל באות ב', 2);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101278, 'g_101278', 'CLASSIC', 'TITLES', 'HARD', 'איזו קבוצה זכתה בהליגה האירופית בשנת 1997?', 'שאלקה 04 זכתה בהליגה האירופית 1997 בגמר מול אינטר מילאנו.', 1, 1, 'טבלת גמרי הליגה האירופית', 'שאלקה 04', 1, 'uel_winner:1997', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101278, 'g_101278', 'CLASSIC', 'TITLES', 'HARD', 'איזו קבוצה זכתה בליגה האירופית בשנת 1997?', 'שאלקה 04 זכתה בליגה האירופית 1997 בגמר מול אינטר מילאנו.', 1, 1, 'טבלת גמרי הליגה האירופית', 'שאלקה 04', 1, 'uel_winner:1997', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101278, 'שאלקה 04', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101278, 'איינטרכט פרנקפורט', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101278, 'מנצ''סטר יונייטד', 0, 2);
@@ -22296,7 +22296,7 @@ INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (101278
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101278, 'המועדון פועל במדינה: גרמניה', 0);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101278, 'השם מתחיל באות ש', 1);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101279, 'g_101279', 'CLASSIC', 'TITLES', 'HARD', 'איזו קבוצה זכתה בהליגה האירופית בשנת 1998?', 'אינטר מילאנו זכתה בהליגה האירופית 1998 בגמר מול לאציו (3–0).', 1, 1, 'טבלת גמרי הליגה האירופית', 'אינטר מילאנו', 1, 'uel_winner:1998', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101279, 'g_101279', 'CLASSIC', 'TITLES', 'HARD', 'איזו קבוצה זכתה בליגה האירופית בשנת 1998?', 'אינטר מילאנו זכתה בליגה האירופית 1998 בגמר מול לאציו (3–0).', 1, 1, 'טבלת גמרי הליגה האירופית', 'אינטר מילאנו', 1, 'uel_winner:1998', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101279, 'אינטר מילאנו', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101279, 'אטאלנטה', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101279, 'באיירן מינכן', 0, 2);
@@ -22312,7 +22312,7 @@ INSERT INTO question_hints (question_id, text, order_index) VALUES (101279, 'ה�
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101279, 'האצטדיון הביתי: סן סירו', 1);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101279, 'השם מתחיל באות א', 2);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101280, 'g_101280', 'CLASSIC', 'TITLES', 'HARD', 'איזו קבוצה זכתה בהליגה האירופית בשנת 1999?', 'פארמה זכתה בהליגה האירופית 1999 בגמר מול מארסיי (3–0).', 1, 1, 'טבלת גמרי הליגה האירופית', 'פארמה', 1, 'uel_winner:1999', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101280, 'g_101280', 'CLASSIC', 'TITLES', 'HARD', 'איזו קבוצה זכתה בליגה האירופית בשנת 1999?', 'פארמה זכתה בליגה האירופית 1999 בגמר מול מארסיי (3–0).', 1, 1, 'טבלת גמרי הליגה האירופית', 'פארמה', 1, 'uel_winner:1999', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101280, 'פארמה', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101280, 'טוטנהאם', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101280, 'פורטו', 0, 2);
@@ -22324,7 +22324,7 @@ INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (101280
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101280, 'המועדון פועל במדינה: איטליה', 0);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101280, 'השם מתחיל באות פ', 1);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101281, 'g_101281', 'CLASSIC', 'TITLES', 'HARD', 'איזו קבוצה זכתה בהליגה האירופית בשנת 2000?', 'גלאטסראי זכתה בהליגה האירופית 2000 בגמר מול ארסנל (0–0 (פנדלים)).', 1, 1, 'טבלת גמרי הליגה האירופית', 'גלאטסראי', 1, 'uel_winner:2000', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101281, 'g_101281', 'CLASSIC', 'TITLES', 'HARD', 'איזו קבוצה זכתה בליגה האירופית בשנת 2000?', 'גלאטסראי זכתה בליגה האירופית 2000 בגמר מול ארסנל (0–0 (פנדלים)).', 1, 1, 'טבלת גמרי הליגה האירופית', 'גלאטסראי', 1, 'uel_winner:2000', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101281, 'גלאטסראי', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101281, 'פיינורד', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101281, 'זניט סנט פטרסבורג', 0, 2);
@@ -22336,7 +22336,7 @@ INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (101281
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101281, 'המועדון פועל במדינה: טורקיה', 0);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101281, 'השם מתחיל באות ג', 1);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101282, 'g_101282', 'CLASSIC', 'TITLES', 'HARD', 'איזו קבוצה זכתה בהליגה האירופית בשנת 2001?', 'ליברפול זכתה בהליגה האירופית בשנת 2001.', 1, 1, 'טבלת גמרי הליגה האירופית', 'ליברפול', 1, 'uel_winner:2001', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101282, 'g_101282', 'CLASSIC', 'TITLES', 'HARD', 'איזו קבוצה זכתה בליגה האירופית בשנת 2001?', 'ליברפול זכתה בליגה האירופית בשנת 2001.', 1, 1, 'טבלת גמרי הליגה האירופית', 'ליברפול', 1, 'uel_winner:2001', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101282, 'ליברפול', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101282, 'גלאטסראי', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101282, 'צסק"א מוסקבה', 0, 2);
@@ -22350,7 +22350,7 @@ INSERT INTO question_hints (question_id, text, order_index) VALUES (101282, 'ה�
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101282, 'האצטדיון הביתי: אנפילד', 1);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101282, 'השם מתחיל באות ל', 2);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101283, 'g_101283', 'CLASSIC', 'TITLES', 'HARD', 'איזו קבוצה זכתה בהליגה האירופית בשנת 2002?', 'פיינורד זכתה בהליגה האירופית 2002 בגמר מול בורוסיה דורטמונד (3–2).', 1, 1, 'טבלת גמרי הליגה האירופית', 'פיינורד', 1, 'uel_winner:2002', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101283, 'g_101283', 'CLASSIC', 'TITLES', 'HARD', 'איזו קבוצה זכתה בליגה האירופית בשנת 2002?', 'פיינורד זכתה בליגה האירופית 2002 בגמר מול בורוסיה דורטמונד (3–2).', 1, 1, 'טבלת גמרי הליגה האירופית', 'פיינורד', 1, 'uel_winner:2002', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101283, 'פיינורד', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101283, 'פורטו', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101283, 'ולנסיה', 0, 2);
@@ -22362,7 +22362,7 @@ INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (101283
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101283, 'המועדון פועל במדינה: הולנד', 0);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101283, 'השם מתחיל באות פ', 1);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101284, 'g_101284', 'CLASSIC', 'TITLES', 'HARD', 'איזו קבוצה זכתה בהליגה האירופית בשנת 2003?', 'פורטו זכתה בהליגה האירופית 2003 בגמר מול סלטיק (3–2).', 1, 1, 'טבלת גמרי הליגה האירופית', 'פורטו', 1, 'uel_winner:2003', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101284, 'g_101284', 'CLASSIC', 'TITLES', 'HARD', 'איזו קבוצה זכתה בליגה האירופית בשנת 2003?', 'פורטו זכתה בליגה האירופית 2003 בגמר מול סלטיק (3–2).', 1, 1, 'טבלת גמרי הליגה האירופית', 'פורטו', 1, 'uel_winner:2003', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101284, 'פורטו', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101284, 'ליברפול', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101284, 'פיינורד', 0, 2);
@@ -22375,7 +22375,7 @@ INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (101284
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101284, 'המועדון פועל במדינה: פורטוגל', 0);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101284, 'השם מתחיל באות פ', 1);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101285, 'g_101285', 'CLASSIC', 'TITLES', 'NORMAL', 'איזו קבוצה זכתה בהליגה האירופית בשנת 2004?', 'ולנסיה זכתה בהליגה האירופית 2004 בגמר מול מארסיי (2–0).', 1, 1, 'טבלת גמרי הליגה האירופית', 'ולנסיה', 1, 'uel_winner:2004', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101285, 'g_101285', 'CLASSIC', 'TITLES', 'NORMAL', 'איזו קבוצה זכתה בליגה האירופית בשנת 2004?', 'ולנסיה זכתה בליגה האירופית 2004 בגמר מול מארסיי (2–0).', 1, 1, 'טבלת גמרי הליגה האירופית', 'ולנסיה', 1, 'uel_winner:2004', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101285, 'ולנסיה', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101285, 'יובנטוס', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101285, 'מנצ''סטר יונייטד', 0, 2);
@@ -22388,7 +22388,7 @@ INSERT INTO question_hints (question_id, text, order_index) VALUES (101285, 'ה�
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101285, 'האצטדיון הביתי: מסטאייה', 1);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101285, 'השם מתחיל באות ו', 2);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101286, 'g_101286', 'CLASSIC', 'TITLES', 'NORMAL', 'איזו קבוצה זכתה בהליגה האירופית בשנת 2005?', 'צסק"א מוסקבה זכתה בהליגה האירופית 2005 בגמר מול ספורטינג ליסבון (3–1).', 1, 1, 'טבלת גמרי הליגה האירופית', 'צסק"א מוסקבה', 1, 'uel_winner:2005', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101286, 'g_101286', 'CLASSIC', 'TITLES', 'NORMAL', 'איזו קבוצה זכתה בליגה האירופית בשנת 2005?', 'צסק"א מוסקבה זכתה בליגה האירופית 2005 בגמר מול ספורטינג ליסבון (3–1).', 1, 1, 'טבלת גמרי הליגה האירופית', 'צסק"א מוסקבה', 1, 'uel_winner:2005', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101286, 'צסק"א מוסקבה', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101286, 'אטאלנטה', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101286, 'גלאטסראי', 0, 2);
@@ -22401,7 +22401,7 @@ INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (101286
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101286, 'המועדון פועל במדינה: רוסיה', 0);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101286, 'השם מתחיל באות צ', 1);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101287, 'g_101287', 'CLASSIC', 'TITLES', 'NORMAL', 'איזו קבוצה זכתה בהליגה האירופית בשנת 2006?', 'סביליה זכתה בהליגה האירופית 2006 בגמר מול מידלסברו (4–0).', 1, 1, 'טבלת גמרי הליגה האירופית', 'סביליה', 1, 'uel_winner:2006', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101287, 'g_101287', 'CLASSIC', 'TITLES', 'NORMAL', 'איזו קבוצה זכתה בליגה האירופית בשנת 2006?', 'סביליה זכתה בליגה האירופית 2006 בגמר מול מידלסברו (4–0).', 1, 1, 'טבלת גמרי הליגה האירופית', 'סביליה', 1, 'uel_winner:2006', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101287, 'סביליה', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101287, 'זניט סנט פטרסבורג', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101287, 'טוטנהאם', 0, 2);
@@ -22413,7 +22413,7 @@ INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (101287
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101287, 'המועדון פועל במדינה: ספרד', 0);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101287, 'השם מתחיל באות ס', 1);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101288, 'g_101288', 'CLASSIC', 'TITLES', 'NORMAL', 'איזו קבוצה זכתה בהליגה האירופית בשנת 2007?', 'סביליה זכתה בהליגה האירופית 2007 בגמר מול אספניול (2–2 (פנדלים)).', 1, 1, 'טבלת גמרי הליגה האירופית', 'סביליה', 1, 'uel_winner:2007', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101288, 'g_101288', 'CLASSIC', 'TITLES', 'NORMAL', 'איזו קבוצה זכתה בליגה האירופית בשנת 2007?', 'סביליה זכתה בליגה האירופית 2007 בגמר מול אספניול (2–2 (פנדלים)).', 1, 1, 'טבלת גמרי הליגה האירופית', 'סביליה', 1, 'uel_winner:2007', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101288, 'סביליה', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101288, 'פורטו', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101288, 'פיינורד', 0, 2);
@@ -22425,7 +22425,7 @@ INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (101288
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101288, 'המועדון פועל במדינה: ספרד', 0);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101288, 'השם מתחיל באות ס', 1);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101289, 'g_101289', 'CLASSIC', 'TITLES', 'NORMAL', 'איזו קבוצה זכתה בהליגה האירופית בשנת 2008?', 'זניט סנט פטרסבורג זכתה בהליגה האירופית 2008 בגמר מול ריינג''רס (2–0).', 1, 1, 'טבלת גמרי הליגה האירופית', 'זניט סנט פטרסבורג', 1, 'uel_winner:2008', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101289, 'g_101289', 'CLASSIC', 'TITLES', 'NORMAL', 'איזו קבוצה זכתה בליגה האירופית בשנת 2008?', 'זניט סנט פטרסבורג זכתה בליגה האירופית 2008 בגמר מול ריינג''רס (2–0).', 1, 1, 'טבלת גמרי הליגה האירופית', 'זניט סנט פטרסבורג', 1, 'uel_winner:2008', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101289, 'זניט סנט פטרסבורג', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101289, 'ויאריאל', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101289, 'אייאקס', 0, 2);
@@ -22438,7 +22438,7 @@ INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (101289
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101289, 'המועדון פועל במדינה: רוסיה', 0);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101289, 'השם מתחיל באות ז', 1);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101290, 'g_101290', 'CLASSIC', 'TITLES', 'NORMAL', 'איזו קבוצה זכתה בהליגה האירופית בשנת 2009?', 'שחטאר דונייצק זכתה בהליגה האירופית 2009 בגמר מול ורדר ברמן (2–1).', 1, 1, 'טבלת גמרי הליגה האירופית', 'שחטאר דונייצק', 1, 'uel_winner:2009', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101290, 'g_101290', 'CLASSIC', 'TITLES', 'NORMAL', 'איזו קבוצה זכתה בליגה האירופית בשנת 2009?', 'שחטאר דונייצק זכתה בליגה האירופית 2009 בגמר מול ורדר ברמן (2–1).', 1, 1, 'טבלת גמרי הליגה האירופית', 'שחטאר דונייצק', 1, 'uel_winner:2009', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101290, 'שחטאר דונייצק', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101290, 'גלאטסראי', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101290, 'מנצ''סטר יונייטד', 0, 2);
@@ -22451,7 +22451,7 @@ INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (101290
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101290, 'המועדון פועל במדינה: אוקראינה', 0);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101290, 'השם מתחיל באות ש', 1);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101291, 'g_101291', 'CLASSIC', 'TITLES', 'NORMAL', 'איזו קבוצה זכתה בהליגה האירופית בשנת 2010?', 'אתלטיקו מדריד זכתה בהליגה האירופית 2010 בגמר מול פולהאם (2–1).', 1, 1, 'טבלת גמרי הליגה האירופית', 'אתלטיקו מדריד', 1, 'uel_winner:2010', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101291, 'g_101291', 'CLASSIC', 'TITLES', 'NORMAL', 'איזו קבוצה זכתה בליגה האירופית בשנת 2010?', 'אתלטיקו מדריד זכתה בליגה האירופית 2010 בגמר מול פולהאם (2–1).', 1, 1, 'טבלת גמרי הליגה האירופית', 'אתלטיקו מדריד', 1, 'uel_winner:2010', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101291, 'אתלטיקו מדריד', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101291, 'אייאקס', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101291, 'איינטרכט פרנקפורט', 0, 2);
@@ -22465,7 +22465,7 @@ INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (101291
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101291, 'המועדון פועל במדינה: ספרד', 0);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101291, 'השם מתחיל באות א', 1);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101292, 'g_101292', 'CLASSIC', 'TITLES', 'NORMAL', 'איזו קבוצה זכתה בהליגה האירופית בשנת 2011?', 'פורטו זכתה בהליגה האירופית 2011 בגמר מול בראגה (1–0).', 1, 1, 'טבלת גמרי הליגה האירופית', 'פורטו', 1, 'uel_winner:2011', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101292, 'g_101292', 'CLASSIC', 'TITLES', 'NORMAL', 'איזו קבוצה זכתה בליגה האירופית בשנת 2011?', 'פורטו זכתה בליגה האירופית 2011 בגמר מול בראגה (1–0).', 1, 1, 'טבלת גמרי הליגה האירופית', 'פורטו', 1, 'uel_winner:2011', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101292, 'פורטו', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101292, 'טוטנהאם', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101292, 'פארמה', 0, 2);
@@ -22478,7 +22478,7 @@ INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (101292
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101292, 'המועדון פועל במדינה: פורטוגל', 0);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101292, 'השם מתחיל באות פ', 1);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101293, 'g_101293', 'CLASSIC', 'TITLES', 'NORMAL', 'איזו קבוצה זכתה בהליגה האירופית בשנת 2012?', 'אתלטיקו מדריד זכתה בהליגה האירופית 2012 בגמר מול אתלטיק בילבאו (3–0).', 1, 1, 'טבלת גמרי הליגה האירופית', 'אתלטיקו מדריד', 1, 'uel_winner:2012', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101293, 'g_101293', 'CLASSIC', 'TITLES', 'NORMAL', 'איזו קבוצה זכתה בליגה האירופית בשנת 2012?', 'אתלטיקו מדריד זכתה בליגה האירופית 2012 בגמר מול אתלטיק בילבאו (3–0).', 1, 1, 'טבלת גמרי הליגה האירופית', 'אתלטיקו מדריד', 1, 'uel_winner:2012', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101293, 'אתלטיקו מדריד', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101293, 'יובנטוס', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101293, 'סביליה', 0, 2);
@@ -22492,7 +22492,7 @@ INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (101293
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101293, 'המועדון פועל במדינה: ספרד', 0);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101293, 'השם מתחיל באות א', 1);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101294, 'g_101294', 'CLASSIC', 'TITLES', 'NORMAL', 'איזו קבוצה זכתה בהליגה האירופית בשנת 2013?', 'צ''לסי זכתה בהליגה האירופית 2013 בגמר מול בנפיקה (2–1).', 1, 1, 'טבלת גמרי הליגה האירופית', 'צ''לסי', 1, 'uel_winner:2013', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101294, 'g_101294', 'CLASSIC', 'TITLES', 'NORMAL', 'איזו קבוצה זכתה בליגה האירופית בשנת 2013?', 'צ''לסי זכתה בליגה האירופית 2013 בגמר מול בנפיקה (2–1).', 1, 1, 'טבלת גמרי הליגה האירופית', 'צ''לסי', 1, 'uel_winner:2013', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101294, 'צ''לסי', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101294, 'ליברפול', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101294, 'אתלטיקו מדריד', 0, 2);
@@ -22506,7 +22506,7 @@ INSERT INTO question_hints (question_id, text, order_index) VALUES (101294, 'ה�
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101294, 'האצטדיון הביתי: סטמפורד ברידג''', 1);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101294, 'השם מתחיל באות צ', 2);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101295, 'g_101295', 'CLASSIC', 'TITLES', 'NORMAL', 'איזו קבוצה זכתה בהליגה האירופית בשנת 2014?', 'סביליה זכתה בהליגה האירופית 2014 בגמר מול בנפיקה (0–0 (פנדלים)).', 1, 1, 'טבלת גמרי הליגה האירופית', 'סביליה', 1, 'uel_winner:2014', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101295, 'g_101295', 'CLASSIC', 'TITLES', 'NORMAL', 'איזו קבוצה זכתה בליגה האירופית בשנת 2014?', 'סביליה זכתה בליגה האירופית 2014 בגמר מול בנפיקה (0–0 (פנדלים)).', 1, 1, 'טבלת גמרי הליגה האירופית', 'סביליה', 1, 'uel_winner:2014', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101295, 'סביליה', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101295, 'אינטר מילאנו', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101295, 'מנצ''סטר יונייטד', 0, 2);
@@ -22518,7 +22518,7 @@ INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (101295
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101295, 'המועדון פועל במדינה: ספרד', 0);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101295, 'השם מתחיל באות ס', 1);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101296, 'g_101296', 'CLASSIC', 'TITLES', 'NORMAL', 'איזו קבוצה זכתה בהליגה האירופית בשנת 2015?', 'סביליה זכתה בהליגה האירופית בשנת 2015.', 1, 1, 'טבלת גמרי הליגה האירופית', 'סביליה', 1, 'uel_winner:2015', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101296, 'g_101296', 'CLASSIC', 'TITLES', 'NORMAL', 'איזו קבוצה זכתה בליגה האירופית בשנת 2015?', 'סביליה זכתה בליגה האירופית בשנת 2015.', 1, 1, 'טבלת גמרי הליגה האירופית', 'סביליה', 1, 'uel_winner:2015', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101296, 'סביליה', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101296, 'פארמה', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101296, 'מנצ''סטר יונייטד', 0, 2);
@@ -22530,7 +22530,7 @@ INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (101296
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101296, 'המועדון פועל במדינה: ספרד', 0);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101296, 'השם מתחיל באות ס', 1);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101297, 'g_101297', 'CLASSIC', 'TITLES', 'NORMAL', 'איזו קבוצה זכתה בהליגה האירופית בשנת 2016?', 'סביליה זכתה בהליגה האירופית 2016 בגמר מול ליברפול (3–1).', 1, 1, 'טבלת גמרי הליגה האירופית', 'סביליה', 1, 'uel_winner:2016', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101297, 'g_101297', 'CLASSIC', 'TITLES', 'NORMAL', 'איזו קבוצה זכתה בליגה האירופית בשנת 2016?', 'סביליה זכתה בליגה האירופית 2016 בגמר מול ליברפול (3–1).', 1, 1, 'טבלת גמרי הליגה האירופית', 'סביליה', 1, 'uel_winner:2016', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101297, 'סביליה', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101297, 'שאלקה 04', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101297, 'ליברפול', 0, 2);
@@ -22542,7 +22542,7 @@ INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (101297
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101297, 'המועדון פועל במדינה: ספרד', 0);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101297, 'השם מתחיל באות ס', 1);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101298, 'g_101298', 'CLASSIC', 'TITLES', 'NORMAL', 'איזו קבוצה זכתה בהליגה האירופית בשנת 2017?', 'מנצ''סטר יונייטד זכתה בהליגה האירופית 2017 בגמר מול אייאקס (2–0).', 1, 1, 'טבלת גמרי הליגה האירופית', 'מנצ''סטר יונייטד', 1, 'uel_winner:2017', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101298, 'g_101298', 'CLASSIC', 'TITLES', 'NORMAL', 'איזו קבוצה זכתה בליגה האירופית בשנת 2017?', 'מנצ''סטר יונייטד זכתה בליגה האירופית 2017 בגמר מול אייאקס (2–0).', 1, 1, 'טבלת גמרי הליגה האירופית', 'מנצ''סטר יונייטד', 1, 'uel_winner:2017', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101298, 'מנצ''סטר יונייטד', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101298, 'אטאלנטה', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101298, 'באיירן מינכן', 0, 2);
@@ -22559,7 +22559,7 @@ INSERT INTO question_hints (question_id, text, order_index) VALUES (101298, 'ה�
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101298, 'האצטדיון הביתי: אולד טראפורד', 1);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101298, 'השם מתחיל באות מ', 2);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101299, 'g_101299', 'CLASSIC', 'TITLES', 'EASY', 'איזו קבוצה זכתה בהליגה האירופית בשנת 2018?', 'אתלטיקו מדריד זכתה בהליגה האירופית 2018 בגמר מול מארסיי (3–0).', 1, 1, 'טבלת גמרי הליגה האירופית', 'אתלטיקו מדריד', 1, 'uel_winner:2018', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101299, 'g_101299', 'CLASSIC', 'TITLES', 'EASY', 'איזו קבוצה זכתה בליגה האירופית בשנת 2018?', 'אתלטיקו מדריד זכתה בליגה האירופית 2018 בגמר מול מארסיי (3–0).', 1, 1, 'טבלת גמרי הליגה האירופית', 'אתלטיקו מדריד', 1, 'uel_winner:2018', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101299, 'אתלטיקו מדריד', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101299, 'גלאטסראי', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101299, 'אסטון וילה', 0, 2);
@@ -22573,7 +22573,7 @@ INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (101299
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101299, 'המועדון פועל במדינה: ספרד', 0);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101299, 'השם מתחיל באות א', 1);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101300, 'g_101300', 'CLASSIC', 'TITLES', 'EASY', 'איזו קבוצה זכתה בהליגה האירופית בשנת 2019?', 'צ''לסי זכתה בהליגה האירופית 2019 בגמר מול ארסנל (4–1).', 1, 1, 'טבלת גמרי הליגה האירופית', 'צ''לסי', 1, 'uel_winner:2019', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101300, 'g_101300', 'CLASSIC', 'TITLES', 'EASY', 'איזו קבוצה זכתה בליגה האירופית בשנת 2019?', 'צ''לסי זכתה בליגה האירופית 2019 בגמר מול ארסנל (4–1).', 1, 1, 'טבלת גמרי הליגה האירופית', 'צ''לסי', 1, 'uel_winner:2019', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101300, 'צ''לסי', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101300, 'איינטרכט פרנקפורט', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101300, 'אייאקס', 0, 2);
@@ -22587,7 +22587,7 @@ INSERT INTO question_hints (question_id, text, order_index) VALUES (101300, 'ה�
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101300, 'האצטדיון הביתי: סטמפורד ברידג''', 1);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101300, 'השם מתחיל באות צ', 2);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101301, 'g_101301', 'CLASSIC', 'TITLES', 'EASY', 'איזו קבוצה זכתה בהליגה האירופית בשנת 2020?', 'סביליה זכתה בהליגה האירופית 2020 בגמר מול אינטר מילאנו (3–2).', 1, 1, 'טבלת גמרי הליגה האירופית', 'סביליה', 1, 'uel_winner:2020', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101301, 'g_101301', 'CLASSIC', 'TITLES', 'EASY', 'איזו קבוצה זכתה בליגה האירופית בשנת 2020?', 'סביליה זכתה בליגה האירופית 2020 בגמר מול אינטר מילאנו (3–2).', 1, 1, 'טבלת גמרי הליגה האירופית', 'סביליה', 1, 'uel_winner:2020', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101301, 'סביליה', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101301, 'צ''לסי', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101301, 'ליברפול', 0, 2);
@@ -22599,7 +22599,7 @@ INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (101301
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101301, 'המועדון פועל במדינה: ספרד', 0);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101301, 'השם מתחיל באות ס', 1);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101302, 'g_101302', 'CLASSIC', 'TITLES', 'EASY', 'איזו קבוצה זכתה בהליגה האירופית בשנת 2021?', 'ויאריאל זכתה בהליגה האירופית 2021 בגמר מול מנצ''סטר יונייטד (1–1 (פנדלים)).', 1, 1, 'טבלת גמרי הליגה האירופית', 'ויאריאל', 1, 'uel_winner:2021', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101302, 'g_101302', 'CLASSIC', 'TITLES', 'EASY', 'איזו קבוצה זכתה בליגה האירופית בשנת 2021?', 'ויאריאל זכתה בליגה האירופית 2021 בגמר מול מנצ''סטר יונייטד (1–1 (פנדלים)).', 1, 1, 'טבלת גמרי הליגה האירופית', 'ויאריאל', 1, 'uel_winner:2021', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101302, 'ויאריאל', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101302, 'ולנסיה', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101302, 'אינטר מילאנו', 0, 2);
@@ -22611,7 +22611,7 @@ INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (101302
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101302, 'המועדון פועל במדינה: ספרד', 0);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101302, 'השם מתחיל באות ו', 1);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101303, 'g_101303', 'CLASSIC', 'TITLES', 'EASY', 'איזו קבוצה זכתה בהליגה האירופית בשנת 2022?', 'איינטרכט פרנקפורט זכתה בהליגה האירופית 2022 בגמר מול ריינג''רס (1–1 (פנדלים)).', 1, 1, 'טבלת גמרי הליגה האירופית', 'איינטרכט פרנקפורט', 1, 'uel_winner:2022', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101303, 'g_101303', 'CLASSIC', 'TITLES', 'EASY', 'איזו קבוצה זכתה בליגה האירופית בשנת 2022?', 'איינטרכט פרנקפורט זכתה בליגה האירופית 2022 בגמר מול ריינג''רס (1–1 (פנדלים)).', 1, 1, 'טבלת גמרי הליגה האירופית', 'איינטרכט פרנקפורט', 1, 'uel_winner:2022', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101303, 'איינטרכט פרנקפורט', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101303, 'פורטו', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101303, 'אינטר מילאנו', 0, 2);
@@ -22625,7 +22625,7 @@ INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (101303
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101303, 'המועדון פועל במדינה: גרמניה', 0);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101303, 'השם מתחיל באות א', 1);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101304, 'g_101304', 'CLASSIC', 'TITLES', 'EASY', 'איזו קבוצה זכתה בהליגה האירופית בשנת 2023?', 'סביליה זכתה בהליגה האירופית 2023 בגמר מול רומא (1–1 (פנדלים)).', 1, 1, 'טבלת גמרי הליגה האירופית', 'סביליה', 1, 'uel_winner:2023', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101304, 'g_101304', 'CLASSIC', 'TITLES', 'EASY', 'איזו קבוצה זכתה בליגה האירופית בשנת 2023?', 'סביליה זכתה בליגה האירופית 2023 בגמר מול רומא (1–1 (פנדלים)).', 1, 1, 'טבלת גמרי הליגה האירופית', 'סביליה', 1, 'uel_winner:2023', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101304, 'סביליה', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101304, 'צ''לסי', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101304, 'צסק"א מוסקבה', 0, 2);
@@ -22637,7 +22637,7 @@ INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (101304
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101304, 'המועדון פועל במדינה: ספרד', 0);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101304, 'השם מתחיל באות ס', 1);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101305, 'g_101305', 'CLASSIC', 'TITLES', 'EASY', 'איזו קבוצה זכתה בהליגה האירופית בשנת 2024?', 'אטאלנטה זכתה בהליגה האירופית 2024 בגמר מול באייר לברקוזן (3–0).', 1, 1, 'טבלת גמרי הליגה האירופית', 'אטאלנטה', 1, 'uel_winner:2024', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101305, 'g_101305', 'CLASSIC', 'TITLES', 'EASY', 'איזו קבוצה זכתה בליגה האירופית בשנת 2024?', 'אטאלנטה זכתה בליגה האירופית 2024 בגמר מול באייר לברקוזן (3–0).', 1, 1, 'טבלת גמרי הליגה האירופית', 'אטאלנטה', 1, 'uel_winner:2024', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101305, 'אטאלנטה', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101305, 'אייאקס', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101305, 'מנצ''סטר יונייטד', 0, 2);
@@ -22649,7 +22649,7 @@ INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (101305
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101305, 'המועדון פועל במדינה: איטליה', 0);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101305, 'השם מתחיל באות א', 1);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101306, 'g_101306', 'CLASSIC', 'TITLES', 'EASY', 'איזו קבוצה זכתה בהליגה האירופית בשנת 2025?', 'טוטנהאם זכתה בהליגה האירופית 2025 בגמר מול מנצ''סטר יונייטד (1–0).', 1, 1, 'טבלת גמרי הליגה האירופית', 'טוטנהאם', 1, 'uel_winner:2025', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101306, 'g_101306', 'CLASSIC', 'TITLES', 'EASY', 'איזו קבוצה זכתה בליגה האירופית בשנת 2025?', 'טוטנהאם זכתה בליגה האירופית 2025 בגמר מול מנצ''סטר יונייטד (1–0).', 1, 1, 'טבלת גמרי הליגה האירופית', 'טוטנהאם', 1, 'uel_winner:2025', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101306, 'טוטנהאם', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101306, 'באיירן מינכן', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101306, 'שחטאר דונייצק', 0, 2);
@@ -22664,7 +22664,7 @@ INSERT INTO answer_aliases (question_id, alias, normalized, lang) VALUES (101306
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101306, 'המועדון פועל במדינה: אנגליה', 0);
 INSERT INTO question_hints (question_id, text, order_index) VALUES (101306, 'השם מתחיל באות ט', 1);
 
-INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101307, 'g_101307', 'CLASSIC', 'TITLES', 'EASY', 'איזו קבוצה זכתה בהליגה האירופית בשנת 2026?', 'אסטון וילה זכתה בהליגה האירופית 2026 בגמר מול פרייבורג (3–0).', 1, 1, 'טבלת גמרי הליגה האירופית', 'אסטון וילה', 1, 'uel_winner:2026', 1);
+INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he, verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated) VALUES (101307, 'g_101307', 'CLASSIC', 'TITLES', 'EASY', 'איזו קבוצה זכתה בליגה האירופית בשנת 2026?', 'אסטון וילה זכתה בליגה האירופית 2026 בגמר מול פרייבורג (3–0).', 1, 1, 'טבלת גמרי הליגה האירופית', 'אסטון וילה', 1, 'uel_winner:2026', 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101307, 'אסטון וילה', 1, 0);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101307, 'גלאטסראי', 0, 1);
 INSERT INTO question_options (question_id, answer_text, is_correct, sort_order) VALUES (101307, 'ולנסיה', 0, 2);

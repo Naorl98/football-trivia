@@ -89,6 +89,12 @@ function firstLetterHint(name: string): string {
   return `השם מתחיל באות ${name.trim()[0]}`;
 }
 
+// Hebrew merges the preposition ב with a following definite article ה:
+// "ב" + "הליגה האירופית" is written "בליגה האירופית", not "בהליגה האירופית".
+function withBe(name: string): string {
+  return name.startsWith("ה") ? `ב${name.slice(1)}` : `ב${name}`;
+}
+
 // ---------------------------------------------------------------------------
 // Player career generators
 // ---------------------------------------------------------------------------
@@ -478,10 +484,10 @@ function generateClubFinals(
         mode: "CLASSIC",
         category,
         difficulty: difficultyForYear(final.year),
-        questionHe: `איזו קבוצה זכתה ב${compHe} בשנת ${final.year}?`,
+        questionHe: `איזו קבוצה זכתה ${withBe(compHe)} בשנת ${final.year}?`,
         explanationHe: final.runnerUp && isReal(final.runnerUp)
-          ? `${winner.he} זכתה ב${compHe} ${final.year} בגמר מול ${clubOf(final.runnerUp).he}${final.score ? ` (${final.score})` : ""}.`
-          : `${winner.he} זכתה ב${compHe} בשנת ${final.year}.`,
+          ? `${winner.he} זכתה ${withBe(compHe)} ${final.year} בגמר מול ${clubOf(final.runnerUp).he}${final.score ? ` (${final.score})` : ""}.`
+          : `${winner.he} זכתה ${withBe(compHe)} בשנת ${final.year}.`,
         options: [winner.he, ...winnerDistractors.map((c) => c.he)],
         correctIndex: 0,
         scopes: baseScopes,
@@ -534,8 +540,8 @@ function generateClubFinals(
       mode: "CLASSIC",
       category,
       difficulty: count >= 7 ? "NORMAL" : "HARD",
-      questionHe: `כמה פעמים זכתה ${c.he} ב${compHe}?`,
-      explanationHe: `${c.he} זכתה ב${compHe} ${count} פעמים.`,
+      questionHe: `כמה פעמים זכתה ${c.he} ${withBe(compHe)}?`,
+      explanationHe: `${c.he} זכתה ${withBe(compHe)} ${count} פעמים.`,
       options: [String(count), ...wrong.slice(0, 3).map(String)],
       correctIndex: 0,
       scopes: [
@@ -581,7 +587,7 @@ function generateNationFinals(
         mode: "CLASSIC",
         category,
         difficulty: difficultyForYear(final.year),
-        questionHe: `איזו נבחרת זכתה ב${compHe} ${final.year}?`,
+        questionHe: `איזו נבחרת זכתה ${withBe(compHe)} ${final.year}?`,
         explanationHe: `${winner.he} ניצחה את ${runnerUp.he} בגמר ${final.year} (${final.score}).`,
         options: [winner.he, ...winnerDistractors.map((n) => NATIONS[n].he)],
         correctIndex: 0,

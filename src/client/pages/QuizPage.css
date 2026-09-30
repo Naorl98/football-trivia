@@ -79,6 +79,10 @@
 }
 
 .option-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   text-align: right;
   background: var(--surface);
   border: 1.5px solid var(--border-strong);
@@ -91,6 +95,14 @@
   transition: all 0.15s ease;
   min-height: 56px;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* State is carried by an icon as well as colour, so the correct/incorrect
+   distinction survives colour-blindness and greyscale. */
+.option-mark {
+  flex-shrink: 0;
+  font-weight: 900;
+  font-size: 15px;
 }
 
 .option-btn:not(:disabled):hover {
@@ -143,4 +155,60 @@
   padding: 20px 20px calc(18px + env(safe-area-inset-bottom));
   max-width: var(--container-max);
   margin-inline: auto;
+}
+
+/* ---------- Question entrance transitions ----------
+   Four short variants, cycled by question index so consecutive questions
+   never animate identically. All are 200-500ms and GPU-friendly. */
+
+@keyframes t-slide-in {
+  from { opacity: 0; transform: translateX(28px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.t-slide { animation: t-slide-in 0.32s cubic-bezier(0.22, 0.85, 0.3, 1) both; }
+
+@keyframes t-flip-in {
+  from { opacity: 0; transform: perspective(900px) rotateX(-12deg) translateY(16px); }
+  to   { opacity: 1; transform: perspective(900px) rotateX(0) translateY(0); }
+}
+.t-flip { animation: t-flip-in 0.42s cubic-bezier(0.22, 0.9, 0.28, 1) both; }
+
+/* Stadium spotlight opening on the question. */
+@keyframes t-spotlight-in {
+  from { opacity: 0; clip-path: circle(22% at 50% 38%); }
+  to   { opacity: 1; clip-path: circle(140% at 50% 38%); }
+}
+.t-spotlight { animation: t-spotlight-in 0.46s ease-out both; }
+
+@keyframes t-rise-in {
+  from { opacity: 0; transform: translateY(22px) scale(0.985); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.t-rise { animation: t-rise-in 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+
+/* ---------- Answer feedback flash ---------- */
+.answer-flash {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  animation: flash-fade 0.6s ease-out forwards;
+}
+
+@keyframes flash-fade {
+  0%   { opacity: 0.85; }
+  100% { opacity: 0; }
+}
+
+.flash-correct {
+  background: radial-gradient(ellipse 120% 70% at 50% 100%, rgba(29, 185, 84, 0.3), transparent 65%);
+}
+
+.flash-wrong {
+  background: radial-gradient(ellipse 120% 70% at 50% 100%, rgba(239, 68, 68, 0.22), transparent 65%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-slide, .t-flip, .t-spotlight, .t-rise { animation: none; }
+  .answer-flash { display: none; }
 }

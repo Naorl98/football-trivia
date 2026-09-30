@@ -1,6 +1,6 @@
 import { QUESTION_COUNTS } from "../../shared/constants";
 import { DIFFICULTIES } from "../../shared/types";
-import type { Category, Difficulty, GameMode, QuizConfiguration, Region } from "../../shared/types";
+import type { AnswerMode, Category, Difficulty, GameMode, QuizConfiguration, Region } from "../../shared/types";
 
 const VALID_REGIONS: Region[] = ["WORLD", "EUROPE", "SOUTH_AMERICA", "NORTH_AMERICA", "AFRICA", "ASIA", "OCEANIA"];
 const VALID_MODES: GameMode[] = ["CLASSIC", "WHO_AM_I", "CAREER_PATH", "CLUB_CONNECTION", "HIGHER_LOWER", "GUESS_THE_CLUB"];
@@ -44,6 +44,17 @@ export function parseQuizConfiguration(body: unknown): QuizConfiguration {
     throw new ValidationError("Invalid gameMode");
   }
 
+  // answerMode is optional so older clients and stored challenge
+  // configurations keep working as multiple choice.
+  const answerMode = b.answerMode ?? "MULTIPLE_CHOICE";
+  if (answerMode !== "MULTIPLE_CHOICE" && answerMode !== "FREE_TEXT") {
+    throw new ValidationError("Invalid answerMode");
+  }
+
+  const excludeQuestionIds = Array.isArray(b.excludeQuestionIds)
+    ? b.excludeQuestionIds.filter((id) => Number.isInteger(id)).slice(0, 400)
+    : [];
+
   return {
     region: region as Region | null,
     countries: countries as string[],
@@ -52,5 +63,7 @@ export function parseQuizConfiguration(body: unknown): QuizConfiguration {
     difficulty: difficulty as Difficulty | "MIXED",
     questionCount: questionCount as QuizConfiguration["questionCount"],
     gameMode: gameMode as GameMode,
+    answerMode: answerMode as AnswerMode,
+    excludeQuestionIds: excludeQuestionIds as number[],
   };
 }

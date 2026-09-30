@@ -10,9 +10,10 @@ import {
   QUESTION_COUNTS,
   REGIONS,
 } from "../../shared/constants";
-import type { Category, Difficulty, GameMode, QuizConfiguration, Region } from "../../shared/types";
+import type { AnswerMode, Category, Difficulty, GameMode, QuizConfiguration, Region } from "../../shared/types";
 import { fetchAvailableCount } from "../lib/api";
 import { startQuiz } from "../lib/startQuiz";
+import { sound } from "../lib/sound";
 import "./BuilderPage.css";
 
 const DIFFICULTY_OPTIONS: (Difficulty | "MIXED")[] = ["MIXED", "EASY", "NORMAL", "HARD", "EXPERT", "IMPOSSIBLE"];
@@ -27,6 +28,7 @@ export function BuilderPage() {
   const [difficulty, setDifficulty] = useState<Difficulty | "MIXED">("MIXED");
   const [questionCount, setQuestionCount] = useState<(typeof QUESTION_COUNTS)[number]>(10);
   const [gameMode, setGameMode] = useState<GameMode>("CLASSIC");
+  const [answerMode, setAnswerMode] = useState<AnswerMode>("MULTIPLE_CHOICE");
 
   const [availableCount, setAvailableCount] = useState<number | null>(null);
   const [counting, setCounting] = useState(false);
@@ -34,8 +36,8 @@ export function BuilderPage() {
   const [error, setError] = useState<string | null>(null);
 
   const config: QuizConfiguration = useMemo(
-    () => ({ region, countries, competitions, categories, difficulty, questionCount, gameMode }),
-    [region, countries, competitions, categories, difficulty, questionCount, gameMode]
+    () => ({ region, countries, competitions, categories, difficulty, questionCount, gameMode, answerMode }),
+    [region, countries, competitions, categories, difficulty, questionCount, gameMode, answerMode]
   );
 
   useEffect(() => {
@@ -60,6 +62,8 @@ export function BuilderPage() {
   async function handleStart() {
     setError(null);
     setStarting(true);
+    // First real gesture of the session — safe point to arm the audio context.
+    sound.play("click");
     try {
       await startQuiz(navigate, config);
     } catch (e) {
@@ -76,6 +80,30 @@ export function BuilderPage() {
     <div className="container builder">
       <h1 className="builder-title">בנו את החידון שלכם</h1>
       <p className="text-dim">התאימו אישית את החידון — טווח גיאוגרפי, ליגות, קטגוריות ורמת קושי.</p>
+
+      <section className="builder-section">
+        <h2>איך עונים?</h2>
+        <div className="answer-mode-row">
+          <button
+            className={`answer-mode ${answerMode === "MULTIPLE_CHOICE" ? "selected" : ""}`}
+            onClick={() => setAnswerMode("MULTIPLE_CHOICE")}
+            aria-pressed={answerMode === "MULTIPLE_CHOICE"}
+          >
+            <span className="answer-mode-emoji" aria-hidden="true">📝</span>
+            <span className="answer-mode-title">אמריקאי</span>
+            <span className="answer-mode-sub">בוחרים מתוך 4 תשובות</span>
+          </button>
+          <button
+            className={`answer-mode ${answerMode === "FREE_TEXT" ? "selected" : ""}`}
+            onClick={() => setAnswerMode("FREE_TEXT")}
+            aria-pressed={answerMode === "FREE_TEXT"}
+          >
+            <span className="answer-mode-emoji" aria-hidden="true">⌨️</span>
+            <span className="answer-mode-title">תשובה חופשית</span>
+            <span className="answer-mode-sub">מקלידים בעצמכם — עם רמזים</span>
+          </button>
+        </div>
+      </section>
 
       <section className="builder-section">
         <h2>סוג משחק</h2>

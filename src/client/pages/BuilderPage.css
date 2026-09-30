@@ -50,3 +50,66 @@
 .text-danger {
   color: var(--danger);
 }
+
+/* ---------- Answer mode selector ---------- */
+.answer-mode-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.answer-mode {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  text-align: right;
+  padding: 16px 14px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.answer-mode:hover {
+  background: var(--surface-hover);
+}
+
+.answer-mode:active {
+  transform: scale(0.98);
+}
+
+.answer-mode.selected {
+  border-color: var(--pitch-green);
+  background: rgba(29, 185, 84, 0.12);
+  box-shadow: 0 0 0 1px rgba(29, 185, 84, 0.3);
+}
+
+.answer-mode-emoji {
+  font-size: 20px;
+  margin-bottom: 2px;
+}
+
+.answer-mode-title {
+  font-weight: 800;
+  font-size: 15.5px;
+}
+
+.answer-mode.selected .answer-mode-title {
+  color: var(--pitch-green-bright);
+}
+
+.answer-mode-sub {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.35;
+}
+
+@media (max-width: 380px) {
+  .answer-mode-row {
+    grid-template-columns: 1fr;
+  }
+}

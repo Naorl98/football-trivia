@@ -240,3 +240,62 @@ img, svg {
 @media (max-width: 480px) {
   .container { padding-inline: 16px; }
 }
+
+/* ---------- Ambient stadium background ----------
+   A fixed, pointer-events-free layer: faint pitch lines plus a slow
+   floodlight drift. Purely decorative, cheap to composite, and disabled
+   under reduced-motion. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background-image:
+    /* halfway line + centre circle, very faint */
+    linear-gradient(to bottom, transparent calc(50% - 1px), rgba(255, 255, 255, 0.022) 50%, transparent calc(50% + 1px)),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.012) 0 1px, transparent 1px 140px);
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: -20%;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(circle 420px at 50% 20%, rgba(29, 185, 84, 0.07), transparent 70%);
+  animation: floodlight 22s ease-in-out infinite alternate;
+}
+
+@keyframes floodlight {
+  0%   { transform: translate3d(-8%, 0, 0); }
+  100% { transform: translate3d(8%, 4%, 0); }
+}
+
+/* ---------- Microinteractions ---------- */
+.btn:focus-visible,
+.pill:focus-visible,
+.option-btn:focus-visible,
+.card-interactive:focus-visible,
+.answer-mode:focus-visible {
+  outline: 2px solid var(--pitch-green-bright);
+  outline-offset: 3px;
+}
+
+.pill:active {
+  transform: scale(0.96);
+}
+
+/* ---------- Global reduced-motion contract ----------
+   Honour the OS setting everywhere rather than per-component. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  body::after { animation: none; }
+}

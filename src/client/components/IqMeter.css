@@ -1,0 +1,60 @@
+.iq-meter {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  margin-inline: auto;
+}
+
+.iq-svg {
+  width: 100%;
+  height: 100%;
+  /* Start the arc at the top and run clockwise. */
+  transform: rotate(-90deg);
+}
+
+.iq-track {
+  fill: none;
+  stroke: var(--bg-elevated);
+  stroke-width: 12;
+}
+
+.iq-progress {
+  fill: none;
+  stroke: url(#iq-grad);
+  stroke-width: 12;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 8px rgba(29, 185, 84, 0.45));
+}
+
+.iq-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+}
+
+.iq-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.iq-value {
+  font-size: 52px;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.iq-rank {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--gold-bright);
+  margin-top: 2px;
+}

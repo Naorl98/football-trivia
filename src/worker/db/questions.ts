@@ -1,4 +1,12 @@
-import type { Category, Difficulty, GameMode, Question, QuestionClue, QuestionOption } from "../../shared/types";
+import type {
+  AnswerMode,
+  Category,
+  Difficulty,
+  GameMode,
+  Question,
+  QuestionClue,
+  QuestionOption,
+} from "../../shared/types";
 import { expandCompetitionCodes } from "../../shared/constants";
 
 export interface QuestionFilter {
@@ -8,6 +16,7 @@ export interface QuestionFilter {
   categories: Category[];
   difficulty: Difficulty | "MIXED";
   gameMode: GameMode;
+  answerMode: AnswerMode;
 }
 
 interface QuestionRow {
@@ -20,6 +29,8 @@ interface QuestionRow {
   explanation_he: string | null;
   verified: number;
   source_label: string | null;
+  canonical_answer: string | null;
+  supports_free_text: number;
 }
 
 // Builds the WHERE clause + bound params for the scope/category/difficulty
@@ -38,6 +49,12 @@ function buildWhere(filter: QuestionFilter): { where: string; params: unknown[] 
   if (filter.difficulty !== "MIXED") {
     clauses.push("q.difficulty = ?");
     params.push(filter.difficulty);
+  }
+
+  // Free-text quizzes can only use questions that carry a single canonical
+  // answer plus aliases.
+  if (filter.answerMode === "FREE_TEXT") {
+    clauses.push("q.supports_free_text = 1");
   }
 
   // "ALL" (or no selection) means "no competition restriction" — it must
@@ -81,12 +98,36 @@ export async function countAvailableQuestions(db: D1Database, filter: QuestionFi
 
 // Selects up to `limit` matching, active question ids at random. Never
 // duplicates: SQLite RANDOM() ordering over distinct rows guarantees uniqueness.
-export async function pickQuestionIds(db: D1Database, filter: QuestionFilter, limit: number): Promise<number[]> {
+//
+// `excludeIds` holds questions the player saw recently. They are pushed to the
+// back of the ordering rather than filtered out, so a player with a long
+// history still gets a full quiz instead of an empty one — fresh questions
+// first, recently-seen ones only to make up the numbers.
+export async function pickQuestionIds(
+  db: D1Database,
+  filter: QuestionFilter,
+  limit: number,
+  excludeIds: number[] = []
+): Promise<number[]> {
   const { where, params } = buildWhere(filter);
-  const stmt = db
-    .prepare(`SELECT q.id FROM questions q WHERE ${where} ORDER BY RANDOM() LIMIT ?`)
-    .bind(...params, limit);
-  const { results } = await stmt.all<{ id: number }>();
+
+  if (excludeIds.length === 0) {
+    const { results } = await db
+      .prepare(`SELECT q.id FROM questions q WHERE ${where} ORDER BY RANDOM() LIMIT ?`)
+      .bind(...params, limit)
+      .all<{ id: number }>();
+    return results.map((r) => r.id);
+  }
+
+  const placeholders = excludeIds.map(() => "?").join(",");
+  const { results } = await db
+    .prepare(
+      `SELECT q.id FROM questions q WHERE ${where}
+       ORDER BY (CASE WHEN q.id IN (${placeholders}) THEN 1 ELSE 0 END), RANDOM()
+       LIMIT ?`
+    )
+    .bind(...params, ...excludeIds, limit)
+    .all<{ id: number }>();
   return results.map((r) => r.id);
 }
 
@@ -106,7 +147,7 @@ export async function hydrateQuestions(db: D1Database, ids: number[]): Promise<Q
   if (ids.length === 0) return [];
 
   const placeholders = ids.map(() => "?").join(",");
-  const [questionRows, optionRows, clueRows] = await Promise.all([
+  const [questionRows, optionRows, clueRows, aliasRows, hintRows] = await Promise.all([
     db.prepare(`SELECT * FROM questions WHERE id IN (${placeholders})`).bind(...ids).all<QuestionRow>(),
     db
       .prepare(`SELECT * FROM question_options WHERE question_id IN (${placeholders}) ORDER BY sort_order ASC`)
@@ -116,6 +157,16 @@ export async function hydrateQuestions(db: D1Database, ids: number[]): Promise<Q
       .prepare(`SELECT * FROM question_clues WHERE question_id IN (${placeholders}) ORDER BY sort_order ASC`)
       .bind(...ids)
       .all<{ question_id: number; clue_he: string; sort_order: number }>(),
+    db
+      .prepare(`SELECT question_id, alias FROM answer_aliases WHERE question_id IN (${placeholders})`)
+      .bind(...ids)
+      .all<{ question_id: number; alias: string }>(),
+    db
+      .prepare(
+        `SELECT question_id, text FROM question_hints WHERE question_id IN (${placeholders}) ORDER BY order_index ASC`
+      )
+      .bind(...ids)
+      .all<{ question_id: number; text: string }>(),
   ]);
 
   const optionsByQuestion = new Map<number, QuestionOption[]>();
@@ -130,6 +181,16 @@ export async function hydrateQuestions(db: D1Database, ids: number[]): Promise<Q
     const list = cluesByQuestion.get(row.question_id) ?? [];
     list.push({ text: row.clue_he, order: row.sort_order });
     cluesByQuestion.set(row.question_id, list);
+  }
+
+  const aliasesByQuestion = new Map<number, string[]>();
+  for (const row of aliasRows.results) {
+    aliasesByQuestion.set(row.question_id, [...(aliasesByQuestion.get(row.question_id) ?? []), row.alias]);
+  }
+
+  const hintsByQuestion = new Map<number, string[]>();
+  for (const row of hintRows.results) {
+    hintsByQuestion.set(row.question_id, [...(hintsByQuestion.get(row.question_id) ?? []), row.text]);
   }
 
   const byId = new Map<number, QuestionRow>();
@@ -151,6 +212,10 @@ export async function hydrateQuestions(db: D1Database, ids: number[]): Promise<Q
       clues: cluesByQuestion.get(row.id) ?? [],
       verified: row.verified === 1,
       sourceLabel: row.source_label,
+      supportsFreeText: row.supports_free_text === 1,
+      canonicalAnswer: row.canonical_answer,
+      aliases: aliasesByQuestion.get(row.id) ?? [],
+      hints: hintsByQuestion.get(row.id) ?? [],
     });
   }
   return questions;

@@ -48,12 +48,52 @@ npm run dev                        # Vite dev server (client + Worker API togeth
 
 Then open http://localhost:5173.
 
+## Answer modes
+
+Players choose between **אמריקאי** (multiple choice) and **תשובה חופשית** (free text)
+in the builder. Free text is only offered for questions with a single unambiguous
+canonical answer plus stored aliases — `questions.supports_free_text`. Club-connection
+questions stay multiple-choice on purpose, because players outside the dataset may also
+satisfy "played for both X and Y".
+
+### Answer matching
+
+`src/shared/answerMatching.ts` is the single matcher, used by the client and covered by
+64 unit tests. It applies, in order:
+
+1. **normalize** — case, Unicode NFD, Latin diacritics, Hebrew niqqud, punctuation
+   (so `Vinícius`, `vinicius` and `Paris Saint-Germain` / `Paris Saint Germain` converge)
+2. **exact / alias** — against the canonical answer and every stored alias
+3. **token** — same words in a different order
+4. **fuzzy** — Damerau-Levenshtein within a length-scaled budget: 0 edits at ≤4 chars,
+   1 at ≤7, 2 at ≤12, 3 beyond. So `Vinicuis` passes but `Kang` never matches `Kane`.
+
+Arbitrary substrings are never accepted — `Ronaldo` matches Cristiano Ronaldo only
+because that alias is stored on the question, and `Junior` alone is rejected.
+
+### Hints and reveal
+
+Free-text questions carry ordered hints (`question_hints`) revealed one at a time by
+**רמז**, and a **גלה תשובה** button that requires a second, deliberate click. A revealed
+answer is scored as not-correct and reported separately in the results.
+
+## Sound
+
+All cues are synthesised at runtime with the Web Audio API — there are no audio files to
+download or cache. The engine creates nothing until the first user gesture (respecting
+autoplay policy), persists the on/off choice in localStorage, and swallows every audio
+error so sound can never break gameplay. Toggle lives in the header.
+
 ## Testing
 
 ```bash
-node scripts/smoke-test.mjs http://localhost:5173   # 34 API assertions
-node scripts/ui-test.mjs    http://localhost:5173   # 31 browser assertions (headless Chrome)
-node scripts/screenshots.mjs                         # visual snapshots into screenshots/
+node --test "tests/**/*.test.ts"                      # 64 answer-matching unit tests
+node scripts/smoke-test.mjs      http://localhost:5173 # 34 API assertions
+node scripts/ui-test.mjs         http://localhost:5173 # 31 browser assertions
+node scripts/freetext-ui-test.mjs http://localhost:5173 # 30 free-text assertions
+node scripts/challenge-e2e.mjs   http://localhost:5173 # 4 challenge round-trip assertions
+node scripts/viewport-qa.mjs     http://localhost:5173 # 147 layout checks across 7 viewports
+node scripts/screenshots.mjs                           # visual snapshots
 ```
 
 The UI test drives a locally installed Chrome via Playwright (`channel: "chrome"`), so no

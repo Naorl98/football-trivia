@@ -30,6 +30,7 @@ quizRoutes.post("/count", async (c) => {
       categories: config.categories,
       difficulty: config.difficulty,
       gameMode: config.gameMode,
+      answerMode: config.answerMode,
     });
     return c.json({ availableCount: count });
   } catch (err) {

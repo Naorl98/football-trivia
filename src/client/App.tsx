@@ -1,6 +1,7 @@
 import { Route, Routes } from "react-router-dom";
 import { Header } from "./components/Header";
 import { ScrollToTop } from "./components/ScrollToTop";
+import { BrandIntro } from "./components/BrandIntro";
 import { HomePage } from "./pages/HomePage";
 import { BuilderPage } from "./pages/BuilderPage";
 import { QuizPage } from "./pages/QuizPage";
@@ -12,6 +13,7 @@ import { NotFoundPage } from "./pages/NotFoundPage";
 export default function App() {
   return (
     <>
+      <BrandIntro />
       <ScrollToTop />
       <Header />
       <main style={{ flex: 1, display: "flex", flexDirection: "column" }}>
