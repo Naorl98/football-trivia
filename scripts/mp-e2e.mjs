@@ -584,6 +584,14 @@ async function testTurnBased() {
   check(!!first, "the room announces whose turn it is");
   check(first?.playerId === host.you, "the first turn belongs to the first player to join", first?.name);
 
+  // The HOST receiving the turn announcement does not mean the other two sockets
+  // have the question yet. Reading `a.question` off the back of the host's message
+  // threw against the deployment, where the gap between sockets is real.
+  const everyoneHasIt = await Promise.all(
+    [host, a, b].map((client) => client.waitForType("QUESTION_STARTED", { timeout: 15_000 }))
+  );
+  check(everyoneHasIt.every(Boolean), "and the question reaches all three players");
+
   // Somebody whose turn it is not may not answer.
   const errorsBefore = a.errors.length;
   answer(a, a.question.options[0].id);
