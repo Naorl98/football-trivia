@@ -182,7 +182,14 @@ export function clubHintCandidates(
   const region = regionOf(facts.countryName);
   const country = countryHe(facts.countryName);
   const league = competitionHe(facts.localCode);
-  const cup = (facts.cupCodes ?? []).map(competitionHe).find(Boolean);
+  // A club's own competition can also appear in its cup list, and then the two
+  // hints name the same trophy in slightly different words — "הוא משחק בליגת
+  // האלופות" followed by "הוא שיחק בליגת האלופות". Deduplicating on the sentence
+  // does not catch that; deduplicating on the competition does.
+  const cup = (facts.cupCodes ?? [])
+    .filter((code) => code !== facts.localCode)
+    .map(competitionHe)
+    .find((name) => Boolean(name) && name !== league);
 
   return [
     ...hint(1, region && separates((f) => regionOf(f.countryName)) ? `המועדון מ${region}` : null),

@@ -70,7 +70,17 @@ function tidyNames(rows) {
 // ---- Read the facts.
 const teams = await db.query(`
   SELECT t.id, t.name, t.name_he, t.country_name, t.founded,
-         v.name AS venue_name, c.local_code, MIN(c.priority) AS competition_priority
+         v.name AS venue_name, MIN(c.priority) AS competition_priority,
+         -- A club's own division, preferred over whatever competition the join
+         -- happens to reach first. Without the type filter a club that has played
+         -- in Europe gets local_code 'UCL', and then its "league" hint names the
+         -- Champions League while its cup hint names it again.
+         (SELECT c2.local_code
+            FROM team_seasons ts2
+            JOIN competitions c2 ON c2.id = ts2.competition_id
+           WHERE ts2.team_id = t.id AND c2.local_code IS NOT NULL
+           ORDER BY CASE WHEN c2.type = 'LEAGUE' THEN 0 ELSE 1 END, c2.priority, c2.id
+           LIMIT 1) AS local_code
     FROM teams t
     LEFT JOIN venues v ON v.id = t.venue_id
     LEFT JOIN team_seasons ts ON ts.team_id = t.id
