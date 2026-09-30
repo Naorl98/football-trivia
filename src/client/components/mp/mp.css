@@ -1,0 +1,1245 @@
+/* ============================================================
+   Football IQ — multiplayer
+   ============================================================
+
+   Same night-match palette as the rest of the product, and the same three rules
+   from tokens.css: no print/editorial system, no neon dashboard, colour is
+   scarce. Green still means "correct / yours / go", gold still means "the
+   scoreline", and shadows are still neutral black.
+
+   What multiplayer adds is a BROADCAST register: a scoreboard strip, a team
+   sheet, a tunnel, a podium. Those are structures, not decoration — a live score
+   really is a scoreboard and a lobby really is a team sheet — which is why none
+   of this is built from generic cards with headings.
+
+   Everything is RTL-first: logical properties throughout, and the only physical
+   directions are in the duel and podium compositions, which are symmetrical and
+   would be wrong if they flipped.
+   ============================================================ */
+
+/* ============================================================
+   Room code slab — the matchday ticket
+   ============================================================ */
+.mp-code {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 18px;
+  align-items: center;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  /* An inset scoreboard face: darker than the page, lit from the top. */
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 60%),
+    var(--bg-deep);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), var(--shadow-1);
+}
+
+.mp-code-label {
+  margin-block-end: 2px;
+  letter-spacing: 0.14em;
+}
+
+.mp-code-digits {
+  font-size: clamp(2.1rem, 9vw, 3rem);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--amber);
+  /* Locked to LTR: a code is a number read left to right, even in an RTL page. */
+  direction: ltr;
+  text-align: start;
+}
+
+.mp-code-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block-start: 14px;
+}
+
+.mp-code-qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  color: var(--text);
+}
+
+.mp-qr {
+  border-radius: var(--r-sm);
+}
+
+.mp-code-scan {
+  text-align: center;
+  max-width: 14ch;
+  line-height: 1.3;
+}
+
+.mp-code.is-compact {
+  padding: 14px;
+  gap: 14px;
+}
+
+.mp-code.is-compact .mp-code-digits {
+  font-size: clamp(1.7rem, 7vw, 2.2rem);
+}
+
+@media (max-width: 460px) {
+  .mp-code {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+  .mp-code-digits { text-align: center; }
+  .mp-code-actions { justify-content: center; }
+}
+
+/* ============================================================
+   Phase clock
+   ============================================================ */
+.mp-clock {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  flex: none;
+}
+
+.mp-clock-ring {
+  position: absolute;
+  inset: 0;
+  /* The ring drains anticlockwise from the top. */
+  transform: rotate(-90deg);
+}
+
+.mp-clock-track {
+  fill: none;
+  stroke: var(--surface-3);
+  stroke-width: 3.5;
+}
+
+.mp-clock-fill {
+  fill: none;
+  stroke: var(--green);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 140ms linear, stroke 200ms var(--ease);
+}
+
+.mp-clock-num {
+  position: relative;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.mp-clock.is-urgent .mp-clock-fill { stroke: var(--red); }
+.mp-clock.is-urgent .mp-clock-num { color: var(--red); }
+
+/* ============================================================
+   Connection badge
+   ============================================================ */
+.mp-conn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  align-self: center;
+  margin-block: 10px;
+  padding: 5px 12px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-family: var(--font-head);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.mp-conn-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--amber);
+  animation: wait-pulse 1.4s var(--ease) infinite;
+}
+
+.mp-conn-closed { color: var(--red); }
+.mp-conn-closed .mp-conn-dot { background: var(--red); animation: none; }
+
+/* ============================================================
+   Reactions
+   ============================================================ */
+.mp-reactions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-block: 16px 4px;
+}
+
+.mp-reaction {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--t-1) var(--ease), background-color var(--t-2) var(--ease);
+}
+
+.mp-reaction:hover:not(:disabled) {
+  background: var(--surface-2);
+  transform: translateY(-2px);
+}
+
+.mp-reaction:active:not(:disabled) { transform: scale(0.9); }
+.mp-reaction:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Pinned to the inline edge and non-interactive, so a burst can never cover the
+   question or swallow a tap — the failure mode that makes reactions annoying. */
+.mp-burst {
+  position: fixed;
+  inset-block-end: 90px;
+  inset-inline-end: 14px;
+  z-index: 40;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 2px;
+  pointer-events: none;
+}
+
+.mp-burst-item {
+  font-size: 1.5rem;
+  animation: reaction-float 1800ms var(--ease) forwards;
+}
+
+/* ============================================================
+   Countdown
+   ============================================================ */
+.mp-count {
+  display: grid;
+  place-items: center;
+  min-height: 34vh;
+}
+
+.mp-count-num {
+  font-size: clamp(4.5rem, 24vw, 9rem);
+  font-weight: 900;
+  line-height: 1;
+  color: var(--green);
+  letter-spacing: -0.04em;
+}
+
+/* ============================================================
+   The VS intro — the tunnel
+   ============================================================ */
+.mp-vs {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+  min-height: 34vh;
+  padding: 24px 6px;
+  overflow: hidden;
+}
+
+.mp-vs-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mp-vs-shirt {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+}
+
+.mp-vs-left .mp-vs-shirt { color: var(--green); border-color: var(--green); background: var(--green-wash); }
+.mp-vs-right .mp-vs-shirt { color: var(--amber); border-color: var(--amber); background: var(--amber-wash); }
+
+.mp-vs-name {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: clamp(1rem, 4.6vw, 1.5rem);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.mp-vs-mid {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+}
+
+.mp-vs-word {
+  font-family: var(--font-head);
+  font-weight: 900;
+  font-size: 1.9rem;
+  letter-spacing: 0.04em;
+  color: var(--text);
+}
+
+.mp-vs-ball {
+  position: absolute;
+  color: var(--text);
+}
+
+.mp-vs-flash {
+  position: absolute;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  /* A floodlight flash, not a coloured glow: white at low alpha. */
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.5), transparent 68%);
+  opacity: 0;
+}
+
+.mp-vs.is-animated .mp-vs-left { animation: vs-from-start 620ms var(--ease) both; }
+.mp-vs.is-animated .mp-vs-right { animation: vs-from-end 620ms var(--ease) both; }
+.mp-vs.is-animated .mp-vs-ball { animation: vs-ball 780ms var(--ease) both; }
+.mp-vs.is-animated .mp-vs-word { animation: vs-word 900ms var(--ease) both; }
+.mp-vs.is-animated .mp-vs-flash { animation: vs-flash 900ms var(--ease) both; }
+
+/* ============================================================
+   Match found
+   ============================================================ */
+.mp-found {
+  position: relative;
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  min-height: 40vh;
+  text-align: center;
+}
+
+.mp-found-head {
+  font-family: var(--font-head);
+  font-weight: 900;
+  font-size: clamp(1.6rem, 8vw, 2.4rem);
+  color: var(--green);
+}
+
+.mp-found-name {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: clamp(1.2rem, 6vw, 1.8rem);
+  color: var(--text);
+}
+
+.mp-found-ring {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  width: 120px;
+  height: 120px;
+  border: 2px solid var(--green);
+  border-radius: 50%;
+  animation: found-ring 900ms var(--ease) both;
+}
+
+/* ============================================================
+   Round verdict
+   ============================================================ */
+.mp-verdict {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  align-self: center;
+  margin-block: 12px;
+  padding: 11px 20px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.mp-verdict-won { border-color: var(--green); background: var(--green-wash); color: var(--green-bright); }
+.mp-verdict-lost { border-color: var(--line-strong); color: var(--text-2); }
+.mp-verdict-draw { border-color: var(--blue); background: var(--blue-wash); color: var(--blue); }
+.mp-verdict-none { color: var(--text-3); }
+
+.mp-callout {
+  position: fixed;
+  inset-block-start: 26vh;
+  inset-inline-start: 50%;
+  z-index: 60;
+  padding: 8px 20px;
+  border-radius: var(--r-pill);
+  background: var(--amber);
+  color: var(--on-amber);
+  font-family: var(--font-head);
+  font-weight: 900;
+  font-size: 1.4rem;
+  pointer-events: none;
+}
+
+/* ============================================================
+   Matchmaking radar
+   ============================================================ */
+.mp-search {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+}
+
+.mp-search-pitch {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  place-items: center;
+  gap: 14px;
+  width: min(100%, 320px);
+  aspect-ratio: 16 / 9;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--bg-deep);
+  overflow: hidden;
+}
+
+/* The sweep is a conic wedge rotating behind everything else. */
+.mp-search-sweep {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  width: 260%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  background: conic-gradient(from 0deg, rgba(38, 196, 99, 0.22), transparent 26%, transparent 100%);
+  opacity: 0;
+}
+
+.mp-search.is-animated .mp-search-sweep {
+  opacity: 1;
+  animation: radar-sweep 3.2s linear infinite;
+}
+
+.mp-search-slot {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: var(--r-md);
+  border: 1px dashed var(--line-strong);
+  background: var(--surface);
+}
+
+.mp-search-slot.is-you {
+  border-style: solid;
+  border-color: var(--green);
+  background: var(--green-wash);
+  color: var(--green);
+}
+
+.mp-search-qmark {
+  font-family: var(--font-head);
+  font-weight: 900;
+  font-size: 1.5rem;
+  color: var(--text-3);
+}
+
+.mp-search-word {
+  position: relative;
+  font-family: var(--font-head);
+  font-weight: 900;
+  font-size: 1.1rem;
+  color: var(--text-2);
+}
+
+.mp-search-ball {
+  position: absolute;
+  inset-block-end: 14px;
+  color: var(--text-2);
+  animation: search-ball 2.6s var(--ease) infinite;
+}
+
+.mp-search-line {
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 1.02rem;
+  color: var(--text-2);
+  text-align: center;
+  min-height: 1.5em;
+}
+
+.mp-search-queue { color: var(--text-3); }
+
+/* ============================================================
+   VAR stamp
+   ============================================================ */
+.mp-var {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  margin-block: 10px;
+  padding: 9px 22px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.mp-var-scan {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 45%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14), transparent);
+  animation: var-scan 900ms var(--ease) infinite;
+}
+
+.mp-var-text {
+  position: relative;
+  font-family: var(--font-head);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.mp-var.is-approved { border-color: var(--green); background: var(--green-wash); }
+.mp-var.is-approved .mp-var-text { color: var(--green-bright); }
+.mp-var.is-rejected { border-color: var(--red); background: var(--red-wash); }
+.mp-var.is-rejected .mp-var-text { color: var(--red); }
+
+/* ============================================================
+   Team sheet — the lineup
+   ============================================================ */
+.mp-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mp-sheet-row {
+  display: grid;
+  grid-template-columns: 30px 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: var(--r-xs);
+  /* A ruled team sheet: one hairline between rows, no boxes. */
+  border-block-end: 1px solid var(--line);
+}
+
+.mp-sheet-row:last-child { border-block-end: none; }
+
+.mp-sheet-num {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--r-xs);
+  background: var(--surface-2);
+  color: var(--text-3);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.mp-sheet-name {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 1.02rem;
+  overflow-wrap: anywhere;
+}
+
+.mp-sheet-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  justify-content: flex-end;
+}
+
+.mp-sheet-host-actions {
+  display: flex;
+  gap: 2px;
+}
+
+.mp-sheet-row.is-you { background: var(--green-wash); }
+.mp-sheet-row.is-you .mp-sheet-num { background: var(--green); color: var(--on-green); }
+
+.mp-sheet-row.is-away { opacity: 0.5; }
+
+.mp-team-tag.is-green { background: var(--green-wash); color: var(--green-bright); }
+.mp-team-tag.is-gold { background: var(--amber-wash); color: var(--amber-bright); }
+
+/* ============================================================
+   Answer status — who has answered, and nothing more
+   ============================================================ */
+.mp-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-block-start: 14px;
+}
+
+.mp-status-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  font-size: 0.82rem;
+}
+
+.mp-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-3);
+  transition: background-color var(--t-2) var(--ease);
+}
+
+.mp-status-name { font-family: var(--font-head); font-weight: 600; }
+.mp-status-state { color: var(--text-3); }
+
+/* "Answered" is neutral on purpose — the colour must not hint at correctness. */
+.mp-status-row.is-in { border-color: var(--line-strong); background: var(--surface-2); }
+.mp-status-row.is-in .mp-status-dot { background: var(--blue); }
+.mp-status-row.is-in .mp-status-state { color: var(--text-2); }
+
+/* ============================================================
+   Broadcast scoreboard
+   ============================================================ */
+.mp-board {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-block: 14px;
+}
+
+.mp-board-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 22px 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: var(--r-xs);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+/* The score bar sits behind the row, as a fill rather than a separate element. */
+.mp-board-bar {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: var(--fill, 0%);
+  background: var(--green-wash);
+  transition: width var(--t-3) var(--ease);
+  z-index: 0;
+}
+
+.mp-board-row > *:not(.mp-board-bar) { position: relative; z-index: 1; }
+
+.mp-board-pos {
+  color: var(--text-3);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.mp-board-name {
+  font-family: var(--font-head);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.mp-board-streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--amber);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.mp-board-score {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text);
+  min-width: 3.5ch;
+  text-align: end;
+}
+
+.mp-board-row.is-you { box-shadow: inset 0 0 0 1px var(--green); }
+.mp-board-row.is-you .mp-board-name { color: var(--green-bright); }
+.mp-board-row.is-round-winner .mp-board-score { color: var(--amber-bright); }
+.mp-board-row.is-away { opacity: 0.55; }
+.mp-board-row.is-moved { animation: board-shift 600ms var(--ease); }
+
+/* ============================================================
+   Duel scoreboard — the head-to-head
+   ============================================================ */
+.mp-duel {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: stretch;
+  gap: 8px;
+  margin-block: 14px;
+}
+
+.mp-duel-side {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 12px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  min-width: 0;
+}
+
+.mp-duel-name {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.mp-duel-score {
+  font-size: clamp(1.8rem, 9vw, 2.6rem);
+  font-weight: 900;
+  line-height: 1.05;
+}
+
+.mp-duel-left .mp-duel-score { color: var(--green); }
+.mp-duel-right .mp-duel-score { color: var(--amber); }
+
+.mp-duel-streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--amber);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.mp-duel-vs {
+  align-self: center;
+  font-family: var(--font-head);
+  font-weight: 900;
+  font-size: 0.95rem;
+  color: var(--text-3);
+}
+
+.mp-duel-side.is-you { border-color: var(--line-strong); box-shadow: inset 0 0 0 1px var(--line-strong); }
+.mp-duel-side.is-round-winner { border-color: var(--amber); }
+.mp-duel-side.is-away { opacity: 0.6; }
+.mp-duel-away { margin-block-start: 4px; }
+
+/* ============================================================
+   Team scoreboard
+   ============================================================ */
+.mp-tsb {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 8px;
+  margin-block: 14px;
+}
+
+.mp-tsb-col {
+  padding: 12px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  text-align: center;
+  min-width: 0;
+}
+
+.mp-tsb-col.is-green { border-color: var(--green); background: var(--green-wash); }
+.mp-tsb-col.is-gold { border-color: var(--amber); background: var(--amber-wash); }
+
+.mp-tsb-name {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 0.92rem;
+  overflow-wrap: anywhere;
+}
+
+.mp-tsb-score {
+  font-size: clamp(1.6rem, 8vw, 2.2rem);
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.mp-tsb-col.is-green .mp-tsb-score { color: var(--green-bright); }
+.mp-tsb-col.is-gold .mp-tsb-score { color: var(--amber-bright); }
+
+.mp-tsb-members {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-block-start: 8px;
+  font-size: 0.8rem;
+  color: var(--text-2);
+}
+
+.mp-tsb-members li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mp-tsb-members li.is-you { color: var(--text); font-weight: 700; }
+
+.mp-tsb-vs {
+  align-self: center;
+  font-family: var(--font-head);
+  font-weight: 900;
+  color: var(--text-3);
+}
+
+/* ============================================================
+   Round results
+   ============================================================ */
+.mp-round {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-block-start: 14px;
+}
+
+.mp-round-row {
+  display: grid;
+  grid-template-columns: 24px 1fr auto auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 11px;
+  border-radius: var(--r-xs);
+  background: var(--surface);
+  font-size: 0.88rem;
+}
+
+.mp-round-mark {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--surface-3);
+  color: var(--text-3);
+}
+
+.mp-round-name { font-family: var(--font-head); font-weight: 600; overflow-wrap: anywhere; }
+.mp-round-typed { font-size: 0.8rem; }
+.mp-round-label { color: var(--text-3); }
+.mp-round-hints { display: inline-flex; align-items: center; gap: 2px; color: var(--amber); }
+.mp-round-points { font-weight: 800; min-width: 4ch; text-align: end; }
+
+.mp-round-row.is-correct .mp-round-mark { background: var(--green); color: var(--on-green); }
+.mp-round-row.is-correct .mp-round-points { color: var(--green-bright); }
+.mp-round-row.is-wrong .mp-round-mark { background: var(--red-wash); color: var(--red); }
+.mp-round-row.is-revealed .mp-round-mark { background: var(--amber-wash); color: var(--amber); }
+.mp-round-row.is-missed { opacity: 0.6; }
+.mp-round-row.is-you { box-shadow: inset 0 0 0 1px var(--line-strong); }
+
+/* ============================================================
+   Podium
+   ============================================================ */
+.mp-podium {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items: end;
+  gap: 8px;
+  margin-block: 22px;
+  padding-block-end: 1px;
+}
+
+/* The ground the steps stand on. Without it three blocks of different heights
+   read as floating rectangles rather than as a podium. */
+.mp-podium::after {
+  content: "";
+  position: absolute;
+  inset-inline: -4px;
+  inset-block-end: 0;
+  height: 1px;
+  background: var(--line-strong);
+}
+
+.mp-podium-step {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.mp-podium.is-animated .mp-podium-step {
+  animation: podium-rise 480ms var(--pop) both;
+  animation-delay: var(--delay, 0ms);
+}
+
+.mp-podium-trophy { color: var(--amber); }
+
+.mp-podium-name {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 0.92rem;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.mp-podium-score {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--text-2);
+}
+
+.mp-podium-block {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  border-radius: var(--r-sm) var(--r-sm) 0 0;
+  border: 1px solid var(--line);
+  border-block-end: none;
+  background: var(--surface-2);
+}
+
+.mp-podium-pos {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: var(--text-3);
+}
+
+/* Bronze, silver, gold — real metals, and real step heights. */
+.mp-podium-step.is-gold .mp-podium-block {
+  height: 112px;
+  background: linear-gradient(180deg, var(--amber-wash), var(--surface-2));
+  border-color: var(--amber);
+}
+.mp-podium-step.is-gold .mp-podium-pos { color: var(--amber-bright); }
+
+.mp-podium-step.is-silver .mp-podium-block {
+  height: 82px;
+  background: linear-gradient(180deg, rgba(233, 240, 250, 0.1), var(--surface-2));
+  border-color: var(--line-strong);
+}
+.mp-podium-step.is-silver .mp-podium-pos { color: var(--text-2); }
+
+.mp-podium-step.is-bronze .mp-podium-block {
+  height: 60px;
+  background: linear-gradient(180deg, rgba(205, 127, 50, 0.16), var(--surface-2));
+  border-color: rgba(205, 127, 50, 0.5);
+}
+.mp-podium-step.is-bronze .mp-podium-pos { color: #cd9b6a; }
+
+/* ============================================================
+   Winner / team win cards
+   ============================================================ */
+.mp-winner,
+.mp-teamwin {
+  padding: 22px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--bg-deep);
+  text-align: center;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.mp-winner-label,
+.mp-teamwin-label {
+  letter-spacing: 0.2em;
+  color: var(--amber);
+}
+
+.mp-winner-name,
+.mp-teamwin-name {
+  font-family: var(--font-head);
+  font-weight: 900;
+  font-size: clamp(1.6rem, 8vw, 2.4rem);
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.mp-teamwin-name.is-green { color: var(--green-bright); }
+.mp-teamwin-name.is-gold { color: var(--amber-bright); }
+
+.mp-winner-note {
+  margin-block-start: 6px;
+  color: var(--text-2);
+  font-size: 0.9rem;
+}
+
+.mp-teamwin-score {
+  margin-block-start: 4px;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-2);
+}
+
+.mp-winner-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-block-start: 18px;
+  text-align: start;
+}
+
+.mp-winner-col {
+  padding: 12px;
+  border-radius: var(--r-sm);
+  background: var(--surface);
+}
+
+.mp-winner-col-name {
+  font-family: var(--font-head);
+  font-weight: 700;
+  margin-block-end: 8px;
+  overflow-wrap: anywhere;
+}
+
+.mp-winner-col dl {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+}
+
+.mp-stat {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mp-stat dd { margin: 0; font-weight: 700; }
+
+.mp-mvp {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  margin-block-start: 16px;
+  padding: 10px 18px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+}
+
+.mp-mvp-label { letter-spacing: 0.18em; color: var(--amber); }
+.mp-mvp-name { font-family: var(--font-head); font-weight: 800; font-size: 1.05rem; }
+.mp-mvp-score { color: var(--text-2); font-size: 0.88rem; }
+
+/* ============================================================
+   Standings table
+   ============================================================ */
+.mp-standings {
+  margin-block-start: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  overflow-x: auto;
+}
+
+.mp-standings-head,
+.mp-standings-row {
+  display: grid;
+  grid-template-columns: 2.2rem minmax(5rem, 1fr) 3.6rem 2.6rem 2.6rem 3.4rem 2.6rem 3.4rem;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 12px;
+  min-width: 30rem;
+  font-size: 0.84rem;
+}
+
+.mp-standings-head {
+  background: var(--surface-2);
+  color: var(--text-3);
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+}
+
+.mp-standings-row { border-block-start: 1px solid var(--line); }
+.mp-standings-row:nth-child(odd) { background: rgba(255, 255, 255, 0.015); }
+
+.mp-standings-name {
+  font-family: var(--font-head);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.mp-standings-score { font-weight: 800; }
+.mp-standings-row.is-you { background: var(--green-wash); }
+.mp-standings-row.is-you .mp-standings-name { color: var(--green-bright); }
+
+/* ============================================================
+   Multiplayer question board
+   ============================================================ */
+.mp-q { margin-block-start: 14px; }
+
+.mp-q-actions {
+  display: flex;
+  justify-content: center;
+  margin-block-start: 12px;
+}
+
+.mp-q-locked,
+.mp-q-watching {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-block-start: 14px;
+  padding: 10px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.mp-q-answer { margin-block-start: 16px; }
+
+.mp-q-answer-line {
+  font-family: var(--font-head);
+  font-size: 1.02rem;
+}
+
+.mp-ft-sent {
+  margin-block-start: 8px;
+  padding: 12px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  font-family: var(--font-head);
+}
+
+/* The "chosen but not yet judged" state. Neutral by design: nothing here may
+   suggest whether the answer is right, so it borrows the line colour and not
+   the green. */
+.opt.is-chosen {
+  border-color: var(--line-strong);
+  background: var(--surface-3);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+
+/* ============================================================
+   Host settings panel
+   ============================================================ */
+.mp-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.mp-group {
+  margin: 0;
+  padding: 0;
+  border: none;
+  /* A <fieldset> is given `min-inline-size: min-content` by every browser, which
+     means it refuses to shrink below its widest child. The mode row is five
+     buttons wide (~400px), so without this the settings panel forced the whole
+     page to ~400px and every phone under that scrolled sideways — on the lobby
+     only, which is why it survived a look at the in-game screens. */
+  min-inline-size: 0;
+}
+
+.mp-group-label {
+  padding: 0;
+  margin-block-end: 7px;
+  letter-spacing: 0.08em;
+}
+
+.mp-group-hint { color: var(--text-3); font-weight: 400; letter-spacing: 0; }
+
+/* A segmented control: one track, no gaps, so the choice reads as one control
+   rather than as a row of buttons. */
+.mp-seg {
+  display: flex;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--bg-deep);
+  /* The track scrolls within itself on a narrow phone rather than widening the
+     page; `min-width: 0` is what lets it actually be narrower than its content. */
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.mp-seg::-webkit-scrollbar { display: none; }
+
+.mp-seg-wrap { flex-wrap: wrap; overflow: visible; }
+
+.mp-seg-btn {
+  flex: 1 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: var(--r-xs);
+  background: transparent;
+  color: var(--text-2);
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 0.86rem;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--t-2) var(--ease), color var(--t-2) var(--ease);
+}
+
+.mp-seg-btn:hover { color: var(--text); background: var(--surface-2); }
+
+.mp-seg-btn[aria-pressed="true"] {
+  background: var(--green);
+  color: var(--on-green);
+  font-weight: 700;
+}
+
+.mp-seg-unit { font-size: 0.72rem; opacity: 0.8; }
+
+.mp-settings-warn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-block-start: 8px;
+  color: var(--amber);
+  font-size: 0.84rem;
+}
+
+.mp-settings-scoring {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 12px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+
+.mp-settings-more { align-self: flex-start; }
+
+.mp-settings-advanced {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-block-start: 12px;
+  border-block-start: 1px solid var(--line);
+}

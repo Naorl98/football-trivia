@@ -38,7 +38,25 @@ export type SoundName =
   | "streak"
   | "reveal"
   | "hint"
-  | "complete";
+  | "complete"
+  // ---- multiplayer ----
+  // Same palette, same synthesis, same mute switch. Adding these here rather
+  // than building a second audio layer for multiplayer means one place can go
+  // quiet, one repeat guard, one voice cap.
+  | "playerJoin"
+  | "playerLeave"
+  | "matchFound"
+  | "countdownTick"
+  | "turnStart"
+  | "timeWarning"
+  | "roundWin"
+  | "roundLoss"
+  | "leaderboardMove"
+  | "teamWin"
+  | "podium"
+  | "duelVictory"
+  | "duelDefeat"
+  | "reaction";
 
 const STORAGE_KEY = "fiq_sound_enabled";
 
@@ -352,6 +370,97 @@ class AudioManager {
             this.tone({ freq: f, type: "triangle", start: 0.55 + i * 0.095, duration: 0.28, gain: 0.36 })
           );
           this.noise({ start: 0.5, duration: 1.1, gain: 0.11, freq: 1100, q: 0.4 });
+          break;
+
+        // ----------------------------------------------------- multiplayer
+
+        case "playerJoin":
+          // A stud landing on the turf, then a small upward note: somebody is in.
+          this.tone({ freq: 180, type: "sine", duration: 0.09, gain: 0.3, sweepTo: 120 });
+          this.tone({ freq: 587.33, type: "triangle", start: 0.06, duration: 0.13, gain: 0.2 });
+          break;
+
+        case "playerLeave":
+          this.tone({ freq: 392, type: "sine", duration: 0.14, gain: 0.2, sweepTo: 262 });
+          break;
+
+        case "matchFound":
+          // Two studs meeting: a low impact under a bright rising pair.
+          this.tone({ freq: 140, type: "sine", duration: 0.18, gain: 0.44, sweepTo: 70 });
+          this.noise({ duration: 0.3, gain: 0.16, freq: 420, q: 0.6 });
+          [659.25, 987.77].forEach((f, i) =>
+            this.tone({ freq: f, type: "triangle", start: 0.1 + i * 0.09, duration: 0.22, gain: 0.34 })
+          );
+          break;
+
+        case "countdownTick":
+          // Deliberately dry and unpitched-sounding, so three of them read as a
+          // count rather than as a tune.
+          this.tone({ freq: 740, type: "square", duration: 0.05, gain: 0.16 });
+          break;
+
+        case "turnStart":
+          // The referee pointing: a short whistle, no thud after it.
+          this.whistle({ duration: 0.2, gain: 0.24 });
+          break;
+
+        case "timeWarning":
+          // Two urgent beats. Warm rather than alarming — a nudge, not a siren.
+          [0, 0.17].forEach((start) =>
+            this.tone({ freq: 880, type: "triangle", start, duration: 0.1, gain: 0.24 })
+          );
+          break;
+
+        case "roundWin":
+          this.tone({ freq: 659.25, type: "triangle", duration: 0.14, gain: 0.34 });
+          this.tone({ freq: 880, type: "triangle", start: 0.09, duration: 0.2, gain: 0.3 });
+          this.noise({ start: 0.05, duration: 0.42, gain: 0.08, freq: 1600, q: 0.5 });
+          break;
+
+        case "roundLoss":
+          // The crossbar: a hard, short ring that goes nowhere.
+          this.tone({ freq: 330, type: "square", duration: 0.07, gain: 0.2 });
+          this.tone({ freq: 247, type: "sine", start: 0.05, duration: 0.2, gain: 0.2, sweepTo: 180 });
+          break;
+
+        case "leaderboardMove":
+          // A single sliding note — a row changing places.
+          this.tone({ freq: 440, type: "sine", duration: 0.13, gain: 0.16, sweepTo: 660 });
+          break;
+
+        case "teamWin":
+          // A crowd behind a broad, held chord.
+          [392, 493.88, 587.33].forEach((f, i) =>
+            this.tone({ freq: f, type: "triangle", start: i * 0.05, duration: 0.5, gain: 0.3 })
+          );
+          this.noise({ start: 0.05, duration: 1.2, gain: 0.13, freq: 900, q: 0.4 });
+          break;
+
+        case "podium":
+          // A rising arpeggio under a long crowd swell: third, second, first.
+          [392, 523.25, 659.25, 783.99, 1046.5].forEach((f, i) =>
+            this.tone({ freq: f, type: "triangle", start: i * 0.13, duration: 0.34, gain: 0.32 })
+          );
+          this.noise({ duration: 1.6, gain: 0.12, freq: 1000, q: 0.35 });
+          break;
+
+        case "duelVictory":
+          this.whistle({ duration: 0.45, gain: 0.28 });
+          [523.25, 659.25, 1046.5].forEach((f, i) =>
+            this.tone({ freq: f, type: "triangle", start: 0.4 + i * 0.11, duration: 0.3, gain: 0.36 })
+          );
+          this.noise({ start: 0.4, duration: 0.9, gain: 0.1, freq: 1200, q: 0.4 });
+          break;
+
+        case "duelDefeat":
+          // Falling, brief, and not miserable about it.
+          [523.25, 415.3, 329.63].forEach((f, i) =>
+            this.tone({ freq: f, type: "sine", start: i * 0.11, duration: 0.26, gain: 0.24 })
+          );
+          break;
+
+        case "reaction":
+          this.tone({ freq: 1046.5, type: "sine", duration: 0.06, gain: 0.14 });
           break;
       }
     } catch {

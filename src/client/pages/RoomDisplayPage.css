@@ -1,0 +1,244 @@
+/* ============================================================
+   The shared screen: /room/:code/display
+   ============================================================
+
+   A television across a room, not a page in a browser. Three consequences:
+
+     * Everything is sized in viewport units, because the reading distance is
+       metres and not centimetres. A 16px body would be unreadable from a sofa.
+     * Nothing is interactive, so there are no hover or focus states here.
+     * It fills the viewport and never scrolls: content that overflows is the
+       layout's problem to solve, because nobody is going to scroll a TV.
+   ============================================================ */
+
+.mp-display {
+  display: flex;
+  flex-direction: column;
+  gap: 2vh;
+  width: 100%;
+  min-height: 100dvh;
+  padding: 2.4vh 2.6vw;
+  background: var(--bg);
+}
+
+.mp-display.is-message {
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-head);
+  font-size: 3vh;
+  color: var(--text-2);
+}
+
+.mp-display-top {
+  display: flex;
+  align-items: center;
+  gap: 1.4vw;
+  padding-block-end: 1.6vh;
+  border-block-end: 1px solid var(--line);
+}
+
+.mp-display-brand {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 2.4vh;
+}
+
+.mp-display-mode {
+  padding: 0.5vh 1.4vh;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 1.9vh;
+}
+
+.mp-display-progress {
+  margin-inline-start: auto;
+  font-size: 2.4vh;
+  font-weight: 800;
+  color: var(--amber);
+}
+
+.mp-display-kicker {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 1.9vh;
+  letter-spacing: 0.16em;
+  color: var(--text-3);
+}
+
+/* ---- Lobby: join instructions beside the lineup ---- */
+.mp-display-lobby {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(28vw, 34vw) 1fr;
+  gap: 3vw;
+  align-items: center;
+  min-height: 0;
+}
+
+.mp-display-join {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.4vh;
+  padding: 2.4vh;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--bg-deep);
+  text-align: center;
+}
+
+.mp-display-code {
+  font-size: 7vh;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--amber);
+  direction: ltr;
+}
+
+.mp-display-join .mp-qr { width: 26vh; height: 26vh; }
+
+.mp-display-scan {
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 2.2vh;
+  color: var(--text-2);
+}
+
+.mp-display-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2vh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* The team sheet grows with the screen rather than staying phone-sized. */
+.mp-display-sheet .mp-sheet-name { font-size: 2.6vh; }
+.mp-display-sheet .mp-sheet-num { width: 3.4vh; height: 3.4vh; font-size: 1.7vh; }
+.mp-display-sheet .mp-sheet-row { padding-block: 1.1vh; }
+
+/* ---- Play: question on the left, clock and board on the right ---- */
+/* Centred rather than top-aligned: a television is read from across a room, and
+   content clinging to the top third with half the screen empty below it looks
+   like a rendering fault rather than a layout. */
+.mp-display-play {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr minmax(24vw, 30vw);
+  gap: 3vw;
+  align-items: center;
+  min-height: 0;
+}
+
+.mp-display-question {
+  display: flex;
+  flex-direction: column;
+  gap: 2vh;
+  min-width: 0;
+}
+
+.mp-display-turn {
+  align-self: flex-start;
+  padding: 0.7vh 1.8vh;
+  border-radius: var(--r-pill);
+  background: var(--green);
+  color: var(--on-green);
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 2.2vh;
+}
+
+.mp-display-q {
+  font-size: 4.4vh;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.mp-display-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.4vh;
+}
+
+.mp-display-options li {
+  padding: 1.6vh 2vh;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 2.6vh;
+}
+
+.mp-display-options li.is-correct {
+  border-color: var(--green);
+  background: var(--green-wash);
+  color: var(--green-bright);
+}
+
+.mp-display-answer {
+  font-family: var(--font-head);
+  font-size: 2.8vh;
+  color: var(--text-2);
+}
+
+.mp-display-answer b { color: var(--text); }
+
+.mp-display-verdict {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 3vh;
+  color: var(--amber);
+}
+
+.mp-display-side {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1.6vh;
+  min-height: 0;
+}
+
+.mp-display-side .mp-clock { width: 9vh; height: 9vh; align-self: center; }
+.mp-display-side .mp-clock-num { font-size: 3vh; }
+.mp-display-side .mp-board-row { padding-block: 1.1vh; font-size: 2.1vh; }
+.mp-display-side .mp-board-score { font-size: 2.4vh; }
+.mp-display-side .mp-status-row { font-size: 1.9vh; }
+.mp-display-side .mp-duel-score { font-size: 5vh; }
+
+/* ---- Countdown, leaderboard, podium ---- */
+.mp-display-stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3vh;
+  min-height: 0;
+}
+
+.mp-display-stage .mp-count-num { font-size: 22vh; }
+.mp-display-stage .mp-vs-name { font-size: 5vh; }
+.mp-display-stage .mp-vs-word { font-size: 5vh; }
+.mp-display-stage .mp-standings { width: min(100%, 72vw); }
+.mp-display-stage .mp-standings-head,
+.mp-display-stage .mp-standings-row { font-size: 2.1vh; padding-block: 1.2vh; }
+.mp-display-stage .mp-podium { width: min(100%, 60vw); }
+.mp-display-stage .mp-podium-name { font-size: 2.6vh; }
+.mp-display-stage .mp-podium-pos { font-size: 4vh; }
+.mp-display-stage .mp-winner-name,
+.mp-display-stage .mp-teamwin-name { font-size: 6vh; }
+
+/* A phone that lands on the display route should still be usable rather than
+   broken: stack the two columns instead of squeezing them. */
+@media (max-width: 860px) {
+  .mp-display-lobby,
+  .mp-display-play {
+    grid-template-columns: 1fr;
+  }
+  .mp-display-options { grid-template-columns: 1fr; }
+  .mp-display { min-height: auto; }
+}

@@ -1,0 +1,113 @@
+/* Random duel: the pitch, the wait, the opponent. */
+
+.mp-duel-page {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-block: 28px 60px;
+  min-height: 60vh;
+}
+
+/* ---- Before searching ---- */
+.mp-duel-intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.mp-duel-intro-glyph {
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--amber);
+  background: var(--amber-wash);
+  color: var(--amber-bright);
+}
+
+.mp-duel-intro-glyph svg { width: 56px; height: 56px; }
+
+.mp-duel-intro-title {
+  font-size: clamp(1.7rem, 8vw, 2.3rem);
+  font-weight: 900;
+}
+
+.mp-duel-intro-sub {
+  max-width: 34ch;
+  color: var(--text-2);
+}
+
+.mp-duel-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 24rem;
+  margin-block-start: 10px;
+  text-align: start;
+}
+
+.mp-duel-label {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.mp-duel-cancelled { color: var(--text-3); }
+
+/* ---- Searching ---- */
+.mp-duel-searching {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.mp-duel-meter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: min(100%, 320px);
+}
+
+.mp-duel-meter .bar-fill { background: var(--amber); }
+
+.mp-duel-cancel { margin-block-start: 2px; }
+
+/* ---- Timed out ---- */
+.mp-duel-timeout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  text-align: center;
+}
+
+.mp-duel-timeout-head {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 1.1rem;
+}
+
+.mp-duel-timeout-body {
+  max-width: 36ch;
+  color: var(--text-2);
+  font-size: 0.92rem;
+}
+
+.mp-duel-timeout-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-block-start: 8px;
+}

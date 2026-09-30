@@ -70,9 +70,23 @@
   margin-bottom: 26px;
 }
 
+/* Two ways in, side by side on anything wider than a small phone: play now, or
+   play against somebody. The multiplayer route is a ghost button so the primary
+   decision stays primary — it is an alternative, not a competitor. */
+.home-ctas {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 26px;
+}
+
 .home-cta {
   min-width: 210px;
-  margin-bottom: 26px;
+}
+
+.home-cta-mp {
+  min-width: 210px;
 }
 
 /* ============================================================

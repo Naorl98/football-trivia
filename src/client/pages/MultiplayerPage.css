@@ -1,0 +1,205 @@
+/* The multiplayer front door. */
+
+.mp-home {
+  padding-block: 26px 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.mp-home-head { text-align: center; }
+
+.mp-home-head .tiny {
+  letter-spacing: 0.22em;
+  color: var(--green);
+}
+
+.mp-home-title {
+  margin-block-start: 6px;
+  font-size: clamp(1.9rem, 8vw, 2.6rem);
+  font-weight: 900;
+}
+
+.mp-home-sub {
+  margin-block-start: 8px;
+  color: var(--text-2);
+  font-size: 1.02rem;
+}
+
+.mp-home-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mp-home-h2 {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--text-3);
+  text-transform: none;
+}
+
+/* ---- Mode cards ----------------------------------------------------------
+   Two columns on anything wider than a phone. Each card leads with its tactical
+   diagram, so the shape of the mode is the first thing read. */
+.mp-modes {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+@media (min-width: 560px) {
+  .mp-modes { grid-template-columns: 1fr 1fr; }
+
+  /* Five modes into two columns leaves one stranded. Letting the odd last card
+     run the full width reads as a deliberate layout rather than a leftover. */
+  .mp-modes > :last-child:nth-child(odd) { grid-column: span 2; }
+}
+
+.mp-mode {
+  position: relative;
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  align-items: start;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  text-align: start;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    border-color var(--t-2) var(--ease),
+    background-color var(--t-2) var(--ease),
+    transform var(--t-1) var(--ease);
+}
+
+.mp-mode:hover { border-color: var(--line-strong); background: var(--surface-2); }
+.mp-mode:active { transform: scale(0.99); }
+
+.mp-mode.is-on {
+  border-color: var(--green);
+  background: var(--green-wash);
+}
+
+.mp-mode-glyph {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--r-sm);
+  background: var(--bg-deep);
+  color: var(--text-2);
+}
+
+.mp-mode.is-on .mp-mode-glyph { color: var(--green-bright); }
+
+.mp-mode-glyph svg { width: 40px; height: 40px; }
+
+.mp-mode-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.mp-mode-title {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 1.08rem;
+}
+
+.mp-mode-tag {
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: var(--green);
+}
+
+.mp-mode.is-on .mp-mode-tag { color: var(--green-bright); }
+
+.mp-mode-blurb {
+  font-size: 0.86rem;
+  color: var(--text-2);
+  line-height: 1.45;
+}
+
+.mp-mode-check {
+  position: absolute;
+  inset-block-start: 12px;
+  inset-inline-end: 12px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--green);
+  color: var(--on-green);
+}
+
+.mp-create { margin-block-start: 4px; }
+
+/* ---- Join by code ---- */
+.mp-join {
+  display: flex;
+  gap: 8px;
+}
+
+.mp-join-input {
+  flex: 1;
+  letter-spacing: 0.16em;
+  font-size: 1.2rem;
+  text-align: center;
+}
+
+/* ---- Random duel ---- */
+.mp-random {
+  display: grid;
+  grid-template-columns: 48px 1fr auto;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 16px;
+  border: 1px solid var(--amber);
+  border-radius: var(--r-md);
+  background: var(--amber-wash);
+  color: var(--text);
+  text-align: start;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--t-1) var(--ease), background-color var(--t-2) var(--ease);
+}
+
+.mp-random:hover { background: rgba(246, 185, 59, 0.2); transform: translateY(-2px); }
+.mp-random:active { transform: scale(0.99); }
+
+.mp-random-glyph { color: var(--amber-bright); }
+.mp-random-glyph svg { width: 44px; height: 44px; }
+
+.mp-random-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+.mp-random-title {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 1.08rem;
+}
+
+.mp-random-sub { font-size: 0.86rem; color: var(--text-2); }
+
+.mp-home-error {
+  padding: 12px 14px;
+  border-radius: var(--r-sm);
+  background: var(--red-wash);
+  color: var(--red);
+  font-weight: 600;
+  text-align: center;
+}
+
+.mp-home-stats {
+  text-align: center;
+  color: var(--text-3);
+}
+
+.mp-home-stats-note { opacity: 0.8; }

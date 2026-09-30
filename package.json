@@ -19,6 +19,9 @@
     "deploy": "npm run build && wrangler deploy",
     "cf-typegen": "wrangler types",
     "test": "node --test \"tests/**/*.test.ts\"",
+    "test:mp": "node scripts/mp-e2e.mjs",
+    "test:mp:browser": "node scripts/mp-browser.mjs",
+    "test:mp:prod": "node scripts/mp-e2e.mjs https://football-iq.naorl.workers.dev",
     "data:harvest": "node scripts/data-harvest.mjs",
     "data:status": "node scripts/data-status.mjs",
     "questions:generate": "node scripts/questions-generate.mjs",
@@ -39,6 +42,7 @@
   "homepage": "https://github.com/Naorl98/football-trivia#readme",
   "dependencies": {
     "hono": "^4.13.11",
+    "qrcode-generator": "^2.0.4",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "react-router-dom": "^7.18.4"

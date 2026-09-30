@@ -11,3 +11,6 @@ screenshots-viewports/
 screenshots-prod/
 # Playwright MCP writes snapshots, console logs and screenshots here during QA.
 .playwright-mcp/
+
+# QA screenshots from the multiplayer phase.
+screenshots-mp/

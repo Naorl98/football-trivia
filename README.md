@@ -14,6 +14,7 @@ Assets) and the `/api/*` routes, backed by Cloudflare D1.
 | Frontend | React 19 + TypeScript + Vite 8, React Router |
 | Backend | Cloudflare Workers + Hono |
 | Database | Cloudflare D1 (SQLite) with migrations |
+| Realtime | Cloudflare Durable Objects + WebSockets (hibernation API) |
 | Hosting | Cloudflare Workers + Workers Static Assets (no Pages, no Workers Sites) |
 | Build | `@cloudflare/vite-plugin` (single integrated build) |
 
@@ -22,14 +23,18 @@ Assets) and the `/api/*` routes, backed by Cloudflare D1.
 ```
 src/
   shared/      Domain types, constants and scoring — imported by BOTH the Worker and the client
+    multiplayer/  Room state machine, protocol, scoring, standings — pure, no platform code
   worker/      Cloudflare Worker: Hono API, question engine, D1 query layer
     engine/    Question engine (quiz assembly) — framework-free domain logic
     db/        D1 access: questions, challenges, daily, attempts
-    routes/    /api/quiz, /api/challenges, /api/daily, /api/attempts
+    durable/   Durable Objects: one per live room, plus the matchmaking queue
+    routes/    /api/quiz, /api/challenges, /api/daily, /api/attempts, /api/mp
   client/      React SPA: pages, components, design system
+    lib/mp/    Room socket hook, matchmaking hook, player identity, QR rendering
+    components/mp/  Multiplayer boards, stage moments and atoms
 migrations/    D1 schema migrations
 seed/          Curated question bank (questions.ts) + generated seed.sql
-scripts/       Seed generator, API smoke test, UI test, screenshot capture
+scripts/       Seed generator, API smoke test, UI test, multiplayer E2E, screenshot capture
 ```
 
 The design deliberately keeps Cloudflare-specific code confined to `src/worker`. The
@@ -87,13 +92,37 @@ error so sound can never break gameplay. Toggle lives in the header.
 ## Testing
 
 ```bash
-node --test "tests/**/*.test.ts"                      # 64 answer-matching unit tests
+npm test                                               # 390 unit tests (node --test)
 node scripts/smoke-test.mjs      http://localhost:5173 # 34 API assertions
 node scripts/ui-test.mjs         http://localhost:5173 # 31 browser assertions
 node scripts/freetext-ui-test.mjs http://localhost:5173 # 30 free-text assertions
 node scripts/challenge-e2e.mjs   http://localhost:5173 # 4 challenge round-trip assertions
 node scripts/viewport-qa.mjs     http://localhost:5173 # 147 layout checks across 7 viewports
+npm run test:mp                                        # 154 multiplayer protocol assertions
+npm run test:mp:browser                                # 73 multi-browser assertions
 node scripts/screenshots.mjs                           # visual snapshots
+```
+
+### Multiplayer testing, in two layers
+
+`scripts/mp-e2e.mjs` speaks the WebSocket protocol directly against real Durable Objects.
+It proves the SERVER is right: that the reveal stays hidden until the last player answers,
+that an out-of-turn submission is refused, that eleven players entering matchmaking at once
+produce five unique pairs and one still-searching player, that an abandoned duel ends in a
+forfeit rather than hanging. A full run is seconds, and a failure points at a message.
+
+`scripts/mp-browser.mjs` runs four players in four separate `BrowserContext`s — separate
+storage, so each mints its own player token exactly as four phones would. It proves the
+PRODUCT is right: the QR is on screen and is dark-on-light (an inverted QR does not scan),
+a locked answer is marked as chosen and *not* as right or wrong, four screens show the same
+question and the same final table, a reload mid-round lands back in the game with the score
+intact, number keys answer, and no page has horizontal overflow at 320px.
+
+Both accept a URL, so the same suites run against a deployment:
+
+```bash
+npm run test:mp:prod                                   # protocol suite against production
+node scripts/mp-browser.mjs https://football-iq.naorl.workers.dev
 ```
 
 The UI test drives a locally installed Chrome via Playwright (`channel: "chrome"`), so no
@@ -108,6 +137,11 @@ npm run db:migrate:remote          # apply schema to the production D1
 npm run db:seed:remote             # load the question bank into production
 npm run deploy                     # typecheck + vite build + wrangler deploy
 ```
+
+The Durable Object namespaces are declared in `wrangler.jsonc` under `migrations` as
+`new_sqlite_classes`. SQLite-backed Durable Objects are what makes multiplayer available
+without a paid Durable Objects plan; changing them to the key-value storage backend would
+not be a like-for-like swap.
 
 ## Question engine
 
@@ -155,6 +189,106 @@ accuracy.
 
 Every mode shares one data shape (question + 4 options + optional ordered clues), so a new
 mode needs a renderer, not a schema change.
+
+## Multiplayer
+
+Real-time rooms on Cloudflare Durable Objects. One object per live room, addressed by its
+six-digit code; one more object for the random-duel queue.
+
+```
+browser ──WebSocket──► Worker ──► RoomDurableObject   (state, clock, scoring, questions)
+                          │
+                          └────►  MatchmakerDurableObject  (the random-duel queue)
+                                        │
+                                        └─► claims a new room for each pair
+```
+
+### Why a Durable Object per room
+
+A room needs one authority and one clock. A Durable Object gives both: it handles one
+request at a time, so "two players answered simultaneously" and "two people created a room
+with the same code" are resolved by the runtime rather than by a lock we have to get right.
+Room codes need no registry at all — `idFromName("482731")` always reaches the same object,
+and that object claims itself on first use (`RoomDurableObject.claim`), so a collision is
+simply a refused claim and a retry.
+
+WebSockets are accepted with `ctx.acceptWebSocket`, the hibernation API, so a lobby waiting
+for a seventh player costs nothing while it waits. Each socket carries its own identity in
+its attachment, and the room's state is rehydrated from storage on every entry point,
+because in-memory state cannot survive an eviction.
+
+**D1 is not involved in a live room.** Not a join, not an answer, not a score change. A
+finished game writes exactly one `multiplayer_games` row plus one row per player. That is a
+rule rather than an optimisation — see [Living within a 100-request/day plan](#living-within-a-100requestday-plan)
+for the incident the same restraint exists to prevent.
+
+### Where the rules live
+
+All of them are in `src/shared/multiplayer/roomEngine.ts`: a plain class with an injected
+clock that knows nothing about sockets, storage or D1. The Durable Object is plumbing —
+sockets in, effects out, state persisted, one alarm always set to the engine's next wake
+time. Two things fall out of that: there is no game logic in the platform layer to get wrong
+twice, and a three-player turn-based game with a disconnect at exactly the grace boundary is
+a dozen lines of unit test rather than a browser run.
+
+### Modes
+
+| Mode | Hebrew | Shape |
+| --- | --- | --- |
+| `CLASSIC_BATTLE` | קרב רגיל | Everyone answers; correctness + speed + streak |
+| `TURN_BASED` | תורות | One player owns each question, round-robin |
+| `EVERYONE_ANSWERS` | כולם עונים | Everyone answers; no streak bonus |
+| `DUEL` | דו קרב | Exactly two, VS intro, head-to-head scoreboard |
+| `TEAM_BATTLE` | קרב קבוצות | Two teams, aggregate score, MVP across both |
+| `RANDOM_DUEL` | דו קרב אקראי | Matchmade, fixed rules, starts itself |
+
+### Server authority
+
+The client is a renderer. It is never sent a score it did not receive from the server, a
+correct answer before the reveal, or a question it is not currently on — the room keeps the
+whole question set and hands out one sanitized question at a time, with `isCorrect`,
+`canonicalAnswer`, `aliases` and hint text stripped. `parseClientMessage` rebuilds every
+inbound message field by field from `unknown` rather than casting, so a client that sends
+its own score, correctness flag or player id gets a message carrying none of them.
+
+Refused by the room: answering twice, answering after the deadline, answering out of turn,
+answering a question that is not in play, an option id from another question, starting or
+reconfiguring as a non-host, and hint usage the client tries not to declare (hints are
+counted server-side before the text is handed over).
+
+### Scoring
+
+```
+correct answer          100
++ speed                 0-50, linear in the time left
++ streak                10 per consecutive correct beyond the first, max 50
+- hints                 20 each, floor of 10 for a correct answer
+wrong / timed out / revealed   0
+```
+
+Points are computed when an answer arrives but **banked at the reveal**. The room view
+carries every player's score, so applying them immediately would announce "that was right"
+to the whole room the instant somebody tapped.
+
+Tie-breaking, in order: score, then correct answers, then average response time (a player
+who answered nothing sorts last). Players identical on all three **share a position** and
+`winnerIds` holds more than one id, so the UI says שוויון rather than inventing a winner.
+
+### Reconnect
+
+Each browser mints a random token into `sessionStorage`. The socket carries it, the room
+recognises it, and a refresh or a dropped tunnel restores the same player with their score
+and seat — plus the question on screen, the reveal, and any hints they already paid for
+(`RoomEngine.resumeMessages`). A dropped player is held for a 25-second grace window,
+shown as מתחבר מחדש, and only then swept: in the lobby they lose their seat, mid-game they
+keep their row in the standings, and in a duel their absence hands the win to the opponent
+by forfeit.
+
+### Shared screen
+
+`/room/:code/display` connects the same protocol with `display=1`. The server treats it as
+a spectator — broadcast to, never able to act — so there is no display mode in the state
+machine at all. The room does not know one of its sockets is a television.
 
 ## Challenges and the daily quiz
 

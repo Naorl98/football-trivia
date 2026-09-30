@@ -1,5 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 
 import {
   CONSENT_STORAGE_KEY,
@@ -85,10 +86,34 @@ describe("keysToPurge", () => {
         "fiq_a11y_v1",
         "fiq_active_quiz",
         "fiq_last_result",
+        "fiq_mp_name",
+        "fiq_mp_stats",
+        "fiq_mp_token",
         "fiq_recent_questions",
         "fiq_sound_enabled",
       ].sort()
     );
+  });
+
+  /*
+    The hardcoded list above can be updated without touching the disclosure, which
+    would leave /privacy quietly lying. This reads the page itself, so adding a
+    storage key and forgetting to declare it fails here rather than in a legal
+    review. The consent record is the one key the page lists that this table does
+    not: it is written by the ConsentStore directly, under its own constant.
+  */
+  it("matches the keys listed on the privacy page, in both directions", () => {
+    const page = readFileSync(new URL("../src/client/pages/PrivacyPage.tsx", import.meta.url), "utf8");
+    const listed = new Set([...page.matchAll(/k="(fiq_[a-z0-9_]+)"/g)].map((m) => m[1]));
+    const declared = new Set(Object.values(KEYS_BY_CATEGORY).flatMap((c) => [...c.local, ...c.session]));
+
+    for (const key of declared) {
+      assert.ok(listed.has(key), `${key} is written by the app but not disclosed on /privacy`);
+    }
+    for (const key of listed) {
+      if (key === CONSENT_STORAGE_KEY) continue;
+      assert.ok(declared.has(key), `/privacy lists ${key}, which the app does not write`);
+    }
   });
 
   it("purges a category's keys when it is withdrawn", () => {

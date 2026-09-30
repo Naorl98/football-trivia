@@ -30,9 +30,13 @@ export const CONSENT_STORAGE_KEY = "fiq_privacy_v1";
 
 /** Every localStorage/sessionStorage key the app owns, by category. */
 export const KEYS_BY_CATEGORY: Record<ConsentCategory, { local: string[]; session: string[] }> = {
-  essential: { local: [], session: ["fiq_active_quiz", "fiq_last_result"] },
-  preferences: { local: ["fiq_sound_enabled", "fiq_a11y_v1"], session: [] },
-  history: { local: ["fiq_recent_questions"], session: [] },
+  // `fiq_mp_token` is the multiplayer reconnect secret. It is essential for the
+  // same reason `fiq_active_quiz` is — without it, a refresh mid-game costs you
+  // your seat and your score — and it lives in sessionStorage, so it is gone when
+  // the tab is.
+  essential: { local: [], session: ["fiq_active_quiz", "fiq_last_result", "fiq_mp_token"] },
+  preferences: { local: ["fiq_sound_enabled", "fiq_a11y_v1", "fiq_mp_name"], session: [] },
+  history: { local: ["fiq_recent_questions", "fiq_mp_stats"], session: [] },
 };
 
 export const DEFAULT_CONSENT: ConsentState = { decided: false, preferences: false, history: false };

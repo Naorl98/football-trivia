@@ -11,7 +11,9 @@ import "./Header.css";
  */
 export function Header() {
   const { pathname } = useLocation();
-  const playing = pathname === "/play";
+  // A multiplayer room counts too: walking out of a live room costs other people
+  // their game, so the links out are not on offer while one is open.
+  const playing = pathname === "/play" || pathname.startsWith("/room/");
 
   return (
     <header className="topbar">
@@ -24,11 +26,16 @@ export function Header() {
         </Link>
 
         <div className="row g2">
-          {/* Hidden mid-quiz: the daily link is a trap door out of a run. */}
+          {/* Hidden mid-quiz: these are trap doors out of a run. */}
           {!playing && (
-            <Link to="/daily" className="topbar-link">
-              אתגר יומי
-            </Link>
+            <>
+              <Link to="/multiplayer" className="topbar-link">
+                מולטיפלייר
+              </Link>
+              <Link to="/daily" className="topbar-link">
+                אתגר יומי
+              </Link>
+            </>
           )}
           <SoundToggle />
           <A11yMenu />

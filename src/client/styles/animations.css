@@ -196,6 +196,107 @@
 }
 
 /* ============================================================
+   Multiplayer
+   ============================================================
+
+   Same budget as everything above: transform/opacity only, each beat under
+   600ms except the two ambient loops (the radar sweep and the lobby pulse),
+   which are slow and cheap. Every one of them is listed in the reduced-motion
+   contract at the bottom of this file — that is the whole reason they live
+   here rather than next to their components.
+   ============================================================ */
+
+/* Players arrive on the team sheet like a lineup being read out. */
+@keyframes lineup-in {
+  0%   { opacity: 0; transform: translateX(14px); }
+  100% { opacity: 1; transform: none; }
+}
+
+.a-lineup {
+  animation: lineup-in 320ms var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+
+/* The VS intro: the two name plates enter from their own touchlines. */
+@keyframes vs-from-start {
+  0%   { opacity: 0; transform: translateX(-60px); }
+  70%  { transform: translateX(6px); }
+  100% { opacity: 1; transform: none; }
+}
+
+@keyframes vs-from-end {
+  0%   { opacity: 0; transform: translateX(60px); }
+  70%  { transform: translateX(-6px); }
+  100% { opacity: 1; transform: none; }
+}
+
+/* The ball arrives into the middle and the word lands on the impact. */
+@keyframes vs-ball {
+  0%   { opacity: 0; transform: translateY(-70px) scale(0.5) rotate(0deg); }
+  55%  { opacity: 1; transform: translateY(0) scale(1.1) rotate(420deg); }
+  100% { opacity: 0; transform: translateY(6px) scale(0.7) rotate(520deg); }
+}
+
+@keyframes vs-word {
+  0%   { opacity: 0; transform: scale(2.4); }
+  46%  { opacity: 0; transform: scale(2.4); }
+  62%  { opacity: 1; transform: scale(0.88); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* A single floodlight flash at the moment of impact. */
+@keyframes vs-flash {
+  0%, 44% { opacity: 0; transform: scale(0.4); }
+  56%     { opacity: 0.75; transform: scale(1.5); }
+  100%    { opacity: 0; transform: scale(2.6); }
+}
+
+/* Match found: one ring leaving the centre. */
+@keyframes found-ring {
+  0%   { opacity: 0.5; transform: translate(-50%, -50%) scale(0.4); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(2.6); }
+}
+
+/* The podium steps rise in turn: third, second, first. */
+@keyframes podium-rise {
+  0%   { opacity: 0; transform: translateY(34px); }
+  100% { opacity: 1; transform: none; }
+}
+
+/* A scoreboard row that changed places. */
+@keyframes board-shift {
+  0%   { background-color: var(--amber-wash); transform: translateX(6px); }
+  100% { background-color: transparent; transform: none; }
+}
+
+/* The matchmaking floodlight, sweeping the stand. */
+@keyframes radar-sweep {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* The ball knocking between the two empty slots while we look. */
+@keyframes search-ball {
+  0%, 100% { transform: translateX(-52px) translateY(0); }
+  25%      { transform: translateX(-26px) translateY(-16px); }
+  50%      { transform: translateX(52px) translateY(0); }
+  75%      { transform: translateX(26px) translateY(-16px); }
+}
+
+/* Reactions drifting up the edge of the screen. */
+@keyframes reaction-float {
+  0%   { opacity: 0; transform: translateY(0) scale(0.6); }
+  18%  { opacity: 1; transform: translateY(-14px) scale(1.1); }
+  100% { opacity: 0; transform: translateY(-96px) scale(0.9); }
+}
+
+/* "Waiting for the host" — a slow breath, not a spinner. */
+@keyframes wait-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.85); }
+  50%      { opacity: 1; transform: scale(1); }
+}
+
+/* ============================================================
    The single reduced-motion contract
    ============================================================ */
 @media (prefers-reduced-motion: reduce) {
@@ -220,12 +321,40 @@
   animation: fade-in 140ms linear both !important;
 }
 
+:root[data-motion="off"] .a-lineup {
+  animation: fade-in 140ms linear both !important;
+}
+
 :root[data-motion="off"] .a-correct,
 :root[data-motion="off"] .a-wrong,
 :root[data-motion="off"] .a-crossbar,
 :root[data-motion="off"] .a-score-pop,
 :root[data-motion="off"] .a-shout {
   animation: none !important;
+}
+
+/* Multiplayer. The components already render a still version of each of these
+   (the VS intro becomes a team sheet, the radar loses its sweep, the podium
+   stands still), so removing the motion here never removes information. */
+:root[data-motion="off"] .mp-vs-side,
+:root[data-motion="off"] .mp-vs-word,
+:root[data-motion="off"] .mp-vs-ball,
+:root[data-motion="off"] .mp-vs-flash,
+:root[data-motion="off"] .mp-found-ring,
+:root[data-motion="off"] .mp-search-sweep,
+:root[data-motion="off"] .mp-search-ball,
+:root[data-motion="off"] .mp-burst-item,
+:root[data-motion="off"] .mp-lobby-pulse,
+:root[data-motion="off"] .mp-board-row.is-moved,
+:root[data-motion="off"] .mp-podium.is-animated .mp-podium-step {
+  animation: none !important;
+  opacity: 1;
+  transform: none;
+}
+
+:root[data-motion="off"] .mp-clock-fill,
+:root[data-motion="off"] .mp-board-bar::after {
+  transition: none !important;
 }
 
 :root[data-motion="off"] .btn:hover:not(:disabled),

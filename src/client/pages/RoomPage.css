@@ -1,0 +1,265 @@
+/* A multiplayer room: the name gate, the lobby, the live round, the finish. */
+
+.mp-room {
+  display: flex;
+  flex-direction: column;
+  padding-block: 18px 60px;
+}
+
+.mp-room-loading,
+.mp-room-wait {
+  margin-block: 40px;
+  text-align: center;
+  color: var(--text-2);
+  font-family: var(--font-head);
+  font-weight: 600;
+}
+
+.mp-room-error {
+  margin-block-start: 14px;
+  padding: 11px 14px;
+  border-radius: var(--r-sm);
+  background: var(--red-wash);
+  color: var(--red);
+  font-weight: 600;
+  text-align: center;
+}
+
+/* ============================================================
+   Name gate
+   ============================================================ */
+.mp-gate {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  margin-block-start: 14px;
+}
+
+.mp-gate-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mp-gate-label {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 1.3rem;
+}
+
+.mp-gate-hint { color: var(--text-3); }
+
+.mp-gate-blocked {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+
+.mp-gate-title {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 1.2rem;
+}
+
+.mp-gate-body { color: var(--text-2); }
+
+/* ============================================================
+   Lobby — the dressing room
+   ============================================================ */
+.mp-lobby {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  margin-block-start: 10px;
+}
+
+.mp-lobby-h2 {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--text-3);
+}
+
+.mp-lobby-sheet,
+.mp-lobby-config {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mp-lobby-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mp-lobby-balance { align-self: flex-start; }
+
+.mp-lobby-facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.mp-lobby-facts li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 11px 13px;
+  border-radius: var(--r-sm);
+  background: var(--surface);
+}
+
+.mp-lobby-facts b { font-family: var(--font-head); font-size: 1.02rem; }
+
+.mp-lobby-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.mp-lobby-actions > .btn-block { width: 100%; }
+
+.mp-lobby-wait {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--text-2);
+  font-family: var(--font-head);
+  font-weight: 600;
+}
+
+.mp-lobby-pulse {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: wait-pulse 1.6s var(--ease) infinite;
+}
+
+/* ============================================================
+   Live round
+   ============================================================ */
+.mp-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-block-start: 12px;
+}
+
+.mp-stage-label { letter-spacing: 0.18em; }
+
+.mp-hud {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-block-start: 6px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+
+.mp-hud-progress { color: var(--text-2); }
+.mp-hud-progress b { color: var(--text); }
+
+.mp-turn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 13px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 0.86rem;
+  text-align: center;
+}
+
+.mp-turn.is-you {
+  background: var(--green);
+  color: var(--on-green);
+}
+
+@media (max-width: 460px) {
+  .mp-hud {
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 8px;
+  }
+  .mp-turn { order: 3; width: 100%; justify-content: center; }
+}
+
+/* ============================================================
+   Finish
+   ============================================================ */
+.mp-finish {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  margin-block-start: 14px;
+}
+
+.mp-finish-table {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mp-finish-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.mp-finish-note { text-align: center; color: var(--text-3); }
+
+/* ============================================================
+   Error states
+   ============================================================ */
+.mp-error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-block: 48px;
+  text-align: center;
+}
+
+.mp-error-mark {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--text-3);
+}
+
+.mp-error-title {
+  font-size: clamp(1.4rem, 6vw, 1.9rem);
+  font-weight: 800;
+}
+
+.mp-error-body { color: var(--text-2); max-width: 34ch; }
+
+.mp-error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-block-start: 6px;
+}

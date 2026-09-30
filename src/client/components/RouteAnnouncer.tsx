@@ -10,12 +10,19 @@ const TITLES: Record<string, string> = {
   "/play": "חידון פעיל",
   "/results": "תוצאות",
   "/daily": "אתגר יומי",
+  "/multiplayer": "משחק עם חברים",
+  "/multiplayer/duel": "דו קרב אקראי",
   "/privacy": "מדיניות פרטיות",
 };
 
 function nameFor(pathname: string): string {
   if (TITLES[pathname]) return TITLES[pathname];
   if (pathname.startsWith("/challenge/")) return "אתגר משותף";
+  // The room code is part of the name on purpose: it is what a player reads out
+  // to the person next to them, and it is the one thing that identifies which
+  // room this tab is in when several are open.
+  const room = /^\/room\/(\d{6})(\/display)?\/?$/.exec(pathname);
+  if (room) return room[2] ? `מסך משותף · חדר ${room[1]}` : `חדר ${room[1]}`;
   return "הדף לא נמצא";
 }
 

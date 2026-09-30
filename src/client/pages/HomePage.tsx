@@ -45,17 +45,32 @@ export function HomePage() {
         בנו חידון ותגלו.
       </p>
 
-      <button
-        className="btn btn-primary btn-lg home-cta a-fade-up"
-        style={{ animationDelay: "140ms" }}
-        onClick={() => {
-          sound.play("click");
-          navigate("/build");
-        }}
-      >
-        התחל משחק
-        <Icon name="arrow" size={19} />
-      </button>
+      <div className="home-ctas a-fade-up" style={{ animationDelay: "140ms" }}>
+        <button
+          className="btn btn-primary btn-lg home-cta"
+          onClick={() => {
+            sound.play("click");
+            navigate("/build");
+          }}
+        >
+          התחל משחק
+          <Icon name="arrow" size={19} />
+        </button>
+
+        {/* The second decision this product supports: not "play alone", but
+            "play against someone". It sits beside the primary rather than in a
+            menu, because a trivia game is better with other people in the room. */}
+        <button
+          className="btn btn-ghost btn-lg home-cta-mp"
+          onClick={() => {
+            sound.play("click");
+            navigate("/multiplayer");
+          }}
+        >
+          <Icon name="shirt" size={18} />
+          משחק עם חברים
+        </button>
+      </div>
 
       <div className="quick a-stagger" role="group" aria-label="התחלה מהירה">
         {QUICK_PRESETS.map((preset, i) => (
