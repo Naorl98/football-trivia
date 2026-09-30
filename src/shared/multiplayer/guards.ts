@@ -10,7 +10,7 @@
 
 import { COMPETITIONS, COUNTRIES, ENABLED_GAME_MODES } from "../constants.ts";
 import { DIFFICULTIES } from "../types.ts";
-import { MULTIPLAYER_MODES, REACTIONS } from "./types.ts";
+import { MULTIPLAYER_MODES, QUICK_MESSAGES, REACTIONS } from "./types.ts";
 
 const CATEGORY_CODES = [
   "PLAYERS",
@@ -51,6 +51,12 @@ export const MULTIPLAYER_MODES_GUARD = {
   // multiplayer room must not be the back door that enables it.
   gameModes: new Set<string>(ENABLED_GAME_MODES),
   reactions: new Set<string>(REACTIONS.map((r) => r.emoji)),
+  quickMessages: new Set<string>(QUICK_MESSAGES.map((m) => m.id)),
 } as const;
 
-export { MAX_NAME_LENGTH, QUESTION_COUNT_CHOICES, SECONDS_PER_QUESTION_CHOICES } from "./constants.ts";
+export {
+  MAX_NAME_LENGTH,
+  MESSAGE_MAX_LENGTH,
+  QUESTION_COUNT_CHOICES,
+  SECONDS_PER_QUESTION_CHOICES,
+} from "./constants.ts";

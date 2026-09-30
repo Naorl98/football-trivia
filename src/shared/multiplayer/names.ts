@@ -54,14 +54,17 @@ function isStripped(codePoint: number): boolean {
 }
 
 /**
- * Cleans a raw name. Returns null when nothing usable is left, which is what the
- * caller turns into an INVALID_NAME error.
+ * Applies the character policy above to any short piece of player-typed text.
+ *
+ * Shared by names and by trash-talk messages, so both get the same treatment and
+ * there is one place where that policy lives. A message is as attacker-controlled
+ * as a name and lands on the same screens.
  */
-export function sanitizePlayerName(raw: unknown): string | null {
+export function sanitizeShortText(raw: unknown, maxLength: number): string | null {
   if (typeof raw !== "string") return null;
 
   // Cap first, so an enormous string cannot make the server walk all of it.
-  const capped = raw.slice(0, MAX_NAME_LENGTH * 4);
+  const capped = raw.slice(0, maxLength * 4);
 
   let kept = "";
   // for..of walks whole code points, so an astral character (an emoji in a name,
@@ -72,8 +75,17 @@ export function sanitizePlayerName(raw: unknown): string | null {
     if (!isStripped(codePoint)) kept += character;
   }
 
-  const cleaned = kept.replace(/\s+/g, " ").trim().slice(0, MAX_NAME_LENGTH).trim();
-  if (cleaned.length < MIN_NAME_LENGTH) return null;
+  const cleaned = kept.replace(/\s+/g, " ").trim().slice(0, maxLength).trim();
+  return cleaned.length > 0 ? cleaned : null;
+}
+
+/**
+ * Cleans a raw name. Returns null when nothing usable is left, which is what the
+ * caller turns into an INVALID_NAME error.
+ */
+export function sanitizePlayerName(raw: unknown): string | null {
+  const cleaned = sanitizeShortText(raw, MAX_NAME_LENGTH);
+  if (cleaned === null || cleaned.length < MIN_NAME_LENGTH) return null;
   return cleaned;
 }
 

@@ -27,6 +27,8 @@ import {
   generateVenueQuestions,
   generateWhoAmI,
   indexCareers,
+  finalizeHints,
+  indexClubFacts,
   notableClubNames,
   seasonLabel,
   validateAndDedupe,
@@ -37,6 +39,8 @@ const target = process.argv.includes("--remote") ? "remote" : "local";
 // Reads the facts, runs every generator and applies the quality gates, then
 // reports what it would write without writing it.
 const dryRun = process.argv.includes("--dry-run");
+// Re-derives hints for questions already stored, which normal generation skips.
+const rewriteHints = process.argv.includes("--rewrite-hints");
 const db = new D1Client({
   target,
   accountId: process.env.CLOUDFLARE_ACCOUNT_ID ?? "367bed473a2c48604d27f2e668162c49",
@@ -77,7 +81,7 @@ const teams = await db.query(`
 const winners = await db.query(`
   SELECT cw.competition_id, c.name AS competition_name, c.local_code AS competition_local_code,
          c.priority AS competition_priority, cw.season,
-         w.name AS team_name, r.name AS runner_up_name,
+         w.name AS team_name, r.name AS runner_up_name, w.country_name AS team_country,
          cs.start_date, cs.end_date
     FROM competition_winners cw
     JOIN competitions c ON c.id = cw.competition_id
@@ -104,7 +108,7 @@ const transfers = await db.query(`
 const players = await db.query(`SELECT id, name, name_he, nationality, position FROM players`);
 
 const trophies = await db.query(`
-  SELECT tr.player_id, p.name AS player_name, tr.competition_name, tr.season, tr.place
+  SELECT tr.player_id, p.name AS player_name, tr.competition_name, tr.country_name, tr.season, tr.place
     FROM player_trophies tr
     JOIN players p ON p.id = tr.player_id
 `);
@@ -262,20 +266,23 @@ for (const row of participationRows) {
 }
 for (const [name, codes] of cupScopes) cupScopes.set(name, [...codes]);
 
+// Club metadata for hints: country, league, ground, founding year, cups played.
+const clubFacts = indexClubFacts(teams, cupScopes);
+
 const byGenerator = {
   competitionWinners: generateCompetitionWinners(winners, clubsByCompetition),
-  transferTo: generateTransferQuestions(transfers, teams, notable, cupScopes),
-  transferFrom: generatePreviousClubQuestions(transfers, teams, notable, cupScopes),
-  careerPath: generateCareerPaths(transfersByPlayer, players, cupScopes),
-  clubConnection: generateClubConnections(careers, { notable, cupScopes }),
+  transferTo: generateTransferQuestions(transfers, teams, notable, cupScopes, clubFacts),
+  transferFrom: generatePreviousClubQuestions(transfers, teams, notable, cupScopes, clubFacts),
+  careerPath: generateCareerPaths(transfersByPlayer, players, cupScopes, clubFacts),
+  clubConnection: generateClubConnections(careers, { notable, cupScopes, clubFacts }),
   didNotPlayFor: generateDidNotPlayFor(careers, { notable, clubCountryById }),
   whoAmI: generateWhoAmI(careers),
   guessTheClub: generateGuessTheClub(teams),
-  managers: generateManagerQuestions(coachSpells),
+  managers: generateManagerQuestions(coachSpells, clubFacts),
   topScorers: generateTopScorerQuestions(seasonStats),
-  cupFinals: generateCupFinalQuestions(cupFixtures, cupParticipants),
-  knockouts: generateKnockoutProgressionQuestions(cupFixtures, cupParticipants),
-  cupParticipation: generateCompetitionParticipation(cupParticipants, cupSeasonMeta, [...notable]),
+  cupFinals: generateCupFinalQuestions(cupFixtures, cupParticipants, clubFacts),
+  knockouts: generateKnockoutProgressionQuestions(cupFixtures, cupParticipants, clubFacts),
+  cupParticipation: generateCompetitionParticipation(cupParticipants, cupSeasonMeta, [...notable], { clubFacts }),
   venues: generateVenueQuestions(teams),
   trophies: generateTrophyQuestions(trophies),
 };
@@ -285,6 +292,119 @@ const candidates = Object.values(byGenerator).flat();
 console.log(`  candidates generated: ${candidates.length}`);
 for (const [name, list] of Object.entries(byGenerator)) {
   if (list.length > 0) console.log(`    ${name.padEnd(20)} ${list.length}`);
+}
+
+/**
+ * --rewrite-hints: re-derive hints for questions that already exist.
+ *
+ * Generation is idempotent by semantic key, so an improvement to hint building
+ * reaches no already-stored question: every candidate is rejected as a duplicate
+ * before its hints are ever looked at. This path matches regenerated candidates to
+ * stored questions by that same key and replaces the hints where they differ,
+ * touching nothing else about the question — the id, the options and the answer
+ * are left exactly as they are, so nobody's saved challenge changes meaning.
+ */
+if (rewriteHints) {
+  const finalized = new Map();
+  for (const q of candidates) {
+    if (!finalized.has(q.semanticKey)) finalized.set(q.semanticKey, finalizeHints(q).hints ?? []);
+  }
+
+  const stored = await db.query(
+    `SELECT q.id, q.semantic_key,
+            (SELECT GROUP_CONCAT(h.text, '') FROM question_hints h
+              WHERE h.question_id = q.id ORDER BY h.order_index) AS hint_text
+       FROM questions q
+      WHERE q.semantic_key IS NOT NULL AND q.id >= ${KB_ID_BASE}`
+  );
+
+  const statements = [];
+  let changed = 0;
+  let unchanged = 0;
+  let emptied = 0;
+
+  for (const row of stored) {
+    const next = finalized.get(String(row.semantic_key));
+    if (!next) continue;
+    const current = row.hint_text ? String(row.hint_text).split("") : [];
+    if (current.length === next.length && current.every((t, i) => t === next[i])) {
+      unchanged++;
+      continue;
+    }
+    changed++;
+    if (next.length === 0) emptied++;
+    const id = Number(row.id);
+    statements.push(`DELETE FROM question_hints WHERE question_id = ${id};`);
+    next.forEach((text, index) => {
+      statements.push(
+        `INSERT INTO question_hints (question_id, text, order_index) VALUES (${id}, ${sqlValue(text)}, ${index});`
+      );
+    });
+  }
+
+  console.log(`\n  hint rewrite over ${stored.length} stored knowledge-base questions`);
+  console.log(`    unchanged            : ${unchanged}`);
+  console.log(`    to rewrite           : ${changed}`);
+  console.log(`    left with no hint    : ${emptied}  (every candidate repeated the question or the answer)`);
+
+  if (statements.length === 0) {
+    console.log(`\n  Nothing to rewrite.\n`);
+    process.exit(0);
+  }
+
+  const budget = (() => {
+    const flag = process.argv.indexOf("--max-writes");
+    return flag !== -1 ? Number(process.argv[flag + 1]) : maxWritesPerRun();
+  })();
+  const priced = planWrites(statements);
+  console.log(`    estimated rows       : ${priced.estimatedRowsWritten.toLocaleString()} (budget ${budget.toLocaleString()})`);
+
+  if (dryRun) {
+    // One sample per difficulty, so the ordering and the strength gating can be
+    // read rather than taken on trust.
+    const sampleByDifficulty = new Map();
+    for (const q of candidates) {
+      const built = finalized.get(q.semanticKey) ?? [];
+      if (built.length === 0 || sampleByDifficulty.has(q.difficulty)) continue;
+      sampleByDifficulty.set(q.difficulty, { q, built });
+    }
+    for (const level of ["EASY", "NORMAL", "HARD", "EXPERT", "IMPOSSIBLE"]) {
+      const sample = sampleByDifficulty.get(level);
+      if (!sample) continue;
+      console.log(`\n  [${level}] ${sample.q.questionHe}`);
+      console.log(`      answer : ${sample.q.options[sample.q.correctIndex]}`);
+      sample.built.forEach((h, i) => console.log(`      hint ${i + 1} : ${h}`));
+    }
+
+    // Where hints disappear, and why it is the right outcome.
+    const emptyByCategory = {};
+    for (const q of candidates) {
+      if ((finalized.get(q.semanticKey) ?? []).length > 0) continue;
+      emptyByCategory[q.category] = (emptyByCategory[q.category] ?? 0) + 1;
+    }
+    console.log(`\n  candidates left with no hint, by category:`, emptyByCategory);
+
+    console.log(`\n  DRY RUN — nothing written.\n`);
+    process.exit(0);
+  }
+
+  // Chunk by cost and stop at the budget; re-running continues, because a
+  // question whose hints already match is skipped on the next pass.
+  let spent = 0;
+  let written = 0;
+  for (const chunk of chunkByCost(statements, 4000)) {
+    const cost = planWrites(chunk).estimatedRowsWritten;
+    if (spent + cost > budget && written > 0) {
+      console.log(`    stopped at the write budget — re-run to continue`);
+      break;
+    }
+    await db.execute(chunk);
+    spent += cost;
+    written += chunk.length;
+    console.log(`    wrote ${written}/${statements.length} statements`);
+  }
+  console.log(`\n  Hint rewrite done (~${spent.toLocaleString()} rows).\n`);
+  process.exit(0);
 }
 
 // ---- Quality gates + dedupe against what already exists.

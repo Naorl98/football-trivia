@@ -1260,3 +1260,182 @@
   padding-block-start: 12px;
   border-block-start: 1px solid var(--line);
 }
+
+/* ============================================================
+   Trash talk
+   ============================================================ */
+
+.mp-talk {
+  position: relative;
+}
+
+.mp-talk-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.mp-talk-toggle:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* The label is the affordance on a wide screen; on a phone the icon carries it
+   and the accessible name comes from aria-label either way. */
+@media (max-width: 420px) {
+  .mp-talk-toggle-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+}
+
+.mp-talk-panel {
+  position: absolute;
+  inset-block-end: calc(100% + 8px);
+  inset-inline-end: 0;
+  z-index: 50;
+  width: min(300px, calc(100vw - 32px));
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-1);
+  box-shadow: 0 12px 28px rgb(0 0 0 / 28%);
+}
+
+.mp-talk-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.mp-talk-preset {
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.mp-talk-preset:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.mp-talk-preset:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.mp-talk-open-custom {
+  margin-block-start: 8px;
+  width: 100%;
+}
+
+.mp-talk-custom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-block-start: 8px;
+}
+
+.mp-talk-custom input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.mp-talk-count {
+  flex: 0 0 auto;
+  min-width: 2ch;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * Incoming bubbles.
+ *
+ * Laid out as a broadcast lower-third above the answer area, and
+ * pointer-events: none throughout — a bubble must never intercept a tap meant for
+ * an answer button, which is the one thing that would make this feature worse
+ * than not having it.
+ */
+.mp-talk-bubbles {
+  position: fixed;
+  inset-block-end: 132px;
+  inset-inline: 12px;
+  z-index: 45;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.mp-talk-bubble {
+  max-width: min(320px, calc(100vw - 40px));
+  padding: 7px 12px 8px;
+  border-radius: 14px 14px 14px 4px;
+  background: linear-gradient(180deg, var(--surface-1), var(--surface-2));
+  border: 1px solid var(--line);
+  border-inline-start: 3px solid var(--accent);
+  box-shadow: 0 8px 20px rgb(0 0 0 / 26%);
+  transition: opacity 360ms var(--ease), transform 360ms var(--ease);
+}
+
+.mp-talk-bubble[data-leaving="true"] {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.mp-talk-bubble-name {
+  display: block;
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.mp-talk-bubble-text {
+  display: block;
+  color: var(--text);
+  font-size: 0.92rem;
+  /* A message is arbitrary text from another player; it must wrap rather than
+     stretch the bubble off screen. */
+  overflow-wrap: anywhere;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mp-talk-bubble {
+    transition: none;
+  }
+}
+
+/* Reactions and the trash-talk control share one row. */
+.mp-social {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}

@@ -660,6 +660,137 @@ async function testLayout(browser) {
 
 // =================================================================== main
 
+/**
+ * Trash talk, across real browsers.
+ *
+ * The room-engine tests already prove the rules — who receives a message, the
+ * cooldown, the per-question ceiling, sanitising. What only a browser can show is
+ * that the bubble actually arrives on the other screens, renders the sender, and
+ * does not sit on top of the answer buttons: a message overlay that swallows a tap
+ * is worse than no message overlay, and that is a layout fact, not a rule.
+ */
+async function testTrashTalkInBrowsers(browser) {
+  section("THREE BROWSERS — trash talk arrives, and does not block the game");
+
+  const players = [];
+  for (const name of ["נאור", "יובל", "דנה"]) players.push(await newPlayer(browser, name));
+  const [host, opponent, third] = players;
+
+  await host.page.goto(`${BASE}/multiplayer`, { waitUntil: "domcontentloaded" });
+  const code = await createRoom(host.page, "CLASSIC_BATTLE");
+  for (const player of players) await join(player, code);
+
+  await host.page.click("button:has-text('התחל משחק')");
+  await waitForPhase(host.page, ["QUESTION", "COUNTDOWN"]);
+  await waitForPhase(opponent.page, ["QUESTION", "COUNTDOWN"]);
+  await waitForPhase(third.page, ["QUESTION"]);
+
+  // ---- a preset reaches the others
+  await host.page.click(".mp-talk-toggle");
+  check(await host.page.isVisible(".mp-talk-panel"), "the composer opens on the sender's screen");
+  await host.page.click(".mp-talk-preset:has-text('זה היה קל')");
+
+  for (const receiver of [opponent, third]) {
+    const arrived = await eventually(() => receiver.page.isVisible(".mp-talk-bubble"));
+    check(arrived, `a bubble reaches ${receiver.name}`);
+    if (!arrived) continue;
+    const bubble = await receiver.page.$eval(".mp-talk-bubble", (el) => ({
+      name: el.querySelector(".mp-talk-bubble-name")?.textContent ?? "",
+      text: el.querySelector(".mp-talk-bubble-text")?.textContent ?? "",
+    }));
+    check(bubble.text.includes("זה היה קל"), `${receiver.name} sees the message`, bubble.text);
+    check(bubble.name.includes("נאור"), `and sees who sent it`, bubble.name);
+  }
+
+  // ---- the sender does not see their own
+  check(
+    !(await host.page.isVisible(".mp-talk-bubble")),
+    "the sender's own jibe does not pop up on their own screen"
+  );
+
+  // ---- the bubble cannot intercept a tap meant for an answer
+  const overlap = await opponent.page.evaluate(() => {
+    const bubble = document.querySelector(".mp-talk-bubble");
+    const container = document.querySelector(".mp-talk-bubbles");
+    if (!bubble || !container) return { missing: true };
+    const box = bubble.getBoundingClientRect();
+    const midpoint = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+    return {
+      pointerEvents: getComputedStyle(container).pointerEvents,
+      // Whatever is under the middle of the bubble must not be the bubble itself.
+      hitIsBubble: bubble.contains(midpoint),
+    };
+  });
+  check(overlap.pointerEvents === "none", "the bubble layer does not take pointer events");
+  check(overlap.hitIsBubble === false, "a tap through the bubble reaches what is underneath");
+
+  // ---- the game still progresses for everyone
+  for (const player of players) await answerIfOpen(player.page, 0);
+  await waitForPhase(opponent.page, ["ANSWER_REVEAL", "ROUND_RESULTS", "QUESTION"]);
+  check(true, "the round still resolves after a message");
+
+  // ---- a custom message, and the length cap in the markup
+  await eventually(async () => (await opponent.page.getAttribute(".mp-talk-toggle", "disabled")) === null);
+  await opponent.page.click(".mp-talk-toggle");
+  await opponent.page.click(".mp-talk-open-custom");
+  const maxLength = await opponent.page.getAttribute(".mp-talk-custom input", "maxLength");
+  check(maxLength === "60", "the custom field caps length in the markup too", maxLength);
+  await opponent.page.fill(".mp-talk-custom input", "פוקס");
+  await opponent.page.click(".mp-talk-custom button[type=submit]");
+
+  const custom = await eventually(async () => {
+    const text = await host.page.$eval(".mp-talk-bubble-text", (el) => el.textContent).catch(() => null);
+    return Boolean(text && text.includes("פוקס"));
+  });
+  check(custom, "a custom message reaches the other player");
+
+  // ---- the cooldown is visible rather than silent
+  check(
+    (await opponent.page.getAttribute(".mp-talk-toggle", "disabled")) !== null,
+    "the control disables itself for the cooldown"
+  );
+
+  for (const player of players) {
+    check(player.errors.length === 0, `${player.name}'s console stayed clean`, player.errors[0]);
+    await player.context.close();
+  }
+}
+
+/**
+ * In a duel the jibe is between the two of them.
+ *
+ * The engine test proves the targeting; this proves the wiring end to end, which
+ * is the case most likely to break silently if the effect kind ever changes.
+ */
+async function testDuelTrashTalkInBrowsers(browser) {
+  section("TWO BROWSERS — a duel jibe reaches the opponent only");
+
+  const host = await newPlayer(browser, "נאור");
+  const rival = await newPlayer(browser, "יובל");
+
+  await host.page.goto(`${BASE}/multiplayer`, { waitUntil: "domcontentloaded" });
+  const code = await createRoom(host.page, "DUEL");
+  await join(host, code);
+  await join(rival, code);
+
+  await host.page.click("button:has-text('התחל משחק')");
+  await waitForPhase(rival.page, ["QUESTION", "COUNTDOWN", "DUEL_INTRO"]);
+
+  await host.page.click(".mp-talk-toggle");
+  await host.page.click(".mp-talk-preset:has-text('לא ראית את זה בא')");
+
+  const duelArrived = await eventually(async () =>
+    Boolean(await rival.page.$eval(".mp-talk-bubble-text", (el) => el.textContent).catch(() => null))
+  );
+  check(duelArrived, "the opponent receives the duel message");
+  check(!(await host.page.isVisible(".mp-talk-bubble")), "and the sender does not see their own");
+
+  for (const player of [host, rival]) {
+    check(player.errors.length === 0, `${player.name}'s console stayed clean`, player.errors[0]);
+    await player.context.close();
+  }
+}
+
 async function main() {
   console.log("Football IQ — multiplayer, in real browsers");
   console.log(`target: ${BASE}\n`);
@@ -670,6 +801,8 @@ async function main() {
     await testTurnBasedInBrowsers(browser);
     await testReconnectInBrowser(browser);
     await testAccessibility(browser);
+    await testTrashTalkInBrowsers(browser);
+    await testDuelTrashTalkInBrowsers(browser);
     await testMatchmakingInBrowsers(browser);
     await testLayout(browser);
   } catch (error) {

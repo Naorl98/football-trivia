@@ -241,6 +241,36 @@ export const REACTIONS = [
 
 export type ReactionEmoji = (typeof REACTIONS)[number]["emoji"];
 
+/**
+ * One-tap trash talk.
+ *
+ * Presets exist so the common case needs no keyboard — on a phone, mid-question,
+ * opening one costs more time than the message is worth. They are also the only
+ * thing a player can send without any text of theirs reaching another screen,
+ * which is why they are identified by id on the wire: the client sends "easy",
+ * never the sentence, so a preset can never be a channel for something else.
+ *
+ * Tone is competitive but never abusive. That is a product decision, not a
+ * moderation feature — the defaults set what the mode feels like.
+ */
+export const QUICK_MESSAGES = [
+  { id: "easy", textHe: "זה היה קל" },
+  { id: "var", textHe: "VAR בבקשה" },
+  { id: "almost", textHe: "כמעט..." },
+  { id: "hattrick", textHe: "שלושער בדרך" },
+  { id: "your_turn", textHe: "נראה אותך עכשיו" },
+  { id: "lucky", textHe: "איזה מזל" },
+  { id: "warming_up", textHe: "אני מתחמם" },
+  { id: "didnt_see", textHe: "לא ראית את זה בא" },
+] as const;
+
+export type QuickMessageId = (typeof QUICK_MESSAGES)[number]["id"];
+
+export const QUICK_MESSAGE_TEXT: Record<QuickMessageId, string> = QUICK_MESSAGES.reduce(
+  (all, m) => ({ ...all, [m.id]: m.textHe }),
+  {} as Record<QuickMessageId, string>
+);
+
 export type MultiplayerErrorCode =
   | "INVALID_ROOM"
   | "ROOM_EXPIRED"

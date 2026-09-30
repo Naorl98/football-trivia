@@ -16,6 +16,7 @@
 
 import {
   MAX_NAME_LENGTH,
+  MESSAGE_MAX_LENGTH,
   MULTIPLAYER_MODES_GUARD,
   QUESTION_COUNT_CHOICES,
   SECONDS_PER_QUESTION_CHOICES,
@@ -28,6 +29,7 @@ import type {
   MultiplayerErrorCode,
   MultiplayerMode,
   ReactionEmoji,
+  QuickMessageId,
   RoomSettings,
   RoomView,
   RoundReveal,
@@ -44,6 +46,11 @@ export type ClientMessage =
   | { type: "SUBMIT_ANSWER"; questionIndex: number; optionId: number | null; typed: string | null; reveal: boolean }
   | { type: "REQUEST_HINT"; questionIndex: number }
   | { type: "SEND_REACTION"; emoji: ReactionEmoji }
+  /**
+   * Trash talk. Exactly one of presetId or text: a preset is resolved to its
+   * sentence on the server, so the client never supplies the words for one.
+   */
+  | { type: "SEND_MESSAGE"; presetId: QuickMessageId | null; text: string | null }
   | { type: "REQUEST_REMATCH" }
   | { type: "KICK_PLAYER"; playerId: string }
   | { type: "SET_TEAM"; playerId: string; team: TeamId }
@@ -73,6 +80,12 @@ export type ServerMessage =
   | { type: "GAME_FINISHED"; result: GameResult }
   | { type: "HINT"; questionIndex: number; hintIndex: number; text: string }
   | { type: "REACTION"; playerId: string; name: string; emoji: ReactionEmoji }
+  /**
+   * A message to show. playerId and name come from the server's own record of the
+   * socket, never from the sender's payload, so the bubble cannot be attributed to
+   * somebody else.
+   */
+  | { type: "PLAYER_MESSAGE"; playerId: string; name: string; text: string }
   | { type: "REMATCH_STATUS"; requested: string[]; needed: number }
   | { type: "MATCH_FOUND"; roomCode: string; opponentName: string }
   | { type: "MATCHMAKING_STATUS"; state: MatchmakingState; queueSize: number; waitedMs: number; timedOut: boolean }
@@ -228,6 +241,23 @@ export function parseClientMessage(raw: unknown): ClientMessage | null {
       const questionIndex = asFiniteInt(value.questionIndex);
       if (questionIndex === null || questionIndex < 0) return null;
       return { type: "REQUEST_HINT", questionIndex };
+    }
+
+    case "SEND_MESSAGE": {
+      // Shape only. The content decision — preset lookup, sanitising, length,
+      // blocked words — belongs to resolveOutgoingMessage, and the rate limit to
+      // the room, so that a malformed frame and a refused message stay distinct.
+      const presetId = typeof value.presetId === "string" ? value.presetId : null;
+      const text = typeof value.text === "string" ? value.text : null;
+      if (presetId === null && text === null) return null;
+      if (presetId !== null && !MULTIPLAYER_MODES_GUARD.quickMessages.has(presetId)) return null;
+      // An over-long frame is rejected at the door rather than walked.
+      if (text !== null && text.length > MESSAGE_MAX_LENGTH * 8) return null;
+      return {
+        type: "SEND_MESSAGE",
+        presetId: presetId as QuickMessageId | null,
+        text: presetId !== null ? null : text,
+      };
     }
 
     case "SEND_REACTION": {

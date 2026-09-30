@@ -2,7 +2,15 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 
 import { RoomEngine, type Effect } from "../src/shared/multiplayer/roomEngine.ts";
-import { defaultSettings, randomDuelSettings, RECONNECT_GRACE_MS, EMPTY_ROOM_TTL_MS } from "../src/shared/multiplayer/constants.ts";
+import {
+  defaultSettings,
+  randomDuelSettings,
+  RECONNECT_GRACE_MS,
+  EMPTY_ROOM_TTL_MS,
+  MESSAGE_COOLDOWN_MS,
+  MESSAGE_MAX_LENGTH,
+  MESSAGE_MAX_PER_QUESTION,
+} from "../src/shared/multiplayer/constants.ts";
 import type { ClientMessage, ServerMessage } from "../src/shared/multiplayer/protocol.ts";
 import type { MultiplayerMode, RoomPhase, RoomSettings } from "../src/shared/multiplayer/types.ts";
 import type { Question } from "../src/shared/types.ts";
@@ -1324,5 +1332,195 @@ describe("a full room", () => {
     const names = Array.from({ length: 20 }, (_, i) => `שחקן${i + 1}`);
     const h = room("CLASSIC_BATTLE", names);
     assert.equal(h.engine.join("token-21", "אחד יותר", h.t).error, "ROOM_FULL");
+  });
+});
+
+describe("trash talk", () => {
+  /** Sends at an explicit time, so the cooldown can be stepped over precisely. */
+  function talk(
+    h: Harness,
+    name: string,
+    payload: { presetId?: string | null; text?: string | null },
+    at = h.t
+  ): Effect[] {
+    return h.engine.handle(
+      h.ids[name],
+      {
+        type: "SEND_MESSAGE",
+        presetId: (payload.presetId ?? null) as never,
+        text: payload.text ?? null,
+      },
+      at
+    );
+  }
+
+  it("sends a preset to the other players but not back to the sender", () => {
+    const h = room("CLASSIC_BATTLE", ["נאור", "יובל", "דנה"]);
+    const effects = talk(h, "נאור", { presetId: "easy" });
+    const sent = messagesOf(effects, "PLAYER_MESSAGE");
+    assert.equal(sent.length, 1);
+    assert.equal(sent[0].text, "זה היה קל");
+    assert.equal(sent[0].name, "נאור");
+    const broadcast = effects.find((e) => e.kind === "broadcast")!;
+    assert.equal(
+      (broadcast as { exceptPlayerId?: string }).exceptPlayerId,
+      h.ids["נאור"],
+      "your own jibe popping up over your own scoreboard reads as a bug"
+    );
+  });
+
+  it("resolves the preset server-side, ignoring any text sent with it", () => {
+    // The wire carries an id, never the sentence, so a preset cannot become a
+    // channel for something else.
+    const h = room("CLASSIC_BATTLE", ["נאור", "יובל"]);
+    const sent = messagesOf(
+      talk(h, "נאור", { presetId: "var", text: "<script>alert(1)</script>" }),
+      "PLAYER_MESSAGE"
+    );
+    assert.equal(sent[0].text, "VAR בבקשה");
+  });
+
+  it("sends a custom message", () => {
+    const h = room("CLASSIC_BATTLE", ["נאור", "יובל"]);
+    const sent = messagesOf(talk(h, "נאור", { text: "נראה אותך בשאלה הבאה" }), "PLAYER_MESSAGE");
+    assert.equal(sent[0].text, "נראה אותך בשאלה הבאה");
+  });
+
+  it("attributes the message to the socket that sent it, not to the payload", () => {
+    const h = room("CLASSIC_BATTLE", ["נאור", "יובל"]);
+    const spoofed = h.engine.handle(
+      h.ids["נאור"],
+      {
+        type: "SEND_MESSAGE",
+        presetId: "easy" as never,
+        text: null,
+        // Extra fields a hostile client might add to claim another identity.
+        ...({ playerId: h.ids["יובל"], name: "יובל" } as object),
+      } as ClientMessage,
+      h.t
+    );
+    const sent = messagesOf(spoofed, "PLAYER_MESSAGE");
+    assert.equal(sent[0].playerId, h.ids["נאור"]);
+    assert.equal(sent[0].name, "נאור");
+  });
+
+  it("strips markup and control characters rather than trusting the renderer", () => {
+    const h = room("CLASSIC_BATTLE", ["נאור", "יובל"]);
+    const sent = messagesOf(talk(h, "נאור", { text: "hi <b>there</b> bye" }), "PLAYER_MESSAGE");
+    assert.equal(sent.length, 1, "the message should still be delivered");
+    for (const character of ["<", ">"]) {
+      assert.ok(!sent[0].text.includes(character), `${character} survived sanitising: ${sent[0].text}`);
+    }
+  });
+
+  it("strips a bidi override, which in an RTL product can reorder the line", () => {
+    const h = room("CLASSIC_BATTLE", ["נאור", "יובל"]);
+    const sent = messagesOf(talk(h, "נאור", { text: "abc‮def" }), "PLAYER_MESSAGE");
+    assert.ok(!sent[0].text.includes("‮"));
+  });
+
+  it("refuses a message over the length limit instead of truncating it", () => {
+    const h = room("CLASSIC_BATTLE", ["נאור", "יובל"]);
+    const effects = talk(h, "נאור", { text: "א".repeat(MESSAGE_MAX_LENGTH + 1) });
+    assert.deepEqual(messagesOf(effects, "PLAYER_MESSAGE"), []);
+    assert.deepEqual(errorsFor(effects, h.ids["נאור"]), ["INVALID_MESSAGE"]);
+  });
+
+  it("accepts a message exactly at the limit", () => {
+    const h = room("CLASSIC_BATTLE", ["נאור", "יובל"]);
+    const sent = messagesOf(talk(h, "נאור", { text: "א".repeat(MESSAGE_MAX_LENGTH) }), "PLAYER_MESSAGE");
+    assert.equal(sent.length, 1);
+  });
+
+  it("blocks obvious abuse", () => {
+    const h = room("CLASSIC_BATTLE", ["נאור", "יובל"]);
+    const effects = talk(h, "נאור", { text: "you fuck" });
+    assert.deepEqual(messagesOf(effects, "PLAYER_MESSAGE"), []);
+    assert.deepEqual(errorsFor(effects, h.ids["נאור"]), ["INVALID_MESSAGE"]);
+  });
+
+  it("blocks abuse spelled with padding", () => {
+    const h = room("CLASSIC_BATTLE", ["נאור", "יובל"]);
+    assert.deepEqual(messagesOf(talk(h, "נאור", { text: "f u c k you" }), "PLAYER_MESSAGE"), []);
+  });
+
+  it("rate limits within the cooldown", () => {
+    const h = room("CLASSIC_BATTLE", ["נאור", "יובל"]);
+    assert.equal(messagesOf(talk(h, "נאור", { presetId: "easy" }), "PLAYER_MESSAGE").length, 1);
+    const second = talk(h, "נאור", { presetId: "lucky" }, h.t + MESSAGE_COOLDOWN_MS - 1);
+    assert.deepEqual(messagesOf(second, "PLAYER_MESSAGE"), []);
+    assert.deepEqual(errorsFor(second, h.ids["נאור"]), ["RATE_LIMITED"]);
+  });
+
+  it("allows another message once the cooldown has passed", () => {
+    const h = room("CLASSIC_BATTLE", ["נאור", "יובל"]);
+    talk(h, "נאור", { presetId: "easy" });
+    const later = talk(h, "נאור", { presetId: "lucky" }, h.t + MESSAGE_COOLDOWN_MS);
+    assert.equal(messagesOf(later, "PLAYER_MESSAGE").length, 1);
+  });
+
+  it("caps messages per question even when the cooldown is respected", () => {
+    // The cooldown alone still allows a steady drip for a whole 30-second question.
+    const h = room("CLASSIC_BATTLE", ["נאור", "יובל"]);
+    let at = h.t;
+    let delivered = 0;
+    for (let i = 0; i < MESSAGE_MAX_PER_QUESTION + 2; i++) {
+      delivered += messagesOf(talk(h, "נאור", { presetId: "easy" }, at), "PLAYER_MESSAGE").length;
+      at += MESSAGE_COOLDOWN_MS;
+    }
+    assert.equal(delivered, MESSAGE_MAX_PER_QUESTION);
+  });
+
+  it("in a duel the message reaches only the opponent", () => {
+    const h = room("DUEL", ["נאור", "יובל"]);
+    const effects = talk(h, "נאור", { presetId: "didnt_see" });
+    assert.deepEqual(
+      effects.filter((e) => e.kind === "broadcast"),
+      [],
+      "a duel jibe is between the two of them, not announced to the room"
+    );
+    const targeted = effects.filter((e) => e.kind === "send" && e.message.type === "PLAYER_MESSAGE");
+    assert.equal(targeted.length, 1);
+    assert.equal((targeted[0] as { playerId: string }).playerId, h.ids["יובל"]);
+  });
+
+  it("a player who has not joined cannot send anything", () => {
+    const h = room("CLASSIC_BATTLE", ["נאור", "יובל"]);
+    const effects = h.engine.handle(
+      "not-a-player",
+      { type: "SEND_MESSAGE", presetId: "easy" as never, text: null },
+      h.t
+    );
+    assert.deepEqual(messagesOf(effects, "PLAYER_MESSAGE"), []);
+  });
+
+  it("does not touch scores or the game phase", () => {
+    const h = room("CLASSIC_BATTLE", ["נאור", "יובל"]);
+    const phaseBefore = h.engine.state.phase;
+    const scoresBefore = h.engine.state.players.map((p) => p.score);
+    talk(h, "נאור", { presetId: "warming_up" });
+    assert.equal(h.engine.state.phase, phaseBefore);
+    assert.deepEqual(
+      h.engine.state.players.map((p) => p.score),
+      scoresBefore
+    );
+  });
+
+  it("is never persisted, so a reconnect cannot replay it", () => {
+    const h = room("CLASSIC_BATTLE", ["נאור", "יובל"]);
+    const effects = talk(h, "נאור", { presetId: "easy" });
+    assert.deepEqual(
+      effects.filter((e) => e.kind === "persist"),
+      []
+    );
+
+    // Rejoining replays the room state, and that state carries no message history.
+    const rejoin = h.engine.join("token-יובל", "יובל", h.t + 1);
+    const state = messagesOf(rejoin.effects, "ROOM_STATE");
+    assert.ok(state.length > 0, "expected the room state to be sent on rejoin");
+    assert.ok(
+      !JSON.stringify(state).includes("זה היה קל"),
+      "an ephemeral jibe must not come back with the room state"
+    );
   });
 });

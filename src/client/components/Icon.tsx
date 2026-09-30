@@ -36,7 +36,8 @@ export type IconName =
   | "sliders"
   | "stadium"
   | "route"
-  | "accessibility";
+  | "accessibility"
+  | "chat";
 
 interface Props {
   name: IconName;
@@ -193,6 +194,13 @@ const PATHS: Record<IconName, React.ReactNode> = {
       <path d="M3 8.5c0-2 4-3.5 9-3.5s9 1.5 9 3.5v7c0 2-4 3.5-9 3.5s-9-1.5-9-3.5z" />
       <path d="M3 8.5c0 2 4 3.5 9 3.5s9-1.5 9-3.5" />
       <path d="M12 12v7" />
+    </>
+  ),
+  /* A speech bubble with a tail, for the trash-talk control. */
+  chat: (
+    <>
+      <path d="M20 12.5a6.5 6.5 0 01-6.5 6.5H9l-4 3v-3.8A6.5 6.5 0 014 12.5v-1A6.5 6.5 0 0110.5 5h3A6.5 6.5 0 0120 11.5z" />
+      <path d="M9 12h6" />
     </>
   ),
   route: (

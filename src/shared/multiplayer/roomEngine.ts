@@ -31,6 +31,8 @@ import {
   LEADERBOARD_MS,
   MAX_PLAYERS_PER_ROOM,
   NEXT_QUESTION_MS,
+  MESSAGE_COOLDOWN_MS,
+  MESSAGE_MAX_PER_QUESTION,
   REACTION_COOLDOWN_MS,
   RECONNECT_GRACE_MS,
   REVEAL_MS,
@@ -39,6 +41,7 @@ import {
   isDuelMode,
   modeMeta,
 } from "./constants.ts";
+import { resolveOutgoingMessage } from "./messages.ts";
 import { sanitizePlayerName, uniquePlayerName } from "./names.ts";
 import type { ClientMessage, ServerMessage } from "./protocol.ts";
 import { errorMessage } from "./protocol.ts";
@@ -78,6 +81,9 @@ export interface PlayerState {
   responseTimes: number[];
   hintsUsedThisRound: number;
   lastReactionAt: number;
+  lastMessageAt: number;
+  /** Reset when a question starts, so the ceiling is per question. */
+  messagesThisQuestion: number;
 }
 
 export interface RoundAnswer {
@@ -356,6 +362,8 @@ export class RoomEngine {
       responseTimes: [],
       hintsUsedThisRound: 0,
       lastReactionAt: 0,
+      lastMessageAt: 0,
+      messagesThisQuestion: 0,
     };
     this.state.players.push(player);
 
@@ -479,6 +487,9 @@ export class RoomEngine {
       case "SEND_REACTION":
         return this.reaction(player, message.emoji, now);
 
+      case "SEND_MESSAGE":
+        return this.playerMessage(player, message, now);
+
       case "REQUEST_REMATCH":
         return this.requestRematch(player, now);
 
@@ -588,6 +599,56 @@ export class RoomEngine {
       { kind: "broadcast", message: { type: "ROOM_CLOSED", reasonHe } },
       { kind: "destroy" },
     ];
+  }
+
+  /**
+   * Trash talk.
+   *
+   * The sender's id and name come from `player`, which is this room's record of
+   * the socket that sent the frame — never from the payload. A client can therefore
+   * say what it likes and still cannot put words in another player's bubble.
+   *
+   * Two limits, because either alone leaves a gap: the cooldown stops a burst, and
+   * the per-question ceiling stops a steady drip for the whole of a 30-second
+   * question. Both are enforced here rather than in the UI, which only mirrors them.
+   *
+   * In a duel the message goes to the opponent alone. Everywhere else it goes to
+   * the room except the sender — seeing your own jibe pop up over your own
+   * scoreboard reads as a bug.
+   */
+  private playerMessage(
+    player: PlayerState,
+    message: { presetId: string | null; text: string | null },
+    now: number
+  ): Effect[] {
+    if (now - player.lastMessageAt < MESSAGE_COOLDOWN_MS) {
+      return [{ kind: "send", playerId: player.id, message: errorMessage("RATE_LIMITED") }];
+    }
+    if (player.messagesThisQuestion >= MESSAGE_MAX_PER_QUESTION) {
+      return [{ kind: "send", playerId: player.id, message: errorMessage("RATE_LIMITED") }];
+    }
+
+    const { text, rejection } = resolveOutgoingMessage(message);
+    if (rejection !== null || !text) {
+      return [{ kind: "send", playerId: player.id, message: errorMessage("INVALID_MESSAGE") }];
+    }
+
+    player.lastMessageAt = now;
+    player.messagesThisQuestion += 1;
+    this.touch(now);
+
+    const outgoing = {
+      type: "PLAYER_MESSAGE" as const,
+      playerId: player.id,
+      name: player.name,
+      text,
+    };
+
+    if (isDuelMode(this.state.settings.mode)) {
+      const opponent = this.state.players.find((p) => p.id !== player.id && p.connected);
+      return opponent ? [{ kind: "send", playerId: opponent.id, message: outgoing }] : [];
+    }
+    return [{ kind: "broadcast", message: outgoing, exceptPlayerId: player.id }];
   }
 
   private reaction(player: PlayerState, emoji: string, now: number): Effect[] {
@@ -728,7 +789,12 @@ export class RoomEngine {
     this.state.roundAnswers = [];
     this.state.roundWinnerIds = [];
     this.state.lastReveal = null;
-    for (const p of this.state.players) p.hintsUsedThisRound = 0;
+    for (const p of this.state.players) {
+      p.hintsUsedThisRound = 0;
+      // The trash-talk ceiling is per question, so it lifts here rather than
+      // lasting the whole game.
+      p.messagesThisQuestion = 0;
+    }
 
     const effects: Effect[] = [];
 

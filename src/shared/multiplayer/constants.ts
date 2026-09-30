@@ -145,6 +145,27 @@ export const ROOM_IDLE_TTL_MS = 2 * 60 * 60 * 1000;
 /** One reaction per player per this window. */
 export const REACTION_COOLDOWN_MS = 3000;
 
+/**
+ * Trash-talk limits.
+ *
+ * Long enough for a jibe and short enough that it cannot become a conversation:
+ * the bubble has to be readable at a glance on a phone while a question is on
+ * screen, and anything longer would have to be truncated anyway.
+ */
+export const MESSAGE_MAX_LENGTH = 60;
+
+/** One message per player per this window, whether preset or typed. */
+export const MESSAGE_COOLDOWN_MS = 4000;
+
+/**
+ * A ceiling per question as well as a cooldown.
+ *
+ * The cooldown alone still allows a steady drip for as long as a question is open,
+ * which on a 30-second question is plenty to be tiresome. Two is enough for a
+ * jibe and a reply.
+ */
+export const MESSAGE_MAX_PER_QUESTION = 2;
+
 /** Matchmaking gives up asking and offers the player a choice after this. */
 export const MATCHMAKING_TIMEOUT_MS = 45_000;
 

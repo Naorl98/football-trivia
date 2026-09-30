@@ -31,6 +31,8 @@ import {
   Announcer,
   ConnectionBadge,
   PhaseClock,
+  MessageBubbles,
+  MessageComposer,
   ReactionBar,
   ReactionBurst,
   RoomCodePanel,
@@ -260,6 +262,7 @@ export function RoomPage() {
       <Announcer message={flash || state.announcement} />
       <ConnectionBadge status={state.status} />
       <ReactionBurst reactions={state.reactions} />
+      <MessageBubbles messages={state.messages} />
       <Callout text={callout.text} id={callout.id} />
 
       {phase === "LOBBY" && (
@@ -394,7 +397,16 @@ export function RoomPage() {
             <RoundResults reveal={state.reveal} players={room.players} youId={you} />
           )}
 
-          <ReactionBar onSend={(emoji) => send({ type: "SEND_REACTION", emoji })} />
+          {/* Reactions and trash talk sit together: both are social, neither
+              affects the game. */}
+          <div className="mp-social">
+            <ReactionBar onSend={(emoji) => send({ type: "SEND_REACTION", emoji })} />
+            <MessageComposer
+              onSend={({ presetId, text }) =>
+                send({ type: "SEND_MESSAGE", presetId: presetId ?? null, text: text ?? null })
+              }
+            />
+          </div>
         </>
       )}
 

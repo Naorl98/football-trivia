@@ -15,6 +15,43 @@
 // believable rather than obviously silly.
 
 import { normalizeAnswer } from "../../shared/answerMatching.ts";
+import {
+  buildHints,
+  clubHintCandidates,
+  countryHe,
+  firstLetterHint,
+  transferTypeHint,
+  competitionHe,
+  hint,
+  regionOf,
+  type ClubHintFacts,
+  type HintCandidate,
+  type HintStrength,
+} from "./hints.ts";
+
+/**
+ * Club facts looked up by display name, for hint building.
+ *
+ * Generators receive clubs as names rather than ids — that is what a transfer row
+ * carries — so the lookup is keyed the same way.
+ */
+export type ClubFactsByName = Map<string, ClubHintFacts>;
+
+export function indexClubFacts(teams: TeamRow[], cupScopes?: CupScopesByClub): ClubFactsByName {
+  const index: ClubFactsByName = new Map();
+  for (const team of teams) {
+    const name = team.name_he || team.name;
+    if (!name) continue;
+    index.set(name, {
+      countryName: team.country_name,
+      localCode: team.local_code,
+      venueName: team.venue_name,
+      founded: team.founded,
+      cupCodes: cupScopes?.get(name) ?? [],
+    });
+  }
+  return index;
+}
 
 export type Difficulty = "EASY" | "NORMAL" | "HARD" | "EXPERT" | "IMPOSSIBLE";
 
@@ -34,6 +71,13 @@ export interface KnowledgeQuestion {
   canonicalAnswer?: string;
   aliases?: string[];
   hints?: string[];
+  /**
+   * Hints with a declared strength, for generators that know how much each one
+   * gives away. Preferred over `hints`: finalizeHints orders these weakest-first
+   * and gates the opener on difficulty. Anything left in `hints` is treated as a
+   * middling candidate and still has to survive the same filters.
+   */
+  hintCandidates?: HintCandidate[];
 }
 
 // ---------------------------------------------------------------------------
@@ -77,6 +121,8 @@ export interface WinnerRow {
   season: number;
   team_name: string;
   runner_up_name: string | null;
+  /** The champion's country, used for hints — never for the question itself. */
+  team_country?: string | null;
   /** Pre-formatted by seasonLabel(); "2024/25" or "2024". */
   season_label?: string | null;
 }
@@ -103,6 +149,7 @@ export interface TrophyRow {
   player_id: number;
   player_name: string;
   competition_name: string;
+  country_name?: string | null;
   season: string | null;
   place: string | null;
 }
@@ -351,7 +398,11 @@ export function generateCompetitionWinners(
         freeText: true,
         canonicalAnswer: row.team_name,
         aliases: [row.team_name],
-        hints: [`התחרות: ${row.competition_name}`, `העונה: ${row.season_label ?? row.season}`],
+        hintCandidates: [
+          ...hint(1, regionOf(row.team_country) ? `האלופה מ${regionOf(row.team_country)}` : null),
+          ...hint(2, countryHe(row.team_country) ? `האלופה פועלת ב${countryHe(row.team_country)}` : null),
+          ...hint(3, row.runner_up_name ? `היא סיימה לפני ${row.runner_up_name}` : null),
+        ],
       });
     }
   }
@@ -407,10 +458,13 @@ export function generateTransferQuestions(
   transfers: TransferRow[],
   teamPool: TeamRow[],
   notable: Set<string> = new Set(),
-  cupScopes?: CupScopesByClub
+  cupScopes?: CupScopesByClub,
+  clubFacts?: ClubFactsByName
 ): KnowledgeQuestion[] {
   const out: KnowledgeQuestion[] = [];
   const isNotable = (name: string) => notable.size === 0 || notable.has(name);
+  const otherFacts = (names: readonly string[]): ClubHintFacts[] =>
+    names.map((nm) => clubFacts?.get(nm) ?? {});
   // Distractors are drawn from the same notability band as the answer. Mixing
   // obscure clubs in beside a famous one gives the answer away by recognition,
   // which is a harder problem than an implausible distractor: the question looks
@@ -435,14 +489,17 @@ export function generateTransferQuestions(
     );
     if (distractors.length < 3) continue;
 
+    const difficulty = classifyDifficulty({ resource: "transfer", season: year });
+    const questionHe = `לאיזו קבוצה עבר ${transfer.player_name} מ${transfer.from_team_name}${
+      year ? ` בשנת ${year}` : ""
+    }?`;
+
     out.push({
       semanticKey: seedKey,
       mode: "CLASSIC",
       category: "TRANSFERS",
-      difficulty: classifyDifficulty({ resource: "transfer", season: year }),
-      questionHe: `לאיזו קבוצה עבר ${transfer.player_name} מ${transfer.from_team_name}${
-        year ? ` בשנת ${year}` : ""
-      }?`,
+      difficulty,
+      questionHe,
       explanationHe: `${transfer.player_name} עבר מ${transfer.from_team_name} ל${transfer.to_team_name}${
         year ? ` בשנת ${year}` : ""
       }.`,
@@ -456,7 +513,12 @@ export function generateTransferQuestions(
       freeText: true,
       canonicalAnswer: transfer.to_team_name,
       aliases: [transfer.to_team_name],
-      hints: [`המועדון הקודם: ${transfer.from_team_name}`, ...(year ? [`השנה: ${year}`] : [])],
+      // The question already names the club he left and the year, so hints are
+      // about the club he joined.
+      hintCandidates: [
+        ...clubHintCandidates(clubFacts?.get(transfer.to_team_name) ?? {}, otherFacts(distractors)),
+        ...transferTypeHint(transfer.transfer_type),
+      ],
     });
   }
   return out;
@@ -466,10 +528,12 @@ export function generateTransferQuestions(
 export function generateCareerPaths(
   transfersByPlayer: Map<number, TransferRow[]>,
   playerPool: PlayerRow[],
-  cupScopes?: CupScopesByClub
+  cupScopes?: CupScopesByClub,
+  clubFacts?: ClubFactsByName
 ): KnowledgeQuestion[] {
   const out: KnowledgeQuestion[] = [];
   const playerNames = playerPool.map((p) => display(p));
+  const playerById = new Map(playerPool.map((p) => [p.id, p]));
 
   for (const [playerId, transfers] of transfersByPlayer) {
     // Ordering must be certain: every move needs a date.
@@ -492,6 +556,14 @@ export function generateCareerPaths(
     );
     if (distractors.length < 3) continue;
 
+    // Facts for the hints. The clubs themselves are already the clues, so a hint
+    // repeating one would be filtered out; these describe the player instead.
+    const playerRecord = playerById.get(playerId) ?? null;
+    const pathCountries = [
+      ...new Set(path.map((club) => clubFacts?.get(club)?.countryName).filter(Boolean)),
+    ] as string[];
+    const firstSeason = ordered[0].transfer_date ? Number(ordered[0].transfer_date.slice(0, 4)) : null;
+
     out.push({
       semanticKey: `KB_CAREER_PATH:${playerId}`,
       mode: "CAREER_PATH",
@@ -508,7 +580,14 @@ export function generateCareerPaths(
       freeText: true,
       canonicalAnswer: playerName,
       aliases: derivePlayerAliases(playerName),
-      hints: [`המועדון הראשון ברשימה: ${path[0]}`, `מספר המועדונים: ${path.length}`],
+      hintCandidates: [
+        ...hint(1, playerRecord?.position ? `העמדה שלו: ${playerRecord.position}` : null),
+        ...hint(1, pathCountries.length >= 2 ? `הקריירה שלו עברה ב${pathCountries.length} מדינות` : null),
+        // The first dated move places the career in time, which the club list on
+        // screen does not: every career path question has one.
+        ...hint(1, firstSeason ? `המעבר הראשון שלו היה בשנת ${firstSeason}` : null),
+        ...hint(2, playerRecord?.nationality ? `הלאום שלו: ${playerRecord.nationality}` : null),
+      ],
     });
   }
   return out;
@@ -546,7 +625,11 @@ export function generateVenueQuestions(teams: TeamRow[]): KnowledgeQuestion[] {
       freeText: true,
       canonicalAnswer: team.venue_name!,
       aliases: [team.venue_name!],
-      hints: [...(team.country_name ? [`המדינה: ${team.country_name}`] : [])],
+      hintCandidates: [
+        ...hint(1, regionOf(team.country_name) ? `האצטדיון נמצא ב${regionOf(team.country_name)}` : null),
+        ...hint(2, team.country_name ? `האצטדיון נמצא ב${team.country_name}` : null),
+        ...hint(2, competitionHe(team.local_code) ? `הקבוצה משחקת ב${competitionHe(team.local_code)}` : null),
+      ],
     });
   }
   return out;
@@ -591,7 +674,7 @@ export function generateTrophyQuestions(trophies: TrophyRow[]): KnowledgeQuestio
       scopes: [{ type: "REGION", value: "WORLD" }],
       sourceLabel: "מסד נתוני תארים מיובא",
       freeText: false,
-      hints: [`העונה: ${row.season}`],
+      hintCandidates: [...hint(2, row.country_name ? `התחרות מתקיימת ב${row.country_name}` : null)],
     });
   }
   return out;
@@ -612,9 +695,25 @@ const yearOf = (date: string | null): number | null => {
  * manager mid-season has no single manager for that year. Those are dropped
  * rather than guessed at, which is why a sacking season produces no question.
  */
-export function generateManagerQuestions(spells: CoachSpellRow[]): KnowledgeQuestion[] {
+export function generateManagerQuestions(
+  spells: CoachSpellRow[],
+  clubFacts?: ClubFactsByName
+): KnowledgeQuestion[] {
   const out: KnowledgeQuestion[] = [];
   const dated = spells.filter((s) => s.team_name && s.coach_name && s.start_date);
+  const otherClubFacts = (names: readonly string[]): ClubHintFacts[] =>
+    names.map((nm) => clubFacts?.get(nm) ?? {});
+
+  // Another club the same coach held, which is the strongest hint available about
+  // a manager without naming him.
+  const clubsByCoach = new Map<number, string[]>();
+  for (const spell of dated) {
+    const held = clubsByCoach.get(spell.coach_id) ?? [];
+    if (!held.includes(spell.team_name)) held.push(spell.team_name);
+    clubsByCoach.set(spell.coach_id, held);
+  }
+  const otherClubOf = (row: CoachSpellRow): string | null =>
+    (clubsByCoach.get(row.coach_id) ?? []).find((name) => name !== row.team_name) ?? null;
 
   const coachNames = [...new Set(dated.map((s) => s.coach_name))];
   const clubNames = [...new Set(dated.map((s) => s.team_name))];
@@ -689,7 +788,10 @@ export function generateManagerQuestions(spells: CoachSpellRow[]): KnowledgeQues
       freeText: true,
       canonicalAnswer: row.team_name,
       aliases: [row.team_name],
-      hints: [...(row.nationality ? [`הלאום של המאמן: ${row.nationality}`] : []), `השנה: ${year}`],
+      hintCandidates: [
+        ...hint(1, row.nationality ? `הלאום של המאמן: ${row.nationality}` : null),
+        ...clubHintCandidates(clubFacts?.get(row.team_name) ?? {}, otherClubFacts(distractors)),
+      ],
     });
   }
 
@@ -727,7 +829,10 @@ export function generateManagerQuestions(spells: CoachSpellRow[]): KnowledgeQues
       freeText: true,
       canonicalAnswer: row.coach_name,
       aliases: derivePlayerAliases(row.coach_name),
-      hints: [`הקבוצה: ${row.team_name}`, `השנה: ${year}`],
+      hintCandidates: [
+        ...hint(1, row.nationality ? `הלאום שלו: ${row.nationality}` : null),
+        ...hint(3, otherClubOf(row) ? `הוא אימן גם את ${otherClubOf(row)}` : null),
+      ],
     });
   }
 
@@ -800,7 +905,7 @@ export function indexCareers(rows: PlayerTeamRow[]): CareerIndex {
  */
 export function generateClubConnections(
   careers: CareerIndex,
-  options: { maxPerClub?: number; notable?: Set<string>; cupScopes?: CupScopesByClub } = {}
+  options: { maxPerClub?: number; notable?: Set<string>; cupScopes?: CupScopesByClub; clubFacts?: ClubFactsByName } = {}
 ): KnowledgeQuestion[] {
   const out: KnowledgeQuestion[] = [];
   const maxPerClub = options.maxPerClub ?? 6;
@@ -867,7 +972,13 @@ export function generateClubConnections(
           freeText: true,
           canonicalAnswer: clubName,
           aliases: [clubName],
-          hints: [`שני השחקנים חלקו מועדון אחד`, `מספר המועדונים בקריירה של ${a.player_name}: ${aClubs.size}`],
+          hintCandidates: [
+            ...hint(1, `בקריירה של ${a.player_name} היו ${aClubs.size} מועדונים`),
+            ...clubHintCandidates(
+              options.clubFacts?.get(clubName) ?? {},
+              distractors.map((nm) => options.clubFacts?.get(nm) ?? {})
+            ),
+          ],
         });
       }
     }
@@ -987,10 +1098,11 @@ export function generateWhoAmI(careers: CareerIndex): KnowledgeQuestion[] {
       freeText: true,
       canonicalAnswer: player.player_name,
       aliases: derivePlayerAliases(player.player_name),
-      hints: [
-        ...(attrs.nationality ? [`הלאום: ${attrs.nationality}`] : []),
-        ...(attrs.position ? [`העמדה: ${attrs.position}`] : []),
-        `מספר המועדונים בקריירה: ${clubNames.length}`,
+      hintCandidates: [
+        ...hint(1, attrs.countries.length >= 2 ? `שיחקתי ב${attrs.countries.length} מדינות שונות` : null),
+        ...hint(2, attrs.firstYear ? `התחלתי להופיע במסד בעונת ${attrs.firstYear}` : null),
+        // A club the clue list did not show is the strongest thing left to give.
+        ...hint(3, clubNames.length > 4 ? `שיחקתי גם ב${clubNames[clubNames.length - 1]}` : null),
       ],
     });
   }
@@ -1070,7 +1182,10 @@ export function generateDidNotPlayFor(
       scopes: [{ type: "REGION", value: "WORLD" }],
       sourceLabel: "מסד נתוני קריירות מיובא",
       freeText: false,
-      hints: [`מספר המועדונים בקריירה: ${clubIds.size}`],
+      hintCandidates: [
+        ...hint(1, `בקריירה שלו היו ${clubIds.size} מועדונים`),
+        ...hint(2, playedCountries.size >= 2 ? `הוא שיחק ב${playedCountries.size} מדינות` : null),
+      ],
     });
   }
   return out;
@@ -1129,7 +1244,10 @@ export function generateGuessTheClub(teams: TeamRow[]): KnowledgeQuestion[] {
       freeText: true,
       canonicalAnswer: display(club),
       aliases: deriveTeamAliases(club),
-      hints: [`המדינה: ${club.country_name}`, `שנת ההיווסדות: ${club.founded}`],
+      hintCandidates: [
+        ...hint(1, regionOf(club.country_name) ? `אני מ${regionOf(club.country_name)}` : null),
+        ...hint(2, competitionHe(club.local_code) ? `אני משחק ב${competitionHe(club.local_code)}` : null),
+      ],
     });
   }
   return out;
@@ -1144,10 +1262,13 @@ export function generatePreviousClubQuestions(
   transfers: TransferRow[],
   teamPool: TeamRow[],
   notable: Set<string> = new Set(),
-  cupScopes?: CupScopesByClub
+  cupScopes?: CupScopesByClub,
+  clubFacts?: ClubFactsByName
 ): KnowledgeQuestion[] {
   const out: KnowledgeQuestion[] = [];
   const isNotable = (name: string) => notable.size === 0 || notable.has(name);
+  const otherFacts = (names: readonly string[]): ClubHintFacts[] =>
+    names.map((nm) => clubFacts?.get(nm) ?? {});
   const teamNames = teamPool.map((t) => display(t)).filter(isNotable);
 
   for (const transfer of transfers) {
@@ -1166,14 +1287,17 @@ export function generatePreviousClubQuestions(
     );
     if (distractors.length < 3) continue;
 
+    const difficulty = classifyDifficulty({ resource: "transfer", season: year });
+    const questionHe = `מאיזו קבוצה הגיע ${transfer.player_name} ל${transfer.to_team_name}${
+      year ? ` בשנת ${year}` : ""
+    }?`;
+
     out.push({
       semanticKey: seedKey,
       mode: "CLASSIC",
       category: "TRANSFERS",
-      difficulty: classifyDifficulty({ resource: "transfer", season: year }),
-      questionHe: `מאיזו קבוצה הגיע ${transfer.player_name} ל${transfer.to_team_name}${
-        year ? ` בשנת ${year}` : ""
-      }?`,
+      difficulty,
+      questionHe,
       explanationHe: `${transfer.player_name} הגיע ל${transfer.to_team_name} מ${transfer.from_team_name}${
         year ? ` בשנת ${year}` : ""
       }.`,
@@ -1187,7 +1311,10 @@ export function generatePreviousClubQuestions(
       freeText: true,
       canonicalAnswer: transfer.from_team_name,
       aliases: [transfer.from_team_name],
-      hints: [`המועדון החדש: ${transfer.to_team_name}`, ...(year ? [`השנה: ${year}`] : [])],
+      hintCandidates: [
+        ...clubHintCandidates(clubFacts?.get(transfer.from_team_name) ?? {}, otherFacts(distractors)),
+        ...transferTypeHint(transfer.transfer_type),
+      ],
     });
   }
   return out;
@@ -1245,7 +1372,10 @@ export function generateTopScorerQuestions(stats: SeasonStatRow[]): KnowledgeQue
       freeText: true,
       canonicalAnswer: row.player_name,
       aliases: derivePlayerAliases(row.player_name),
-      hints: [`התחרות: ${row.competition_name}`, `מספר השערים: ${best}`],
+      hintCandidates: [
+        ...hint(1, `הוא כבש ${best} שערים באותה עונה`),
+        ...hint(3, row.team_name ? `הוא שיחק ב${row.team_name}` : null),
+      ],
     });
   }
   return out;
@@ -1296,7 +1426,8 @@ function scoreText(f: FixtureRow): string | null {
  */
 export function generateCupFinalQuestions(
   finals: FixtureRow[],
-  participantsByCompetitionSeason: Map<string, string[]>
+  participantsByCompetitionSeason: Map<string, string[]>,
+  clubFacts?: ClubFactsByName
 ): KnowledgeQuestion[] {
   const out: KnowledgeQuestion[] = [];
 
@@ -1337,7 +1468,10 @@ export function generateCupFinalQuestions(
         freeText: true,
         canonicalAnswer: opponent,
         aliases: [opponent],
-        hints: [`התחרות: ${f.competition_name}`, `העונה: ${label}`],
+        hintCandidates: clubHintCandidates(
+          clubFacts?.get(opponent) ?? {},
+          distractors.map((nm) => clubFacts?.get(nm) ?? {})
+        ),
       });
     }
 
@@ -1367,7 +1501,7 @@ export function generateCupFinalQuestions(
           scopes,
           sourceLabel: "מסד נתוני משחקים מיובא",
           freeText: false,
-          hints: [`התחרות: ${f.competition_name}`, `העונה: ${label}`],
+          hintCandidates: [...hint(2, `המשחק היה חלק מ${f.competition_name}`)],
         });
       }
     }
@@ -1387,7 +1521,8 @@ export function generateCupFinalQuestions(
  */
 export function generateKnockoutProgressionQuestions(
   fixtures: FixtureRow[],
-  participantsByCompetitionSeason: Map<string, string[]>
+  participantsByCompetitionSeason: Map<string, string[]>,
+  clubFacts?: ClubFactsByName
 ): KnowledgeQuestion[] {
   const out: KnowledgeQuestion[] = [];
 
@@ -1466,7 +1601,10 @@ export function generateKnockoutProgressionQuestions(
           freeText: true,
           canonicalAnswer: opponentName,
           aliases: [opponentName],
-          hints: [`התחרות: ${first.competition_name}`, `העונה: ${label}`],
+          hintCandidates: clubHintCandidates(
+            clubFacts?.get(opponentName) ?? {},
+            distractors.map((nm) => clubFacts?.get(nm) ?? {})
+          ),
         });
       }
     }
@@ -1487,8 +1625,9 @@ export function generateCompetitionParticipation(
   participantsByCompetitionSeason: Map<string, string[]>,
   meta: Map<string, { competitionId: number; competitionName: string; localCode: string | null; priority: number | null; season: number; seasonLabel: string }>,
   notableClubs: string[],
-  options: { maxPerCompetitionSeason?: number } = {}
+  options: { maxPerCompetitionSeason?: number; clubFacts?: ClubFactsByName } = {}
 ): KnowledgeQuestion[] {
+  const clubFacts = options.clubFacts;
   const out: KnowledgeQuestion[] = [];
   const cap = options.maxPerCompetitionSeason ?? 40;
 
@@ -1521,7 +1660,10 @@ export function generateCompetitionParticipation(
         scopes: scopesForCompetition(info.localCode, null),
         sourceLabel: "מסד נתוני משחקים מיובא",
         freeText: false,
-        hints: [`התחרות: ${info.competitionName}`, `העונה: ${info.seasonLabel}`],
+        hintCandidates: clubHintCandidates(
+          clubFacts?.get(subject) ?? {},
+          distractors.map((nm) => clubFacts?.get(nm) ?? {})
+        ),
       });
     }
   }
@@ -1532,6 +1674,41 @@ export function generateCompetitionParticipation(
  * Final quality gate. Drops anything ambiguous, duplicated or malformed before
  * it can reach the question bank.
  */
+/**
+ * Settles a question's hints, the last thing done before it is accepted.
+ *
+ * Every question passes through here, which is the point: a generator that says
+ * nothing about hint strength still has its hints checked for repeating the
+ * question, repeating a clue, or containing the answer. That single pass is what
+ * removes the bank's two worst habits — a hint reading "השנה: 2022" on a question
+ * that already says "בשנת 2022", and one reading "the two players shared a club"
+ * on a question asking which club they shared.
+ */
+export function finalizeHints(q: KnowledgeQuestion): KnowledgeQuestion {
+  const answer = q.canonicalAnswer ?? q.options[q.correctIndex];
+  const candidates: HintCandidate[] = [
+    ...(q.hintCandidates && q.hintCandidates.length > 0
+      ? q.hintCandidates
+      : (q.hints ?? []).map((text) => ({ text, strength: 2 as HintStrength }))),
+    // Appended last and strongest, so it is the final hint where it survives at
+    // all — and only offered on free-text questions, where the first character is
+    // worth something. On multiple choice the options are already on screen.
+    ...(q.freeText ? firstLetterHint(answer) : []),
+  ];
+
+  const hints = buildHints({
+    candidates,
+    questionHe: q.questionHe,
+    answer: q.canonicalAnswer ?? q.options[q.correctIndex],
+    aliases: q.aliases,
+    clues: q.clues,
+    difficulty: q.difficulty,
+  });
+
+  const { hintCandidates: _dropped, ...rest } = q;
+  return { ...rest, hints };
+}
+
 export function validateAndDedupe(
   candidates: KnowledgeQuestion[],
   existingSemanticKeys: Set<string>
@@ -1588,7 +1765,7 @@ export function validateAndDedupe(
     }
 
     seen.add(q.semanticKey);
-    accepted.push(q);
+    accepted.push(finalizeHints(q));
   }
 
   return { accepted, rejected };

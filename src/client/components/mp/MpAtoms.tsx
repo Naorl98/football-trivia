@@ -6,13 +6,22 @@
 // (MultiplayerPage, RoomPage, DuelSearchPage, RoomDisplayPage) compose these.
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { REACTIONS, type ReactionEmoji } from "../../../shared/multiplayer/types";
+import {
+  QUICK_MESSAGES,
+  REACTIONS,
+  type QuickMessageId,
+  type ReactionEmoji,
+} from "../../../shared/multiplayer/types";
+import { MESSAGE_COOLDOWN_MS, MESSAGE_MAX_LENGTH } from "../../../shared/multiplayer/constants";
 import { formatRoomCode, roomJoinUrl } from "../../../shared/multiplayer/roomCode";
 import { renderQr } from "../../lib/mp/qr";
 import { motionAllowed } from "../../lib/a11y";
 import { sound } from "../../lib/sound";
 import { Icon } from "../Icon";
-import type { LiveReaction } from "../../lib/mp/useRoom";
+import type { LiveMessage, LiveReaction } from "../../lib/mp/useRoom";
+
+/** How long a bubble stays on screen before it fades. */
+const MESSAGE_VISIBLE_MS = 4200;
 import "./mp.css";
 
 // ------------------------------------------------------------------ QR code
@@ -288,6 +297,166 @@ export function ReactionBurst({ reactions }: { reactions: LiveReaction[] }) {
         <span key={reaction.key} className="mp-burst-item">
           {reaction.emoji}
         </span>
+      ))}
+    </div>
+  );
+}
+
+// ----------------------------------------------------------- trash talk
+
+/**
+ * The trash-talk control: presets first, typing only if you want to.
+ *
+ * Opening a keyboard mid-question costs more time than the message is worth, so
+ * the presets are the primary path and the custom field is behind a second tap.
+ * The server enforces the cooldown and the per-question ceiling; this mirrors the
+ * cooldown so the limit is visible as a disabled button rather than arriving as an
+ * error after the fact.
+ */
+export function MessageComposer({
+  onSend,
+  disabled,
+}: {
+  onSend: (payload: { presetId?: QuickMessageId; text?: string }) => void;
+  disabled?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [custom, setCustom] = useState("");
+  const [typing, setTyping] = useState(false);
+  const [cooling, setCooling] = useState(false);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+
+  const blocked = cooling || disabled;
+
+  function fire(payload: { presetId?: QuickMessageId; text?: string }) {
+    if (blocked) return;
+    onSend(payload);
+    setCooling(true);
+    window.setTimeout(() => setCooling(false), MESSAGE_COOLDOWN_MS);
+    setOpen(false);
+    setTyping(false);
+    setCustom("");
+  }
+
+  // Escape closes, and focus returns to nothing in particular — the panel is
+  // transient furniture over a live game, not a dialog to be trapped in.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+        setTyping(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  const remaining = MESSAGE_MAX_LENGTH - [...custom].length;
+
+  return (
+    <div className="mp-talk" ref={panelRef}>
+      <button
+        type="button"
+        className="mp-talk-toggle"
+        onClick={() => setOpen((v) => !v)}
+        disabled={blocked}
+        aria-expanded={open}
+        aria-label="הודעה ליריב"
+        title="הודעה ליריב"
+      >
+        <Icon name="chat" />
+        <span className="mp-talk-toggle-label">הודעה ליריב</span>
+      </button>
+
+      {open && (
+        <div className="mp-talk-panel" role="group" aria-label="הודעה ליריב">
+          <div className="mp-talk-presets">
+            {QUICK_MESSAGES.map((preset) => (
+              <button
+                key={preset.id}
+                type="button"
+                className="mp-talk-preset"
+                onClick={() => fire({ presetId: preset.id })}
+                disabled={blocked}
+              >
+                {preset.textHe}
+              </button>
+            ))}
+          </div>
+
+          {typing ? (
+            <form
+              className="mp-talk-custom"
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (custom.trim()) fire({ text: custom });
+              }}
+            >
+              <input
+                type="text"
+                value={custom}
+                onChange={(event) => setCustom(event.target.value)}
+                maxLength={MESSAGE_MAX_LENGTH}
+                placeholder="הודעה קצרה..."
+                aria-label="הודעה חופשית"
+                autoFocus
+              />
+              <span className="mp-talk-count" aria-hidden="true">
+                {remaining}
+              </span>
+              <button type="submit" className="btn btn-sm" disabled={blocked || !custom.trim()}>
+                שלח
+              </button>
+            </form>
+          ) : (
+            <button type="button" className="btn btn-quiet btn-sm mp-talk-open-custom" onClick={() => setTyping(true)}>
+              הודעה משלי
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Incoming messages, as speech bubbles.
+ *
+ * Laid out like a broadcast lower-third and pinned with `pointer-events: none`, so
+ * a bubble can never sit on top of an answer button or swallow a tap — the failure
+ * that makes this kind of feature actively hostile on a phone.
+ *
+ * Under reduced motion the bubbles still appear, because unlike a decorative
+ * emoji burst they carry words somebody sent; they simply do not animate. Nothing
+ * here is announced either: useRoom already writes the message to the live region
+ * once, and repeating it per bubble is how a screen reader ends up reciting the
+ * same jibe three times.
+ */
+export function MessageBubbles({ messages }: { messages: LiveMessage[] }) {
+  const [now, setNow] = useState(() => Date.now());
+
+  // One timer for the whole stack rather than one per bubble.
+  useEffect(() => {
+    if (messages.length === 0) return;
+    const timer = window.setInterval(() => setNow(Date.now()), 250);
+    return () => window.clearInterval(timer);
+  }, [messages.length]);
+
+  const visible = messages.filter((m) => now - m.at < MESSAGE_VISIBLE_MS);
+  if (visible.length === 0) return null;
+
+  return (
+    <div className="mp-talk-bubbles" aria-hidden="true">
+      {visible.map((message) => (
+        <div
+          key={message.key}
+          className={`mp-talk-bubble${motionAllowed() ? " a-pop" : ""}`}
+          data-leaving={now - message.at > MESSAGE_VISIBLE_MS - 400 ? "true" : undefined}
+        >
+          <span className="mp-talk-bubble-name">{message.name}</span>
+          <span className="mp-talk-bubble-text">{message.text}</span>
+        </div>
       ))}
     </div>
   );

@@ -41,6 +41,16 @@ export interface LiveReaction {
   emoji: ReactionEmoji;
 }
 
+/** A trash-talk bubble currently on screen. */
+export interface LiveMessage {
+  key: number;
+  playerId: string;
+  name: string;
+  text: string;
+  /** When it arrived, so the bubble can time itself out. */
+  at: number;
+}
+
 export interface RoomClientState {
   status: ConnectionStatus;
   room: RoomView | null;
@@ -57,6 +67,7 @@ export interface RoomClientState {
   /** Hint texts handed over for the question in play, in the order they were asked for. */
   hints: string[];
   reactions: LiveReaction[];
+  messages: LiveMessage[];
   error: { code: MultiplayerErrorCode; messageHe: string } | null;
   closedReason: string | null;
   /** The latest thing worth saying out loud, for the live region. */
@@ -76,6 +87,7 @@ const INITIAL: RoomClientState = {
   result: null,
   hints: [],
   reactions: [],
+  messages: [],
   error: null,
   closedReason: null,
   announcement: "",
@@ -106,6 +118,7 @@ export function useRoom(code: string | undefined, options: UseRoomOptions = {}) 
   /** The name this client joined under, replayed if a reconnect loses the seat. */
   const joinNameRef = useRef<string | null>(null);
   const reactionKeyRef = useRef(0);
+  const messageKeyRef = useRef(0);
   const youRef = useRef<string | null>(null);
   const modeRef = useRef<RoomView["settings"]["mode"] | null>(null);
 
@@ -279,6 +292,26 @@ export function useRoom(code: string | undefined, options: UseRoomOptions = {}) 
           next.hints = [...previous.hints, message.text];
           next.announcement = `רמז: ${message.text}`;
           return next;
+
+        case "PLAYER_MESSAGE": {
+          sound.play("reaction");
+          messageKeyRef.current += 1;
+          // Only the most recent few are kept: a bubble that has aged out is gone,
+          // and nothing here is replayed after a reconnect because the messages
+          // live in this state alone and a reconnect starts it empty.
+          next.messages = [
+            ...previous.messages.slice(-2),
+            {
+              key: messageKeyRef.current,
+              playerId: message.playerId,
+              name: message.name,
+              text: message.text,
+              at: Date.now(),
+            },
+          ];
+          next.announcement = `${message.name}: ${message.text}`;
+          return next;
+        }
 
         case "REACTION": {
           sound.play("reaction");
