@@ -64,6 +64,18 @@ export const ARCHETYPE_WEIGHT = {
   stadium: 1.1,
   /** "Whose career path is this?" — several clues, one answer. */
   career_path: 1.2,
+  /**
+   * "Who am I?" — a handful of biographical clues narrowing to one player.
+   * Slightly harder than a career path: the clues are about the person rather
+   * than the club sequence, so there is no visual shape to recognise.
+   */
+  who_am_i: 0.9,
+  /**
+   * "Which club is this?" — country, stadium, founding year, famous players.
+   * Harder again, because a club is identified by facts most fans never learn
+   * deliberately.
+   */
+  guess_club: 1.1,
   /** "Where did Player X start his senior career?" — a detail even fans miss. */
   first_club: 1.5,
   /** "Who did the winner beat in the final?" — the loser is far less memorable. */

@@ -26,7 +26,9 @@
     "data:status": "node scripts/data-status.mjs",
     "questions:generate": "node scripts/questions-generate.mjs",
     "questions:generate:incremental": "node scripts/questions-generate.mjs",
-    "questions:stats": "node scripts/questions-stats.mjs"
+    "questions:stats": "node scripts/questions-stats.mjs",
+    "db:report": "node scripts/d1-report.mjs",
+    "db:report:remote": "node scripts/d1-report.mjs --remote"
   },
   "repository": {
     "type": "git",

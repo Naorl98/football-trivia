@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { QUICK_PRESETS } from "../lib/presets";
+import { QUICK_PRESETS, type QuickPreset } from "../lib/presets";
 import { startQuiz } from "../lib/startQuiz";
+import type { AnswerMode } from "../../shared/types";
 import { sound } from "../lib/sound";
 import { motionAllowed } from "../lib/a11y";
 import { Icon } from "../components/Icon";
@@ -21,12 +22,24 @@ export function HomePage() {
   const [loadingKey, setLoadingKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function handlePreset(key: string, config: Parameters<typeof startQuiz>[1]) {
+  /**
+   * A quick tile no longer starts the quiz on its own.
+   *
+   * It used to, and that made the single most consequential choice in the
+   * product — typing the answer versus picking one of four — invisible: every
+   * quick start was multiple choice because that is what the preset happened to
+   * say. One tap to pick the topic, one tap to pick how you answer, then play.
+   * No builder, no modal to dismiss, nothing to confirm.
+   */
+  const [pending, setPending] = useState<QuickPreset | null>(null);
+
+  async function start(preset: QuickPreset, answerMode: AnswerMode) {
     setError(null);
-    setLoadingKey(key);
+    setPending(null);
+    setLoadingKey(preset.key);
     sound.play("select");
     try {
-      await startQuiz(navigate, config);
+      await startQuiz(navigate, { ...preset.config, answerMode });
     } catch (e) {
       setError(e instanceof Error ? e.message : "משהו השתבש, נסו שוב.");
     } finally {
@@ -57,9 +70,10 @@ export function HomePage() {
           <Icon name="arrow" size={19} />
         </button>
 
-        {/* The second decision this product supports: not "play alone", but
-            "play against someone". It sits beside the primary rather than in a
-            menu, because a trivia game is better with other people in the room. */}
+        {/* The three ways into a game, all on the surface. Random Game in
+            particular is not tucked inside the multiplayer menu: "find me
+            somebody to play against right now" is its own intent, and burying it
+            one level down is the difference between it being used and not. */}
         <button
           className="btn btn-ghost btn-lg home-cta-mp"
           onClick={() => {
@@ -69,6 +83,17 @@ export function HomePage() {
         >
           <Icon name="shirt" size={18} />
           משחק עם חברים
+        </button>
+
+        <button
+          className="btn btn-ghost btn-lg home-cta-mp"
+          onClick={() => {
+            sound.play("click");
+            navigate("/multiplayer/duel");
+          }}
+        >
+          <Icon name="target" size={18} />
+          משחק אקראי
         </button>
       </div>
 
@@ -80,7 +105,11 @@ export function HomePage() {
             style={{ "--i": i + 3 } as React.CSSProperties}
             disabled={loadingKey !== null}
             aria-busy={loadingKey === preset.key}
-            onClick={() => handlePreset(preset.key, preset.config)}
+            aria-haspopup="dialog"
+            onClick={() => {
+              sound.play("click");
+              setPending(preset);
+            }}
           >
             <Icon name={preset.icon} size={17} />
             <span>{loadingKey === preset.key ? "טוען…" : preset.titleHe}</span>
@@ -88,11 +117,91 @@ export function HomePage() {
         ))}
       </div>
 
+      {pending && (
+        <AnswerModeSheet
+          preset={pending}
+          onPick={(mode) => start(pending, mode)}
+          onDismiss={() => setPending(null)}
+        />
+      )}
+
       {error && (
         <p className="home-error a-pop" role="alert">
           {error}
         </p>
       )}
+    </div>
+  );
+}
+
+/**
+ * The one tap between choosing a topic and playing it.
+ *
+ * A bottom sheet rather than a modal: it is a choice, not a warning, so it rises
+ * from the thumb rather than landing in the middle of the screen. Free text is
+ * marked as the recommendation because it is the mode the product is actually
+ * built around — the smart matcher, the aliases, the hints all exist for it —
+ * but it is still a choice, not a default that happens silently.
+ *
+ * Keyboard and screen readers get a real dialog: focus moves in, Escape leaves,
+ * and the two options are the only things to tab between.
+ */
+function AnswerModeSheet({
+  preset,
+  onPick,
+  onDismiss,
+}: {
+  preset: QuickPreset;
+  onPick: (mode: AnswerMode) => void;
+  onDismiss: () => void;
+}) {
+  const firstRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    firstRef.current?.focus();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onDismiss();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onDismiss]);
+
+  return (
+    <div className="mode-sheet-backdrop" onClick={onDismiss}>
+      <div
+        className="mode-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="mode-sheet-title"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <p className="mode-sheet-topic">{preset.titleHe}</p>
+        <h2 id="mode-sheet-title" className="mode-sheet-title">
+          איך משחקים?
+        </h2>
+
+        <div className="mode-sheet-options">
+          <button
+            ref={firstRef}
+            className="mode-opt is-primary"
+            onClick={() => onPick("FREE_TEXT")}
+          >
+            <Icon name="keyboard" size={20} />
+            <span className="mode-opt-label">תשובה חופשית</span>
+            <span className="mode-opt-note">מקלידים את התשובה</span>
+          </button>
+
+          <button className="mode-opt" onClick={() => onPick("MULTIPLE_CHOICE")}>
+            <Icon name="list" size={20} />
+            <span className="mode-opt-label">אמריקאי</span>
+            <span className="mode-opt-note">בוחרים מתוך ארבע</span>
+          </button>
+        </div>
+
+        <button className="btn btn-quiet btn-sm mode-sheet-cancel" onClick={onDismiss}>
+          ביטול
+        </button>
+      </div>
     </div>
   );
 }

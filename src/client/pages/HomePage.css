@@ -147,3 +147,113 @@
   font-size: 0.87rem;
   font-weight: 600;
 }
+
+/* ============================================================
+   Quick-start answer mode sheet
+   ============================================================
+
+   One tap between picking a topic and playing it. A bottom sheet rather than a
+   centred modal: on a phone the choice belongs under the thumb, and rising from
+   the bottom edge reads as "continue" rather than "stop and read this".
+   ============================================================ */
+.mode-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(4, 8, 15, 0.62);
+  backdrop-filter: blur(3px);
+  animation: fade-in 140ms var(--ease) both;
+}
+
+.mode-sheet {
+  width: 100%;
+  max-width: var(--page);
+  padding: 20px var(--gutter) calc(20px + env(safe-area-inset-bottom, 0px));
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  border: 1px solid var(--line);
+  border-block-end: none;
+  background: var(--surface);
+  box-shadow: var(--shadow-3);
+  text-align: center;
+  animation: sheet-up 240ms var(--ease) both;
+}
+
+@keyframes sheet-up {
+  from { transform: translateY(18px); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+
+.mode-sheet-topic {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.12em;
+  color: var(--green);
+}
+
+.mode-sheet-title {
+  margin-block: 4px 16px;
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.mode-sheet-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.mode-opt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 16px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--t-1) var(--ease), background-color var(--t-2) var(--ease),
+    border-color var(--t-2) var(--ease);
+}
+
+.mode-opt:hover { transform: translateY(-2px); background: var(--surface-3); }
+.mode-opt:active { transform: scale(0.98); }
+
+/* Free text is the recommendation — the matcher, the aliases and the hints all
+   exist for it — so it carries the product's "go" colour. It is still a choice:
+   nothing is preselected and nothing happens without a tap. */
+.mode-opt.is-primary {
+  background: var(--green);
+  border-color: var(--green);
+  color: var(--on-green);
+}
+
+.mode-opt.is-primary:hover { background: var(--green-bright); }
+
+.mode-opt-label {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 1.02rem;
+}
+
+.mode-opt-note {
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+.mode-sheet-cancel { margin-block-start: 12px; }
+
+@media (max-width: 380px) {
+  .mode-sheet-options { grid-template-columns: 1fr; }
+}
+
+:root[data-motion="off"] .mode-sheet,
+:root[data-motion="off"] .mode-sheet-backdrop {
+  animation: none !important;
+}

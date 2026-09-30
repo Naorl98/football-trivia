@@ -80,11 +80,45 @@ export class D1Client {
     }
   }
 
-  /** Runs a read query and returns typed rows. */
+  /**
+   * Runs a read query and returns typed rows.
+   *
+   * MUST use `--command`, not `--file`. Against a REMOTE database wrangler's
+   * `--json` output for file input is an execution SUMMARY — `{"Total queries
+   * executed": 1, "Rows read": 1659, ...}` — and not the rows at all. Parsing
+   * that yields exactly one meaningless object, which reads as a successful
+   * query returning one row.
+   *
+   * That is not a cosmetic difference. `seed-apply` builds its "what is already
+   * in production" map from this call, so a one-row answer meant every question
+   * in the seed looked new, every incremental apply planned a full re-insert,
+   * and the write budget then refused it — which is why production sat at its
+   * original 1,659 questions through several seed expansions. The failure was
+   * silent in both directions: no error here, and a plausible-looking plan there.
+   */
   async query<T = Record<string, unknown>>(sql: string): Promise<T[]> {
     const trimmed = sql.trim();
-    const stdout = await this.runFile(trimmed.endsWith(";") ? trimmed : `${trimmed};`);
+    const stdout = await this.runCommand(trimmed.endsWith(";") ? trimmed : `${trimmed};`);
     return parseResults<T>(stdout);
+  }
+
+  /** Single-statement execution. Returns real rows on both local and remote. */
+  private async runCommand(sql: string): Promise<string> {
+    const { stdout } = await execFileAsync(
+      process.execPath,
+      [
+        WRANGLER_ENTRY,
+        "d1",
+        "execute",
+        this.databaseName,
+        `--${this.target}`,
+        "--json",
+        "--command",
+        sql,
+      ],
+      { env: this.env, cwd: this.cwd, maxBuffer: 128 * 1024 * 1024 }
+    );
+    return stdout;
   }
 
   /**
