@@ -1,3 +1,13 @@
+// SUPERSEDED — see scripts/product-qa.mjs.
+//
+// This script was written against an earlier generation of the UI and its
+// selectors no longer match the markup, so it reports failures on a product
+// that works. Known stale: the quiz-board selectors it waits on.
+//
+// It is left in place rather than deleted because removing someone else’s test
+// is their call, not a side effect of a reliability pass. Do not treat a
+// failure here as a regression without checking the selector first.
+
 // Verifies the full "challenge a friend" round trip against a running deployment:
 // create a challenge over the API, open its URL in a real browser as a second
 // player would, and confirm the exact same questions are replayed.

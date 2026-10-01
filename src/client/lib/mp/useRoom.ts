@@ -28,7 +28,13 @@ import type {
   RoomView,
   RoundReveal,
 } from "../../../shared/multiplayer/types";
-import { isDuelMode } from "../../../shared/multiplayer/constants";
+import {
+  HEARTBEAT_INTERVAL_MS,
+  HEARTBEAT_TIMEOUT_MS,
+  isDuelMode,
+  PING,
+  PONG,
+} from "../../../shared/multiplayer/constants";
 import { sound } from "../sound";
 import { playerToken } from "./identity";
 
@@ -70,6 +76,15 @@ export interface RoomClientState {
   messages: LiveMessage[];
   error: { code: MultiplayerErrorCode; messageHe: string } | null;
   closedReason: string | null;
+  /**
+   * Reconnect has been failing for long enough to say so.
+   *
+   * Distinct from `status`, because "reconnecting" and "we have been trying for
+   * twenty seconds and getting nowhere" want different words on screen and the
+   * second one wants a button. Collapsing them is how a momentary blip ends up
+   * announcing that the server has died.
+   */
+  stalled: boolean;
   /** The latest thing worth saying out loud, for the live region. */
   announcement: string;
 }
@@ -90,11 +105,24 @@ const INITIAL: RoomClientState = {
   messages: [],
   error: null,
   closedReason: null,
+  stalled: false,
   announcement: "",
 };
 
 /** Backoff schedule for reconnect attempts, in ms. The last value repeats. */
 const BACKOFF_MS = [400, 800, 1600, 3000, 5000, 8000];
+
+/**
+ * How many consecutive failed reconnects before the UI stops saying
+ * "reconnecting" and admits it cannot get through.
+ *
+ * Six attempts spans roughly nineteen seconds of backoff, which covers every
+ * ordinary blip — a lift, a tunnel, a wifi-to-cellular handover — without ever
+ * telling a player the game is gone while it is in fact coming back. Past that,
+ * continuing to show a hopeful spinner is the dishonest option: the player is
+ * entitled to know, and to be offered a button.
+ */
+const RECONNECT_ATTEMPTS_BEFORE_STALLED = BACKOFF_MS.length;
 
 export interface UseRoomOptions {
   /** A read-only shared screen: it never becomes a player. */
@@ -159,6 +187,9 @@ export function useRoom(code: string | undefined, options: UseRoomOptions = {}) 
         case "ROOM_STATE": {
           next.room = message.room;
           next.status = "open";
+          // A full room picture is the strongest possible evidence the
+          // connection is working, so it clears the stalled flag too.
+          next.stalled = false;
           if (message.you !== null) {
             next.you = message.you;
             youRef.current = message.you;
@@ -371,6 +402,78 @@ export function useRoom(code: string | undefined, options: UseRoomOptions = {}) 
     deliberateRef.current = false;
     let disposed = false;
 
+    /**
+     * THE HALF-OPEN SOCKET, which is the bug this block exists for.
+     *
+     * A room in the lobby sends nothing and receives nothing. When a mobile
+     * carrier NAT or an iOS app-switch tears the connection down without a close
+     * frame — which is the normal way a phone loses a connection, not an edge
+     * case — the result is a socket that both ends still believe is open:
+     *
+     *   * the room keeps the player on the roster, because the only thing that
+     *     would tell it otherwise is a failed send, and in a lobby there is
+     *     nothing to send
+     *   * `readyState` here stays OPEN, so no reconnect is scheduled and no
+     *     badge is shown
+     *   * the player taps a button, `send()` writes into the dead socket and
+     *     reports success, and nothing happens
+     *
+     * There is no error anywhere in that sequence. It reads as "the server
+     * stopped responding" because from the player's seat that is exactly what it
+     * looks like — and nothing was watching, so it could stay that way
+     * indefinitely.
+     *
+     * The fix is traffic plus a watchdog. The ping is answered by the runtime's
+     * auto-responder without waking the Durable Object, so a hibernating lobby
+     * stays hibernating; the traffic itself also stops the intermediaries that
+     * cause this from deciding the connection is idle. The watchdog is what turns
+     * silence into a reconnect instead of a wait with no end.
+     */
+    let heartbeatTimer: number | null = null;
+    let watchdogTimer: number | null = null;
+    let lastTrafficAt = Date.now();
+
+    const stopTimers = () => {
+      if (heartbeatTimer !== null) window.clearInterval(heartbeatTimer);
+      if (watchdogTimer !== null) window.clearInterval(watchdogTimer);
+      heartbeatTimer = null;
+      watchdogTimer = null;
+    };
+
+    /** Drops a socket we have decided is dead, and starts the reconnect loop. */
+    const giveUpOn = (socket: WebSocket) => {
+      stopTimers();
+      if (socketRef.current === socket) socketRef.current = null;
+      try {
+        // 4000 is in the application-defined range: it distinguishes "we decided
+        // this socket is dead" from a real close in a Worker log.
+        socket.close(4000, "heartbeat timeout");
+      } catch {
+        /* already gone */
+      }
+      scheduleRetry();
+    };
+
+    const startTimers = (socket: WebSocket) => {
+      stopTimers();
+      lastTrafficAt = Date.now();
+
+      heartbeatTimer = window.setInterval(() => {
+        if (disposed || socket.readyState !== WebSocket.OPEN) return;
+        try {
+          socket.send(PING);
+        } catch {
+          giveUpOn(socket);
+        }
+      }, HEARTBEAT_INTERVAL_MS);
+
+      watchdogTimer = window.setInterval(() => {
+        if (disposed || deliberateRef.current) return;
+        if (Date.now() - lastTrafficAt < HEARTBEAT_TIMEOUT_MS) return;
+        giveUpOn(socket);
+      }, HEARTBEAT_INTERVAL_MS);
+    };
+
     const connect = () => {
       if (disposed || deliberateRef.current) return;
 
@@ -391,11 +494,22 @@ export function useRoom(code: string | undefined, options: UseRoomOptions = {}) 
       socket.onopen = () => {
         if (disposed) return;
         attemptRef.current = 0;
-        setState((previous) => ({ ...previous, status: "open" }));
+        startTimers(socket);
+        setState((previous) => ({ ...previous, status: "open", stalled: false }));
       };
 
       socket.onmessage = (event) => {
         if (disposed || typeof event.data !== "string") return;
+
+        // Before anything else: the connection is demonstrably alive. Counting
+        // every frame rather than only pongs means a busy game never trips the
+        // watchdog on a pong that was dropped.
+        lastTrafficAt = Date.now();
+
+        // The auto-responder's reply is a bare string, not protocol JSON. It has
+        // already done its only job above.
+        if (event.data === PONG) return;
+
         let parsed: ServerMessage;
         try {
           parsed = JSON.parse(event.data) as ServerMessage;
@@ -406,6 +520,7 @@ export function useRoom(code: string | undefined, options: UseRoomOptions = {}) 
       };
 
       socket.onclose = () => {
+        stopTimers();
         if (disposed || deliberateRef.current) return;
         socketRef.current = null;
         scheduleRetry();
@@ -419,18 +534,71 @@ export function useRoom(code: string | undefined, options: UseRoomOptions = {}) 
 
     const scheduleRetry = () => {
       if (disposed || deliberateRef.current) return;
+      if (retryTimerRef.current !== null) window.clearTimeout(retryTimerRef.current);
+
       const delay = BACKOFF_MS[Math.min(attemptRef.current, BACKOFF_MS.length - 1)];
       attemptRef.current += 1;
-      setState((previous) => ({ ...previous, status: "reconnecting" }));
+      const stalled = attemptRef.current > RECONNECT_ATTEMPTS_BEFORE_STALLED;
+      setState((previous) => ({ ...previous, status: "reconnecting", stalled }));
       retryTimerRef.current = window.setTimeout(connect, delay);
     };
 
-    setState((previous) => ({ ...previous, status: "connecting" }));
+    /**
+     * Reconnect the moment the device says it is back, rather than waiting out a
+     * backoff that was scheduled while it was offline.
+     *
+     * `navigator.onLine` is only trusted in this direction. False negatives are
+     * common — a captive portal reports online — so it is never used to decide
+     * that a connection is impossible, only as a hint that it is now worth
+     * another try.
+     */
+    const onBackOnline = () => {
+      if (disposed || deliberateRef.current) return;
+      if (socketRef.current?.readyState === WebSocket.OPEN) return;
+      if (retryTimerRef.current !== null) window.clearTimeout(retryTimerRef.current);
+      attemptRef.current = 0;
+      setState((previous) => ({ ...previous, status: "reconnecting", stalled: false }));
+      connect();
+    };
+
+    /**
+     * A tab coming back to the foreground.
+     *
+     * This is the iOS case specifically: Safari suspends a background tab, and a
+     * socket that died while it was suspended has had no timer running to notice.
+     * Checking on return makes a backgrounded phone recover on the frame the
+     * player looks at it, rather than after a watchdog interval.
+     */
+    const onVisible = () => {
+      if (disposed || deliberateRef.current) return;
+      if (document.visibilityState !== "visible") return;
+      const socket = socketRef.current;
+      if (!socket || socket.readyState === WebSocket.CLOSED || socket.readyState === WebSocket.CLOSING) {
+        onBackOnline();
+        return;
+      }
+      // Alive as far as the browser knows, but it may have been suspended for a
+      // while: probe immediately instead of waiting for the next interval.
+      lastTrafficAt = Date.now();
+      try {
+        if (socket.readyState === WebSocket.OPEN) socket.send(PING);
+      } catch {
+        giveUpOn(socket);
+      }
+    };
+
+    window.addEventListener("online", onBackOnline);
+    document.addEventListener("visibilitychange", onVisible);
+
+    setState((previous) => ({ ...previous, status: "connecting", stalled: false }));
     connect();
 
     return () => {
       disposed = true;
       deliberateRef.current = true;
+      stopTimers();
+      window.removeEventListener("online", onBackOnline);
+      document.removeEventListener("visibilitychange", onVisible);
       if (retryTimerRef.current !== null) window.clearTimeout(retryTimerRef.current);
       const socket = socketRef.current;
       socketRef.current = null;

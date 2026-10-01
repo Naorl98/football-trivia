@@ -1,3 +1,13 @@
+// SUPERSEDED — see scripts/product-qa.mjs.
+//
+// This script was written against an earlier generation of the UI and its
+// selectors no longer match the markup, so it reports failures on a product
+// that works. Known stale: .quick-card (the presets are .quick-btn), .how-step (no such section exists), and the flow assumes a preset navigates straight to /play when it now opens the answer-mode sheet first.
+//
+// It is left in place rather than deleted because removing someone else’s test
+// is their call, not a side effect of a reliability pass. Do not treat a
+// failure here as a regression without checking the selector first.
+
 // Headless UI smoke test driving the real app with a locally installed Chrome.
 // Usage: node scripts/ui-test.mjs [baseUrl]   (default http://localhost:5173)
 import { chromium } from "playwright";
@@ -35,10 +45,10 @@ console.log(`\nFootball IQ UI smoke test → ${BASE} (mobile viewport 390x844)\n
 
 // --- Home page
 await page.goto(BASE, { waitUntil: "networkidle" });
-check("home renders the hero title", (await page.locator("h1.hero-title").count()) === 1);
+check("home renders the hero title", (await page.locator("h1.home-title").count()) === 1);
 check(
   "hero shows the Hebrew brand question",
-  (await page.locator("h1.hero-title").innerText()).includes("Football IQ")
+  (await page.locator("h1.home-title").innerText()).includes("Football IQ")
 );
 check("page direction is RTL", (await page.evaluate(() => document.documentElement.dir)) === "rtl");
 check("primary CTA is present", (await page.getByRole("button", { name: "התחל משחק" }).count()) === 1);

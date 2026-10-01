@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { QUICK_PRESETS, type QuickPreset } from "../lib/presets";
 import { startQuiz } from "../lib/startQuiz";
+import { messageHeOf } from "../lib/api";
 import type { AnswerMode } from "../../shared/types";
 import { sound } from "../lib/sound";
 import { motionAllowed } from "../lib/a11y";
@@ -41,7 +42,9 @@ export function HomePage() {
     try {
       await startQuiz(navigate, { ...preset.config, answerMode });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "משהו השתבש, נסו שוב.");
+      // messageHeOf, not e.message: a server error's `.message` is an English
+      // internal string and must not reach the screen.
+      setError(messageHeOf(e));
     } finally {
       setLoadingKey(null);
     }

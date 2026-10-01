@@ -101,9 +101,18 @@ for (const mode of ["WHO_AM_I", "CAREER_PATH"]) {
   const { body } = await post("/api/quiz", { ...baseConfig, gameMode: "WHO_AM_I", questionCount: 50 });
   const ids = body.questions.map((q) => q.id);
   check("oversized request does not duplicate questions", new Set(ids).size === ids.length);
+
+  // This assertion used to be `availableCount < requestedCount`, which asserted
+  // a fact about the DATA rather than about the code: when it was written the
+  // WHO_AM_I pool held fewer than fifty questions, so asking for fifty was
+  // necessarily an over-request. The pool is now 706, so the premise expired and
+  // the test started failing on a system that was behaving correctly.
+  //
+  // The rule worth protecting does not depend on the pool size: a quiz is as
+  // long as was asked for, or as long as the pool allows, whichever is smaller.
   check(
-    "oversized request reports availableCount below requested",
-    body.availableCount < body.requestedCount && body.questions.length === body.availableCount,
+    "a quiz is min(requested, available) long",
+    body.questions.length === Math.min(body.requestedCount, body.availableCount),
     `available=${body.availableCount} requested=${body.requestedCount} returned=${body.questions.length}`
   );
 }

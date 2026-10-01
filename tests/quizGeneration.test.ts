@@ -29,9 +29,33 @@ import { CATEGORIES, COMPETITIONS, COUNTRIES, QUESTION_COUNTS } from "../src/sha
   i.e. it is the statement TOTAL that matters, not the exclude list alone.
 */
 
-/** A D1 stand-in that enforces the real parameter ceiling. */
+/**
+ * A D1 stand-in that enforces the real parameter ceiling AND models the
+ * shuffle-key window.
+ *
+ * The window matters as much as the ceiling now. Selection no longer sorts the
+ * whole table with ORDER BY RANDOM(); it picks a random pivot and walks an index
+ * from it, wrapping to the start of the key space if the first range comes up
+ * short (see migration 0007 and `pickQuestionIds`). A double that returned the
+ * same rows for every query would make those two ranges look like one, so the
+ * test would be blind to whether the wrap works at all — and would report
+ * duplicates the real database cannot produce.
+ *
+ * So: each row gets a shuffle_key, and the double honours the comparison and the
+ * LIMIT from the SQL it was handed. Nothing else about the WHERE clause is
+ * modelled; `buildWhere` is unit tested on its own text, and the filters are
+ * exercised for real against D1 by scripts/d1-query-plan.mjs.
+ */
 function fakeD1(rows: { id: number }[] = []) {
   const calls: { sql: string; params: unknown[] }[] = [];
+
+  // Deterministic, and deliberately not in id order: a double whose key order
+  // matches its id order cannot show that the result is actually shuffled.
+  const keyed = rows.map((row, index) => ({
+    id: row.id,
+    shuffleKey: ((index * 7919) % 1000) * 1_000_000,
+  }));
+
   const db = {
     prepare(sql: string) {
       const statement = {
@@ -46,11 +70,31 @@ function fakeD1(rows: { id: number }[] = []) {
           return statement;
         },
         async all<T>() {
-          return { results: rows as T[] };
+          // The last two bound values are the pivot and the limit; the filter's
+          // own parameters come before them.
+          const limit = Number(params.at(-1));
+          const pivot = Number(params.at(-2));
+          const forward = sql.includes("shuffle_key >=");
+
+          const matching = keyed
+            .filter((row) => (forward ? row.shuffleKey >= pivot : row.shuffleKey < pivot))
+            .sort((a, b) => a.shuffleKey - b.shuffleKey)
+            .slice(0, Number.isFinite(limit) ? limit : undefined)
+            .map((row) => ({ id: row.id }));
+
+          return { results: matching as T[] };
         },
         async first<T>() {
           return { cnt: rows.length } as T;
         },
+      };
+      let params: unknown[] = [];
+      // `bind` is what captures them; kept on the closure so `all` can read the
+      // pivot and limit back out.
+      const bind = statement.bind;
+      statement.bind = (...args: unknown[]) => {
+        params = args;
+        return bind(...args);
       };
       return statement;
     },
@@ -82,10 +126,11 @@ const widestFilter: QuestionFilter = {
 describe("D1 bound-parameter budget", () => {
   it("stays under the ceiling for the widest filter the UI can build", () => {
     const { params } = buildWhere(widestFilter);
-    // +1 for the LIMIT that pickQuestionIds binds alongside the filter.
+    // +2 for the pivot and the LIMIT that pickQuestionIds binds alongside the
+    // filter. It was +1 when the ordering was ORDER BY RANDOM().
     assert.ok(
-      params.length + 1 <= D1_MAX_BOUND_PARAMS,
-      `widest filter needs ${params.length + 1} bound params, ceiling is ${D1_MAX_BOUND_PARAMS}`
+      params.length + 2 <= D1_MAX_BOUND_PARAMS,
+      `widest filter needs ${params.length + 2} bound params, ceiling is ${D1_MAX_BOUND_PARAMS}`
     );
   });
 
@@ -111,24 +156,60 @@ describe("D1 bound-parameter budget", () => {
     await assert.doesNotReject(() => pickQuestionIds(db, widestFilter, 50, excludeIds));
   });
 
-  it("still de-prioritises excluded ids rather than dropping the clause", async () => {
-    const { db, calls } = fakeD1([{ id: 7 }]);
-    await pickQuestionIds(db, baseFilter, 10, [101, 102, 103]);
-    assert.match(calls[0].sql, /CASE WHEN q\.id IN \(101,102,103\)/);
-    assert.match(calls[0].sql, /ORDER BY/);
+  /*
+    THESE THREE TESTS CHANGED SHAPE, NOT PURPOSE.
+
+    They used to assert the text of the generated SQL: that the exclude list
+    appeared as `CASE WHEN q.id IN (101,102,103)` in the ORDER BY, and that the
+    ordering was `ORDER BY RANDOM() LIMIT ?`. Both of those are gone, because
+    `ORDER BY RANDOM()` was the performance problem — measured at 25,197 rows
+    read to return ten, with a full temp B-tree sort — and the exclude list no
+    longer reaches SQL at all. Selection now walks a shuffle-key index from a
+    random pivot and does the de-prioritisation in memory.
+
+    The guarantees those tests protected are still guarantees, so they are
+    asserted here on behaviour instead of on a string. Behaviour is the better
+    test anyway: the old ones would have passed for any query that merely
+    contained the right substring.
+  */
+
+  it("de-prioritises excluded ids rather than dropping them", async () => {
+    // Twelve available, ten wanted, and nine of the twelve recently seen. The
+    // three fresh ones must all be in, the quiz must still be full, and the
+    // seen ones make up the difference — a player with a long history gets a
+    // complete quiz, which is the rule this protects.
+    const { db } = fakeD1(Array.from({ length: 12 }, (_, i) => ({ id: i + 1 })));
+    const seen = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+    const ids = await pickQuestionIds(db, baseFilter, 10, seen);
+
+    assert.equal(ids.length, 10, "a long history must not shorten the quiz");
+    assert.equal(new Set(ids).size, ids.length, "returned duplicate ids");
+    for (const fresh of [10, 11, 12]) {
+      assert.ok(ids.includes(fresh), `fresh question ${fresh} should have been preferred`);
+    }
+    // And the three fresh ones come first, before anything already seen.
+    assert.deepEqual(new Set(ids.slice(0, 3)), new Set([10, 11, 12]));
   });
 
-  it("omits the ordering clause entirely when nothing is excluded", async () => {
+  it("binds the pivot and the limit, and nothing else beyond the filter", async () => {
     const { db, calls } = fakeD1([{ id: 7 }]);
-    await pickQuestionIds(db, baseFilter, 10, []);
-    assert.ok(!calls[0].sql.includes("CASE WHEN"));
-    assert.match(calls[0].sql, /ORDER BY RANDOM\(\) LIMIT \?/);
+    const { params } = buildWhere(baseFilter);
+
+    await pickQuestionIds(db, baseFilter, 10, [101, 102, 103]);
+
+    // The filter's parameters, plus exactly two: the pivot and the limit. If a
+    // future change starts binding the exclude list again, this is what notices
+    // before the 100-parameter ceiling does in production.
+    assert.equal(calls[0].params.length, params.length + 2);
+    assert.match(calls[0].sql, /ORDER BY q\.shuffle_key/);
+    assert.ok(!calls[0].sql.includes("RANDOM()"), "ORDER BY RANDOM() is the query this replaced");
   });
 });
 
-describe("exclude ids are never interpolated as caller-supplied text", () => {
-  it("drops anything that is not a finite integer", async () => {
-    const { db, calls } = fakeD1([{ id: 7 }]);
+describe("no caller-supplied value is ever interpolated into SQL", () => {
+  it("hostile exclude ids reach neither the SQL text nor the bound parameters", async () => {
+    const { db, calls } = fakeD1(Array.from({ length: 10 }, (_, i) => ({ id: i + 1 })));
     const hostile = [
       1,
       "2); DROP TABLE questions;--",
@@ -139,14 +220,24 @@ describe("exclude ids are never interpolated as caller-supplied text", () => {
       undefined,
       {},
       "4",
+      "' OR 1=1 --",
     ] as unknown as number[];
-    await pickQuestionIds(db, baseFilter, 10, hostile);
 
-    // Only the genuine integer survives.
-    assert.match(calls[0].sql, /IN \(1\)/);
-    assert.ok(!calls[0].sql.includes("DROP"));
-    assert.ok(!calls[0].sql.includes("3.5"));
-    assert.ok(!/NaN|Infinity|null|undefined|object/.test(calls[0].sql));
+    await assert.doesNotReject(() => pickQuestionIds(db, baseFilter, 10, hostile));
+
+    // The exclude list is now applied in memory, so none of it should appear
+    // anywhere near the database — not inlined in the statement, and not bound.
+    for (const call of calls) {
+      assert.ok(!call.sql.includes("DROP"), "SQL text carried an exclude value");
+      assert.ok(!call.sql.includes("OR 1=1"), "SQL text carried an exclude value");
+      assert.ok(!/CASE WHEN|IN \(/.test(call.sql), "exclude ids should not be in the statement at all");
+      for (const param of call.params) {
+        assert.ok(
+          typeof param !== "string" || !/DROP|OR 1=1|--/.test(param),
+          `hostile value reached a bound parameter: ${String(param)}`
+        );
+      }
+    }
   });
 
   it("the validator rejects non-integer ids before they ever reach SQL", () => {

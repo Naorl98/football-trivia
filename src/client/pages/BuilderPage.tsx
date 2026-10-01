@@ -11,7 +11,7 @@ import {
   REGIONS,
 } from "../../shared/constants";
 import type { AnswerMode, Category, Difficulty, GameMode, QuizConfiguration, Region } from "../../shared/types";
-import { fetchAvailableCount } from "../lib/api";
+import { fetchAvailableCount, messageHeOf } from "../lib/api";
 import { startQuiz } from "../lib/startQuiz";
 import { sound } from "../lib/sound";
 import { Icon } from "../components/Icon";
@@ -74,7 +74,7 @@ export function BuilderPage() {
     try {
       await startQuiz(navigate, config);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "משהו השתבש, נסו שוב.");
+      setError(messageHeOf(e));
     } finally {
       setStarting(false);
     }

@@ -1,3 +1,13 @@
+// SUPERSEDED — see scripts/product-qa.mjs.
+//
+// This script was written against an earlier generation of the UI and its
+// selectors no longer match the markup, so it reports failures on a product
+// that works. Known stale: the builder answer-mode selectors, and "reveal" is now a two-tap confirmation.
+//
+// It is left in place rather than deleted because removing someone else’s test
+// is their call, not a side effect of a reliability pass. Do not treat a
+// failure here as a regression without checking the selector first.
+
 // Browser tests for free-text answer mode: typing, aliases, typos, hints,
 // reveal, Enter submission, and keyboard-only play.
 // Usage: node scripts/freetext-ui-test.mjs [baseUrl]

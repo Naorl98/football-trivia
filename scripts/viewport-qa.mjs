@@ -57,7 +57,7 @@ for (const vp of VIEWPORTS) {
   });
 
   const screens = [
-    { label: "home", url: BASE, ready: ".hero-title" },
+    { label: "home", url: BASE, ready: ".home-title" },
     { label: "builder", url: `${BASE}/build`, ready: ".builder-title" },
     { label: "play-freetext", url: `${BASE}/play`, ready: ".ft-input" },
     { label: "daily", url: `${BASE}/daily`, ready: ".intro-card" },

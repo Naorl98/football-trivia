@@ -21,6 +21,8 @@
 import { DurableObject } from "cloudflare:workers";
 import {
   MATCHMAKING_TIMEOUT_MS,
+  PING,
+  PONG,
   randomDuelSettings,
 } from "../../shared/multiplayer/constants";
 import { sanitizePlayerName } from "../../shared/multiplayer/names";
@@ -41,6 +43,22 @@ interface QueueAttachment {
 const HEARTBEAT_MS = 2500;
 
 export class MatchmakerDurableObject extends DurableObject<Env> {
+  /**
+   * The same ping/pong contract the room socket has.
+   *
+   * This queue does not need it to stay alive — the 2.5s status heartbeat above
+   * is already both its liveness check and its rotating copy. It is registered
+   * so the two sockets in the product speak the same protocol: without it, a
+   * client heartbeat pointed at this socket would fall through to
+   * `webSocketMessage`, fail to parse as a protocol message, and come back as an
+   * INVALID_MESSAGE error every twenty seconds. Two lines now, rather than a
+   * confusing bug for whoever shares the heartbeat helper later.
+   */
+  constructor(ctx: DurableObjectState, env: Env) {
+    super(ctx, env);
+    ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair(PING, PONG));
+  }
+
   async fetch(request: Request): Promise<Response> {
     if (request.headers.get("Upgrade") !== "websocket") {
       return new Response("Expected WebSocket upgrade", { status: 426 });

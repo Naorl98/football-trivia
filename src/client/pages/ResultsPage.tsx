@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CATEGORIES } from "../../shared/constants";
 import type { Category } from "../../shared/types";
-import { createChallenge, fetchQuiz } from "../lib/api";
+import { createChallenge, fetchQuiz, messageHeOf } from "../lib/api";
 import { loadResult, saveActiveQuiz } from "../lib/quizSession";
 import { getRecentQuestionIds } from "../lib/recentQuestions";
 import { ScoreRing } from "../components/ScoreRing";
@@ -54,8 +54,8 @@ export function ResultsPage() {
       const fresh = await fetchQuiz({ ...quiz.configuration, excludeQuestionIds: getRecentQuestionIds() });
       saveActiveQuiz({ quiz: fresh, startedAt: Date.now() });
       navigate("/play");
-    } catch {
-      setShareMessage("לא הצלחנו לטעון סבב חדש, נסו שוב.");
+    } catch (e) {
+      setShareMessage(messageHeOf(e, "לא הצלחנו לטעון סבב חדש, נסו שוב."));
     } finally {
       setReplaying(false);
     }
@@ -78,8 +78,8 @@ export function ResultsPage() {
         await navigator.clipboard.writeText(url);
         setShareMessage("הקישור הועתק.");
       }
-    } catch {
-      setShareMessage("לא הצלחנו ליצור קישור, נסו שוב.");
+    } catch (e) {
+      setShareMessage(messageHeOf(e, "לא הצלחנו ליצור קישור, נסו שוב."));
     } finally {
       setSharing(false);
     }

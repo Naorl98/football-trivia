@@ -1534,3 +1534,39 @@
   width: 100%;
   min-height: 44px;
 }
+
+/* ------------------------------------------------------------
+   A reconnect that is not working.
+
+   Separated from the ordinary "מתחברים מחדש…" state on purpose: the first few
+   seconds of a reconnect are routine and should stay quiet in amber, but a
+   reconnect that has been failing for twenty seconds is news, and it carries a
+   button. Red rather than amber, and the dot stops pulsing — a pulse reads as
+   "working on it", which at that point is no longer the honest signal.
+   ------------------------------------------------------------ */
+.mp-conn-stalled {
+  color: var(--red);
+  background: var(--red-wash);
+}
+
+.mp-conn-stalled .mp-conn-dot {
+  background: var(--red);
+  animation: none;
+}
+
+.mp-conn-retry {
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin-inline-start: 4px;
+  padding: 2px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.mp-conn-retry:hover {
+  background: rgba(255, 255, 255, 0.07);
+}

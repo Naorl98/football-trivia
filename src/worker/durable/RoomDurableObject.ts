@@ -26,7 +26,7 @@ import { DurableObject } from "cloudflare:workers";
 import type { Question } from "../../shared/types";
 import { RoomEngine, type Effect, type RoomState } from "../../shared/multiplayer/roomEngine";
 import { parseClientMessage, errorMessage, type ServerMessage } from "../../shared/multiplayer/protocol";
-import { defaultSettings } from "../../shared/multiplayer/constants";
+import { defaultSettings, PING, PONG } from "../../shared/multiplayer/constants";
 import type { GameResult, MultiplayerMode, RoomSettings } from "../../shared/multiplayer/types";
 import { hydrateQuestions, pickQuestionIds } from "../db/questions";
 import type { Env } from "../env";
@@ -47,6 +47,38 @@ const STATE_KEY = "state";
 const QUESTIONS_KEY = "questions";
 
 export class RoomDurableObject extends DurableObject<Env> {
+  /**
+   * The heartbeat contract, installed once per object instance.
+   *
+   * WHY THIS EXISTS. The matchmaking queue has always had a heartbeat; a room
+   * had none, and that asymmetry was the bug. A lobby waiting for a seventh
+   * player sends nothing and receives nothing, sometimes for minutes. A mobile
+   * carrier NAT or an iOS app-switch tears down an idle TCP connection without
+   * either side sending a close frame, so:
+   *
+   *   * the room still lists the socket in getWebSockets() and still believes
+   *     the player is present, because the only thing that would tell it
+   *     otherwise is a failed send, and in a lobby there is nothing to send
+   *   * the client's WebSocket still reports OPEN, so it shows no reconnecting
+   *     badge and keeps rendering a lobby
+   *   * the player taps "start", `send()` writes into a dead socket and returns
+   *     true, and nothing happens, ever
+   *
+   * That last state is what reads as "the server stopped responding": the
+   * server is fine, the socket is not, and nothing was watching.
+   *
+   * `setWebSocketAutoResponse` is the right tool because it is answered by the
+   * runtime without waking this object — a hibernating lobby stays hibernating
+   * and stays free, which is the whole reason hibernation is used here. The
+   * client pings on a timer and treats silence as a dead connection; see
+   * `useRoom`. Traffic in both directions also keeps the intermediaries that
+   * cause this from deciding the connection is idle in the first place.
+   */
+  constructor(ctx: DurableObjectState, env: Env) {
+    super(ctx, env);
+    ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair(PING, PONG));
+  }
+
   /**
    * Atomically takes ownership of this room code.
    *

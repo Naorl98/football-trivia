@@ -186,6 +186,45 @@ export const MATCHMAKING_TIMEOUT_MS = 45_000;
 /** A queue entry whose socket went away is swept after this. */
 export const MATCHMAKING_STALE_MS = 10_000;
 
+// ---------------------------------------------------------------- heartbeat
+
+/**
+ * The room socket's liveness probe.
+ *
+ * Two plain strings rather than JSON, because they never reach application code
+ * on either side: the Durable Object registers them with
+ * `setWebSocketAutoResponse`, so the runtime answers PING with PONG without
+ * waking the object at all. That is what makes a heartbeat affordable on a
+ * hibernating lobby — the alternative, a server-driven timer, would hold every
+ * idle room in memory for as long as it was idle.
+ *
+ * They are deliberately not valid protocol messages, so a client that somehow
+ * sent one through the normal path would simply be told the message was invalid.
+ */
+export const PING = "ping";
+export const PONG = "pong";
+
+/**
+ * How often the client probes.
+ *
+ * Chosen against the thing it is defending from: the idle timeouts on mobile
+ * carrier NATs and intermediary proxies, which commonly sit between 30 and 120
+ * seconds. Twenty seconds keeps the connection demonstrably in use with a
+ * comfortable margin, at a cost of three small frames a minute.
+ */
+export const HEARTBEAT_INTERVAL_MS = 20_000;
+
+/**
+ * How long the client tolerates complete silence before treating the socket as
+ * dead and reconnecting.
+ *
+ * Generously more than two heartbeat intervals. A single late pong on a phone
+ * switching from wifi to cellular must not be read as a failure — that
+ * over-eagerness is its own bug, and would show up as a game that reconnects
+ * constantly on a train.
+ */
+export const HEARTBEAT_TIMEOUT_MS = 55_000;
+
 // ------------------------------------------------------------------ scoring
 
 export const SCORE_BASE_CORRECT = 100;

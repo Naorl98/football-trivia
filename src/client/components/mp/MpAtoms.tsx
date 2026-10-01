@@ -226,15 +226,55 @@ export function Announcer({ message }: { message: string }) {
 
 // -------------------------------------------------------------- connection
 
-/** "מתחבר מחדש…" — visible, because a silent stall looks like a broken game. */
-export function ConnectionBadge({ status }: { status: "connecting" | "open" | "reconnecting" | "closed" }) {
+/**
+ * The connection badge — visible, because a silent stall looks like a broken
+ * game.
+ *
+ * THE COPY IS THE POINT HERE. The old version had three words for four
+ * situations, and the one it had no word for was the one that mattered: a
+ * reconnect that has been failing for twenty seconds was labelled the same as
+ * one that started half a second ago. So a player on a train saw a cheerful
+ * "מתחבר מחדש…" forever, and a player whose connection really was gone was told
+ * nothing they could act on.
+ *
+ * Now `stalled` separates them, and neither message claims to know more than it
+ * does. In particular nothing here says the server died: from the client's seat
+ * that is indistinguishable from a phone that lost its signal, and the phone is
+ * by far the likelier of the two. Saying "we cannot reach the game" is both true
+ * and useful; saying "the server stopped responding" is a guess, usually wrong,
+ * and tells the player the one thing they definitely cannot fix.
+ */
+export function ConnectionBadge({
+  status,
+  stalled = false,
+  onRetry,
+}: {
+  status: "connecting" | "open" | "reconnecting" | "closed";
+  stalled?: boolean;
+  onRetry?: () => void;
+}) {
   if (status === "open") return null;
+
   const copy =
-    status === "connecting" ? "מתחבר…" : status === "reconnecting" ? "מתחבר מחדש…" : "החיבור נסגר";
+    status === "connecting"
+      ? "מתחבר…"
+      : status === "reconnecting"
+        ? stalled
+          ? "לא מצליחים להתחבר למשחק. ממשיכים לנסות…"
+          : "מתחברים מחדש…"
+        : "החיבור נסגר";
+
   return (
-    <p className={`mp-conn mp-conn-${status}`} role="status" aria-live="polite">
+    <p className={`mp-conn mp-conn-${status}${stalled ? " mp-conn-stalled" : ""}`} role="status" aria-live="polite">
       <span className="mp-conn-dot" aria-hidden="true" />
       {copy}
+      {/* Offered only once trying again is actually the useful move — while a
+          first reconnect is in flight it would just interrupt it. */}
+      {stalled && onRetry && (
+        <button type="button" className="mp-conn-retry" onClick={onRetry}>
+          רענון
+        </button>
+      )}
     </p>
   );
 }

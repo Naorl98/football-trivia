@@ -167,7 +167,7 @@ export function RoomPage() {
   if (!room) {
     return (
       <div className="page mp-room">
-        <ConnectionBadge status={state.status} />
+        <ConnectionBadge status={state.status} stalled={state.stalled} onRetry={() => window.location.reload()} />
         <p className="mp-room-loading">מתחבר לחדר…</p>
       </div>
     );
@@ -189,7 +189,7 @@ export function RoomPage() {
     return (
       <div className="page mp-room">
         <Announcer message={flash || state.announcement} />
-        <ConnectionBadge status={state.status} />
+        <ConnectionBadge status={state.status} stalled={state.stalled} onRetry={() => window.location.reload()} />
 
         <div className="mp-gate">
           {/* A random duel has no one to invite, so a code and a QR would be
@@ -260,7 +260,7 @@ export function RoomPage() {
   return (
     <div className="page mp-room" data-phase={phase}>
       <Announcer message={flash || state.announcement} />
-      <ConnectionBadge status={state.status} />
+      <ConnectionBadge status={state.status} stalled={state.stalled} onRetry={() => window.location.reload()} />
       <ReactionBurst reactions={state.reactions} />
       <MessageBubbles messages={state.messages} />
       <Callout text={callout.text} id={callout.id} />

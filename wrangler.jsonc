@@ -5,13 +5,58 @@
   "account_id": "367bed473a2c48604d27f2e668162c49",
   "compatibility_date": "2026-09-29",
   "compatibility_flags": ["nodejs_compat"],
+
+  // ASSETS ARE SERVED THROUGH THE WORKER, NOT PAST IT.
+  //
+  // `run_worker_first: true` is what makes the Worker able to attach security
+  // headers and a cache policy to static files at all — an asset that bypasses
+  // the Worker bypasses both, which is how this app shipped with no CSP, no
+  // nosniff, no Referrer-Policy and a `max-age=0, must-revalidate` on a 425KB
+  // content-addressed bundle.
+  //
+  // `not_found_handling` is deliberately absent, which means a request matching
+  // no file gets a real 404 from the binding. That is the fix for the blank
+  // screen, and it is worth spelling out because the obvious setting is the one
+  // that caused it:
+  //
+  //   With `single-page-application`, a GET for /assets/index-<old hash>.js —
+  //   which is exactly what a browser holding a previous deployment's HTML asks
+  //   for — was answered 200 OK with index.html and Content-Type text/html.
+  //   Module scripts enforce their MIME type, so the browser refused it, React
+  //   never mounted, #root stayed empty, and because the stale stylesheet was
+  //   missing too the page had no background: a permanent white screen with no
+  //   error anywhere that the app could catch.
+  //
+  // SPA fallback still happens — /daily and /room/482731 are client-side routes
+  // with no file behind them and must return the shell — but it now happens in
+  // Worker code, which can tell a missing route from a missing bundle. See
+  // `serveAsset` in src/worker/index.ts.
+  //
+  // THE COST, stated because it is a real one: an asset served past the Worker
+  // is not a Worker invocation, and with `run_worker_first` every one of them
+  // is. A first visit therefore bills three invocations (shell, JS, CSS) where
+  // it used to bill one.
+  //
+  // It is still the better trade, and not only for the headers. The old policy
+  // was `max-age=0, must-revalidate` on a content-addressed 431KB bundle, which
+  // means every repeat visit sent a conditional request for it — and under
+  // `run_worker_first` that would have been an invocation too. Immutable
+  // caching removes those entirely, so a returning visitor now costs one
+  // invocation for the shell and nothing else. The extra two are paid once, by
+  // first-time visitors, and bought the security headers and the 404.
+  //
+  // The alternative, `["/*", "!/assets/*"]`, keeps asset requests free but
+  // cannot set the immutable cache policy — and the asset layer's default is
+  // the revalidate-everything policy this is replacing.
   "assets": {
-    "not_found_handling": "single-page-application",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
+    "run_worker_first": true
   },
+
   "observability": {
     "enabled": true
   },
+
   "d1_databases": [
     {
       "binding": "DB",
@@ -20,6 +65,7 @@
       "migrations_dir": "migrations"
     }
   ],
+
   // One Durable Object per live multiplayer room (addressed by its room code),
   // plus a single matchmaking queue for random duels. Both are SQLite-backed,
   // which is what makes them available without a paid Durable Objects plan.
@@ -29,10 +75,86 @@
       { "name": "MATCHMAKER", "class_name": "MatchmakerDurableObject" }
     ]
   },
+
   "migrations": [
     {
       "tag": "v1",
       "new_sqlite_classes": ["RoomDurableObject", "MatchmakerDurableObject"]
+    }
+  ],
+
+  // RATE LIMITS.
+  //
+  // One binding per surface, with its own namespace id, so the counters do not
+  // share: being throttled for hammering room lookups must not also stop you
+  // creating a room. Periods may only be 10 or 60 seconds.
+  //
+  // THE KEY IS THE CLIENT IP, AND THAT IS THE WHOLE DIFFICULTY. With no
+  // accounts there is nothing cheaper to meter, but an IP is not a person:
+  // mobile carriers put very large numbers of subscribers behind one address
+  // (CGNAT), and so does any school, office or household. A limit tuned to
+  // "more than one person could possibly need" is therefore a limit that locks
+  // a whole carrier out of multiplayer.
+  //
+  // The first version of this file got that wrong, and it was caught by the
+  // multiplayer suite rather than reasoned about: RL_SOCKET at 60/min refused
+  // connections from attempt ~72 of a burst, which broke a different handful of
+  // tests on each production run while passing locally. A rate limit that
+  // denies service to legitimate users is a worse bug than the abuse it
+  // prevents, so every number below is now set against a plausible SHARED
+  // address, not a single device.
+  //
+  // What that costs is stated honestly in SECURITY.md: these are speed bumps
+  // that make sustained abuse expensive, not walls. They are also per
+  // Cloudflare location, which is the documented granularity of this mechanism.
+  "ratelimits": [
+    {
+      // Room creation. Protects Durable Object allocation and the six-digit code
+      // space. Sixty a minute tolerates a classroom where everyone opens a room
+      // at once; sustained, it would hold ~600 live rooms against a million
+      // codes, since an empty room is swept after ten minutes.
+      "name": "RL_ROOM_CREATE",
+      "namespace_id": "2001",
+      "simple": { "limit": 60, "period": 60 }
+    },
+    {
+      // The six-digit enumeration oracle. 120/min still puts a full sweep of
+      // the code space at about six days — by which time every room found on
+      // day one has long expired, which is what actually makes the sweep
+      // pointless. Being stricter buys very little against an attacker with
+      // more than one address, and costs a shared NAT its ability to join.
+      "name": "RL_ROOM_LOOKUP",
+      "namespace_id": "2002",
+      "simple": { "limit": 120, "period": 60 }
+    },
+    {
+      // Socket opens. A single client needs at most a handful: the reconnect
+      // backoff tops out at six attempts in ~19s. This is here to bound a
+      // connection flood, and nothing else, so it is set well clear of any
+      // plausible shared address.
+      "name": "RL_SOCKET",
+      "namespace_id": "2003",
+      "simple": { "limit": 300, "period": 60 }
+    },
+    {
+      // The D1 reads. Measured at 15,000-25,000 rows per call before migration
+      // 0007; a pick is now ~80 covering-index reads and counts are cached at
+      // the edge, so the per-request cost this was guarding against is largely
+      // gone and the limit can be generous.
+      "name": "RL_QUIZ",
+      "namespace_id": "2004",
+      "simple": { "limit": 200, "period": 60 }
+    },
+    {
+      // The only unauthenticated D1 WRITES: attempt rows and challenge rows.
+      // The tightest limit here, and the one real tension in this file — the
+      // daily row budget is finite, so this cannot be as generous as the rest.
+      // Thirty a minute covers a group of thirty finishing a quiz in the same
+      // minute, and bounds a single-location attacker to roughly 43,000 writes
+      // a day rather than an unbounded number.
+      "name": "RL_WRITE",
+      "namespace_id": "2005",
+      "simple": { "limit": 30, "period": 60 }
     }
   ]
 }

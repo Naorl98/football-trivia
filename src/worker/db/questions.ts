@@ -101,55 +101,28 @@ export async function countAvailableQuestions(db: D1Database, filter: QuestionFi
  *   D1_ERROR: too many SQL variables ... SQLITE_ERROR
  *
  * That ceiling is shared by the whole statement, so the filter's own parameters
- * and anything else bound alongside them compete for the same budget.
+ * and anything else bound alongside them compete for the same budget. It is why
+ * the recently-seen list is no longer part of the query at all (see below).
  */
 export const D1_MAX_BOUND_PARAMS = 100;
 
+/** The range `shuffle_key` is drawn from, matching migration 0007. */
+const SHUFFLE_SPACE = 1_000_000_000;
+
 /**
- * Renders question ids as SQL integer literals.
+ * How many candidates to pull per question wanted.
  *
- * These ids are the ONLY values in this module that are inlined rather than
- * bound, because binding them is what broke quiz creation: the recently-seen
- * list grows to hundreds of ids and blew the 100-parameter ceiling. Inlining is
- * safe here and nowhere else — every element is proven to be a finite integer
- * first, and anything else is dropped rather than coerced, so no caller-supplied
- * string can reach the SQL text.
+ * The point of a window wider than the quiz: rows adjacent in `shuffle_key` are
+ * adjacent in every selection that starts before them, so taking exactly
+ * `limit` rows from the pivot would mean question A always arrives with the same
+ * B and C after it. Eight times the quiz length, shuffled in memory, gives a
+ * very large number of possible sets per pivot while still reading hundreds of
+ * rows instead of fifteen thousand.
  */
-function toIdList(ids: number[]): string {
-  return ids
-    .filter((id) => Number.isInteger(id) && Number.isFinite(id))
-    .map((id) => String(Math.trunc(id)))
-    .join(",");
-}
+const CANDIDATE_FACTOR = 8;
 
-// Selects up to `limit` matching, active question ids at random. Never
-// duplicates: SQLite RANDOM() ordering over distinct rows guarantees uniqueness.
-//
-// `excludeIds` holds questions the player saw recently. They are pushed to the
-// back of the ordering rather than filtered out, so a player with a long
-// history still gets a full quiz instead of an empty one — fresh questions
-// first, recently-seen ones only to make up the numbers.
-export async function pickQuestionIds(
-  db: D1Database,
-  filter: QuestionFilter,
-  limit: number,
-  excludeIds: number[] = []
-): Promise<number[]> {
-  const { where, params } = buildWhere(filter);
-
-  const idList = toIdList(excludeIds);
-  // `limit` is bound; the filter's params are bound; the exclude ids are not.
-  const ordering = idList
-    ? `(CASE WHEN q.id IN (${idList}) THEN 1 ELSE 0 END), RANDOM()`
-    : `RANDOM()`;
-
-  const { results } = await db
-    .prepare(`SELECT q.id FROM questions q WHERE ${where} ORDER BY ${ordering} LIMIT ?`)
-    .bind(...params, limit)
-    .all<{ id: number }>();
-
-  return results.map((r) => r.id);
-}
+/** Never read more than this many candidate rows, whatever the quiz length. */
+const MAX_CANDIDATES = 400;
 
 function shuffle<T>(arr: T[]): T[] {
   const copy = [...arr];
@@ -158,6 +131,121 @@ function shuffle<T>(arr: T[]): T[] {
     [copy[i], copy[j]] = [copy[j], copy[i]];
   }
   return copy;
+}
+
+/** A uniform pivot into the shuffle space, from the CSRNG the platform provides. */
+function randomPivot(): number {
+  const buffer = new Uint32Array(1);
+  crypto.getRandomValues(buffer);
+  return buffer[0] % SHUFFLE_SPACE;
+}
+
+/** One window of candidate ids, walked in `shuffle_key` order. */
+async function candidateWindow(
+  db: D1Database,
+  where: string,
+  params: unknown[],
+  comparison: ">=" | "<",
+  pivot: number,
+  limit: number
+): Promise<number[]> {
+  const { results } = await db
+    .prepare(
+      `SELECT q.id FROM questions q
+       WHERE ${where} AND q.shuffle_key ${comparison} ?
+       ORDER BY q.shuffle_key
+       LIMIT ?`
+    )
+    .bind(...params, pivot, limit)
+    .all<{ id: number }>();
+  return results.map((r) => r.id);
+}
+
+/**
+ * Selects up to `limit` matching, active question ids at random.
+ *
+ * WHAT THIS USED TO DO, AND WHY IT CHANGED. The query was
+ * `… ORDER BY RANDOM() LIMIT ?`, which measured at 25,197 rows read to return
+ * ten, with a `USE TEMP B-TREE FOR ORDER BY` in the plan — SQLite has to give
+ * every matching row a random key and sort all of them to find the smallest ten.
+ * No index can fix that; the sort is inherent to the ordering.
+ *
+ * HOW IT WORKS NOW. Every question carries a fixed random `shuffle_key`
+ * (migration 0007), indexed behind the filter columns. Picking a random pivot in
+ * that space and walking the index forwards from it reads only the rows it
+ * returns, in index order, with no sort at all — and wraps to the start of the
+ * space when the pivot lands near the end. The candidate window is deliberately
+ * wider than the quiz and shuffled here, so the result is not a fixed run of
+ * neighbours.
+ *
+ * `excludeIds` holds questions the player saw recently. They are still
+ * de-prioritised rather than filtered out — fresh questions first, recently-seen
+ * ones only to make up the numbers — but that now happens in memory over the
+ * candidate window instead of as a CASE expression in the ORDER BY. Which also
+ * means the recently-seen ids no longer reach the SQL text at all: there is now
+ * no value anywhere in this module that is interpolated rather than bound.
+ */
+export async function pickQuestionIds(
+  db: D1Database,
+  filter: QuestionFilter,
+  limit: number,
+  excludeIds: number[] = []
+): Promise<number[]> {
+  if (limit <= 0) return [];
+
+  const { where, params } = buildWhere(filter);
+  const windowSize = Math.min(MAX_CANDIDATES, Math.max(limit, limit * CANDIDATE_FACTOR));
+  const pivot = randomPivot();
+
+  // Forwards from the pivot, then wrap to the beginning of the space for the
+  // remainder. Two bounded index scans, each reading only what it returns.
+  const forward = await candidateWindow(db, where, params, ">=", pivot, windowSize);
+  let candidates = forward;
+
+  /*
+    WHEN TO WRAP, which is where the remaining cost lives.
+
+    A pivot near the end of the key space leaves a short forward range, so the
+    remainder has to come from the beginning. But measured against production,
+    the wrap is also the expensive half, and usually an unnecessary one:
+
+      filter                               forward scan
+      mode only                            80 rows for a window of 80
+      mode + 3 categories + a competition  7,031 rows, and the LIMIT is never
+                                           reached at any window size from 40
+                                           to 240
+
+    The second row is the whole story. When a filter is selective enough, the
+    scan runs out of matching rows before it runs out of window — so
+    `forward.length < windowSize` is true not because the pivot was unlucky but
+    because the bank does not hold that many matching questions. Wrapping then
+    walks the rest of the index for candidates we do not need, and roughly
+    doubles the cost of the most expensive query in the product.
+
+    So the wrap is conditional on actually being short. Twice the quiz length is
+    the bar: enough spare candidates for the shuffle below to mean something,
+    without a second scan whenever a filter happens to be narrow.
+  */
+  if (forward.length < Math.min(windowSize, limit * 2)) {
+    const wrapped = await candidateWindow(db, where, params, "<", pivot, windowSize - forward.length);
+    // Deduplicated rather than merely concatenated. The two ranges are disjoint
+    // in SQL — `>= pivot` and `< pivot` cannot both match a row — so this is
+    // belt and braces, and it is here because "never duplicates" is part of
+    // this function's contract and a contract should not depend on a reader
+    // noticing that two predicates are complementary. A quiz with the same
+    // question twice in it is a visible, embarrassing bug.
+    candidates = [...new Set([...forward, ...wrapped])];
+  }
+
+  if (candidates.length === 0) return [];
+
+  // Fresh first, seen only to make up the numbers — the same rule as before,
+  // applied to the window rather than to the whole table.
+  const seen = new Set(excludeIds);
+  const fresh = shuffle(candidates.filter((id) => !seen.has(id)));
+  const repeats = shuffle(candidates.filter((id) => seen.has(id)));
+
+  return [...fresh, ...repeats].slice(0, limit);
 }
 
 // Fetches full Question objects (options + clues) for a fixed, ordered list

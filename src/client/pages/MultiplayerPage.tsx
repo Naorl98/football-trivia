@@ -15,7 +15,7 @@ import { useNavigate } from "react-router-dom";
 import { MODES, type ModeMeta } from "../../shared/multiplayer/constants";
 import type { MultiplayerMode } from "../../shared/multiplayer/types";
 import { normalizeRoomCodeInput } from "../../shared/multiplayer/roomCode";
-import { createRoom, fetchRoomSummary } from "../lib/api";
+import { createRoom, fetchRoomSummary, messageHeOf } from "../lib/api";
 import { sound } from "../lib/sound";
 import { Icon } from "../components/Icon";
 import { readLocalStats } from "../lib/mp/identity";
@@ -43,8 +43,8 @@ export function MultiplayerPage() {
     try {
       const { code } = await createRoom(DEFAULT_MODE);
       navigate(`/room/${code}`);
-    } catch {
-      setError("לא הצלחנו לפתוח חדר כרגע. נסו שוב.");
+    } catch (e) {
+      setError(messageHeOf(e, "לא הצלחנו לפתוח חדר כרגע. נסו שוב."));
     } finally {
       setCreating(false);
     }
@@ -71,8 +71,8 @@ export function MultiplayerPage() {
         return;
       }
       navigate(`/room/${code}`);
-    } catch {
-      setError("לא הצלחנו לבדוק את הקוד. נסו שוב.");
+    } catch (e) {
+      setError(messageHeOf(e, "לא הצלחנו לבדוק את הקוד. נסו שוב."));
     } finally {
       setJoining(false);
     }

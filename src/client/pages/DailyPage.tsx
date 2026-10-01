@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Quiz } from "../../shared/types";
-import { fetchDaily } from "../lib/api";
+import { fetchDaily, messageHeOf } from "../lib/api";
 import { saveActiveQuiz } from "../lib/quizSession";
 import { sound } from "../lib/sound";
 import { Icon } from "../components/Icon";
@@ -20,7 +20,10 @@ export function DailyPage() {
         setQuiz(res.quiz);
         setDate(res.date);
       })
-      .catch(() => setError("לא הצלחנו לטעון את אתגר היום. נסו שוב מאוחר יותר."));
+      // Says which failure it was — no connection, too slow, or the server
+      // refusing — rather than one sentence covering all three. The client can
+      // now tell them apart, so it should.
+      .catch((e) => setError(messageHeOf(e, "לא הצלחנו לטעון את אתגר היום. נסו שוב מאוחר יותר.")));
   }, []);
 
   function start() {

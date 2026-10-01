@@ -60,16 +60,42 @@ function writeSession(key: string, value: string): void {
  */
 let cachedToken: string | null = null;
 
+/**
+ * 128 bits of CSRNG output as hex.
+ *
+ * `crypto.randomUUID()` was the obvious way to write this and the wrong one: it
+ * is Safari 15.4 and later only, and it is unavailable in any non-secure
+ * context, so on an older iPhone it is simply `undefined` and calling it threw a
+ * TypeError out of the socket connect — taking multiplayer down entirely on the
+ * platform the product is most played on.
+ *
+ * `getRandomValues` has been in every browser that can run this app for a
+ * decade, gives the same 128 bits, and is the primitive `randomUUID` is built
+ * on. There is deliberately no Math.random fallback: a reconnect token is what
+ * proves to the room which seat and which score belong to this client, and a
+ * guessable one would let anyone holding a room code take over a player. If
+ * there is no CSRNG, the honest outcome is a throw, not a weak token.
+ */
+function mintToken(): string {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  let hex = "";
+  for (const byte of bytes) hex += byte.toString(16).padStart(2, "0");
+  return hex;
+}
+
 export function playerToken(): string {
   if (cachedToken) return cachedToken;
 
   const stored = readSession(TOKEN_KEY);
+  // Length is the only check worth making: the token is ours, opaque, and
+  // compared only for equality by the room. A short one is a truncated write.
   if (stored && stored.length >= 8) {
     cachedToken = stored;
     return stored;
   }
 
-  const fresh = crypto.randomUUID().replace(/-/g, "");
+  const fresh = mintToken();
   cachedToken = fresh;
   writeSession(TOKEN_KEY, fresh);
   return fresh;
