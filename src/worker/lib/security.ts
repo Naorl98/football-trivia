@@ -73,7 +73,26 @@ export function contentSecurityPolicy(url: URL, nonce: string | null): string {
     // clickjacking target with no upside.
     "frame-ancestors 'none'",
     "frame-src 'none'",
-    "upgrade-insecure-requests",
+    /*
+      HTTPS ONLY, and this one bites.
+
+      `upgrade-insecure-requests` asks the browser to rewrite this document's
+      http subresource requests to https. On a secure page that is exactly
+      right. On an http origin it is meaningless at best — and in WebKit it is
+      actively destructive: served over `http://127.0.0.1`, WebKit upgraded the
+      bundle requests to https, which no dev server answers, and executed no
+      script at all. The page loaded, no request was reported as failed, and
+      nothing rendered. Verified by stripping this one directive from the
+      response:
+
+        CSP as served                        stage undefined, #root empty
+        CSP without upgrade-insecure-requests  stage APP_READY, #root populated
+
+      Production is https and was never affected, but this silently made local
+      WebKit testing impossible — which is the environment the iOS bugs live in,
+      so it cost more than it looks like.
+    */
+    ...(url.protocol === "https:" ? ["upgrade-insecure-requests"] : []),
   ].join("; ");
 }
 

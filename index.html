@@ -90,6 +90,7 @@
         background: #26c463; color: #07140b;
       }
       .boot-btn-quiet { background: transparent; border-color: #2b3647; color: #f1f0ea; }
+      .boot-code { margin: 6px 0 0; font-size: 11px; letter-spacing: 0.04em; color: #5b687a; }
       @keyframes boot-spin { to { transform: rotate(360deg); } }
       /* The spinner is decoration; someone who asked for less motion gets a
          static mark rather than a moving one. */
@@ -229,62 +230,136 @@
           boot.appendChild(heading);
           boot.appendChild(text);
           boot.appendChild(actions);
+
+          /**
+           * A short code, so an occurrence on a real phone is reportable.
+           *
+           * The whole difficulty with this bug has been that it happens on
+           * somebody's handset and leaves nothing behind. Four fields — the
+           * stage startup reached, why this screen appeared, and the engine —
+           * are enough to tell the mechanisms apart, and none of them says
+           * anything about the person holding the phone.
+           */
+          try {
+            var last = (window.__FIQ_ERRORS__ && window.__FIQ_ERRORS__.length)
+              ? window.__FIQ_ERRORS__[window.__FIQ_ERRORS__.length - 1]
+              : null;
+            var code = document.createElement("p");
+            code.className = "boot-code";
+            code.textContent =
+              "קוד: " + (window.__FIQ_STAGE__ || "?") +
+              " / " + ((last && last.kind) || "?") +
+              " / " + (navigator.vendor || "?").slice(0, 12);
+            boot.appendChild(code);
+          } catch (e) {
+            /* a diagnostic is never worth failing the recovery screen for */
+          }
         }
 
         /**
-         * Watches for the app vanishing AFTER it rendered.
+         * Watches for the app becoming UNUSABLE after it rendered.
          *
-         * This covers the failure that was actually reported: the header, hero
-         * and headline all drew correctly, and a moment later every bit of it
-         * was gone with only the background colour left. The cause was an
-         * unguarded `new ResizeObserver` in the consent bar's layout effect,
-         * which throws on browsers without it — from a passive effect, so after
-         * first paint — and React responds to an error thrown in an effect by
-         * unmounting the tree. That specific bug is fixed at source, and
-         * optional features are now individually contained, so it cannot happen
-         * that way again.
+         * THE BLIND SPOT THIS CLOSES. The first version of this guard asked only
+         * whether #root had been emptied. That caught the failure known at the
+         * time — an error thrown from a passive effect, which makes React unmount
+         * the whole tree — but it is the wrong question for the symptom that kept
+         * being reported afterwards: a DARK screen, with no content and no
+         * recovery.
          *
-         * This exists for the next one. By the time the app has mounted, the
-         * nine-second failsafe has already been disarmed — `settled` is true —
-         * so a post-mount collapse had nothing watching it and simply stayed
-         * blank. Now an empty #root re-arms the recovery screen.
+         * Dark is not blank. White meant the stylesheet never arrived. Dark means
+         * the stylesheet DID arrive and painted `body { background: #0d1522 }`, so
+         * the app's own CSS is running. If the content is still in the DOM but
+         * invisible — collapsed to no height, or hidden under a full-screen
+         * element — then #root is full, the old guard saw nothing wrong, and the
+         * visitor sat looking at a dark rectangle with nothing to press. That is
+         * exactly "no content and no recovery".
          *
-         * Debounced by a second, and it requires #root to be BOTH childless and
-         * textless, because React empties and refills the container within a
-         * single frame during an ordinary route change. A recovery screen that
-         * flashed up during navigation would be worse than the thing it is
-         * guarding against.
+         * So the question is now visibility, asked three ways, because any one of
+         * them alone has a failure mode:
+         *
+         *   text      #root still has something in it
+         *   geometry  #root occupies real height
+         *   hit test  something belonging to the app actually answers at the
+         *             points a thumb would touch
+         *
+         * The hit test is the one that catches a curtain, and it is why the probe
+         * asks whether the element at each point is INSIDE #root. Every
+         * legitimate full-screen overlay in this product — the answer-mode sheet,
+         * the privacy panel, the accessibility menu, the kickoff whistle — is
+         * rendered by React inside #root, so all of them pass. The only
+         * full-screen opaque thing outside #root is this boot layer itself.
+         *
+         * FALSE POSITIVES ARE THE REAL RISK HERE, because the cure is a screen
+         * that replaces the product. Four things keep it quiet: it only runs
+         * after a successful mount; it needs THREE consecutive bad samples two
+         * seconds apart, so a route change that empties and refills the container
+         * cannot trip it; a single good probe point is enough to pass; and it
+         * stands down entirely while the tab is hidden, since a backgrounded page
+         * in WebKit reports zero-sized boxes and absent hit targets as a matter
+         * of course.
          */
-        function watchForCollapse(root) {
-          if (typeof MutationObserver !== "function") return;
+        function appLooksUsable(root) {
+          if (!root) return false;
+          if ((root.textContent || "").trim() === "") return false;
 
-          var pending = null;
-          var observer = new MutationObserver(function () {
-            var empty = root.childElementCount === 0 && (root.textContent || "").trim() === "";
-            if (!empty) {
-              if (pending) { clearTimeout(pending); pending = null; }
-              return;
-            }
-            if (pending) return;
-            pending = setTimeout(function () {
-              pending = null;
-              if (root.childElementCount > 0 || (root.textContent || "").trim() !== "") return;
-              note("post-mount-collapse", "#root emptied after a successful mount", "");
-              // settled was set by __FIQ_MOUNTED__; clear it so recover() runs.
-              settled = false;
-              if (boot) boot.removeAttribute("hidden");
-              recover(
-                "המשחק נעלם מהמסך",
-                "משהו הפסיק את המשחק אחרי שנטען. אפשר לנסות שוב."
-              );
-            }, 1000);
-          });
+          // Height, not width: a full-bleed column can legitimately be narrow,
+          // but it can never legitimately be flat.
+          var box = root.getBoundingClientRect ? root.getBoundingClientRect() : null;
+          if (box && box.height < 24) return false;
 
-          try {
-            observer.observe(root, { childList: true, subtree: false });
-          } catch (e) {
-            /* an observer we cannot attach is simply one less safety net */
+          // Hit testing needs a laid-out viewport; without one, say nothing.
+          var w = window.innerWidth, h = window.innerHeight;
+          if (!w || !h) return true;
+          if (typeof document.elementFromPoint !== "function") return true;
+
+          // Three points down the middle of the screen. One hit inside #root is
+          // enough — the app does not have to cover every pixel, it only has to
+          // be reachable somewhere.
+          var ys = [Math.round(h * 0.3), Math.round(h * 0.5), Math.round(h * 0.7)];
+          var x = Math.round(w * 0.5);
+          for (var i = 0; i < ys.length; i++) {
+            var hit = document.elementFromPoint(x, ys[i]);
+            if (hit && (hit === root || root.contains(hit))) return true;
           }
+          return false;
+        }
+
+        function watchForCollapse(root) {
+          var strikes = 0;
+
+          var check = function () {
+            // A hidden tab is not a broken tab. WebKit reports collapsed boxes
+            // and no hit targets for a backgrounded page, which would otherwise
+            // look identical to the failure.
+            if (document.visibilityState === "hidden") { strikes = 0; return; }
+            // Once the recovery screen is up it owns the page; stop measuring.
+            if (boot && !boot.hasAttribute("hidden")) return;
+
+            if (appLooksUsable(root)) { strikes = 0; return; }
+
+            strikes++;
+            if (strikes < 3) return;
+
+            note("post-mount-collapse", "app stopped being usable after a successful mount", "");
+            // __FIQ_MOUNTED__ set this; clear it so recover() is allowed to run.
+            settled = false;
+            if (boot) boot.removeAttribute("hidden");
+            recover(
+              "המשחק נעלם מהמסך",
+              "משהו הפסיק את המשחק אחרי שנטען. אפשר לנסות שוב."
+            );
+          };
+
+          // Polled rather than driven by MutationObserver: the failure this is
+          // for does not necessarily change the DOM at all. An element that
+          // becomes invisible through a style change, or a curtain that was
+          // always in the tree, produces no mutation worth waking for.
+          var timerId = setInterval(check, 2000);
+
+          // And stop after a few minutes. By then the page has long since proved
+          // itself, and a timer that runs for the life of a tab is a cost with
+          // nothing left to buy.
+          setTimeout(function () { clearInterval(timerId); }, 180000);
         }
 
         /**
@@ -294,8 +369,17 @@
          * an app that rendered, which is the distinction the old startup had no
          * way to make.
          */
-        window.__FIQ_MOUNTED__ = function () {
-          window.__FIQ_STAGE__ = STAGES.mounted;
+        /**
+         * Takes the shell down. The only place that does.
+         *
+         * Called by the app's handshake, and also by the self-check below when
+         * it can see for itself that React has rendered. Idempotent, because
+         * both paths may well fire.
+         */
+        var dismissed = false;
+        function dismissShell(reason) {
+          if (dismissed) return;
+          dismissed = true;
           settled = true;
           if (timer) { clearTimeout(timer); timer = null; }
           if (boot) boot.setAttribute("hidden", "hidden");
@@ -303,6 +387,51 @@
 
           var root = document.getElementById("root");
           if (root) watchForCollapse(root);
+          void reason;
+        }
+
+        /**
+         * THE SHELL DISMISSES ITSELF. This is the structural half of the fix.
+         *
+         * The shell used to come down only when the app called
+         * `__FIQ_MOUNTED__`, which made one callback the single point of failure
+         * between a rendered app and a visitor being able to see it. When that
+         * callback was scheduled with requestAnimationFrame — which does not run
+         * while a page is not visible — a page that rendered perfectly well in a
+         * background tab or an off-screen webview stayed behind an opaque dark
+         * overlay indefinitely. That is a dark screen with no content, and it is
+         * what was being reported.
+         *
+         * Now the shell watches for evidence rather than waiting to be told: if
+         * #root has actually been populated, React has rendered and the shell has
+         * no business being on screen, whoever did or did not call in. The app's
+         * handshake is kept because it is faster and more precise; this is the
+         * floor under it.
+         *
+         * Polled on a plain timer, which is the point — no rAF, no observer, no
+         * dependency on anything the failure might have taken with it.
+         */
+        (function selfDismiss() {
+          var ticks = 0;
+          var poll = setInterval(function () {
+            ticks++;
+            var root = document.getElementById("root");
+            if (root && root.childElementCount > 0 && (root.textContent || "").trim() !== "") {
+              clearInterval(poll);
+              window.__FIQ_STAGE__ = window.__FIQ_STAGE__ === STAGES.html ? STAGES.mounted : window.__FIQ_STAGE__;
+              dismissShell("self-check saw #root populated");
+              return;
+            }
+            // Give up watching after fifteen seconds. By then the nine-second
+            // failsafe has already spoken, and this would only be competing with
+            // the recovery screen it put up.
+            if (ticks > 60) clearInterval(poll);
+          }, 250);
+        })();
+
+        window.__FIQ_MOUNTED__ = function () {
+          window.__FIQ_STAGE__ = STAGES.mounted;
+          dismissShell("app handshake");
         };
 
         /** Set once the first route has had its data; purely diagnostic. */

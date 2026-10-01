@@ -59,18 +59,40 @@ function start() {
     </React.StrictMode>
   );
 
-  // Dismisses the loading shell and cancels the nine-second failsafe. In the
-  // frame after render, so a synchronous throw out of the initial render is
-  // still caught by the failsafe rather than being hidden by a shell we already
-  // took down.
-  requestAnimationFrame(() => {
+  /*
+    Dismisses the loading shell and cancels the nine-second failsafe.
+
+    Deferred by one frame on purpose, so a synchronous throw out of the initial
+    render is still caught by the failsafe rather than being hidden behind a
+    shell we had already taken down.
+
+    BUT NOT BY requestAnimationFrame ALONE, which is what this used to be and
+    was a real bug: rAF does not fire while a page is not visible. A link opened
+    in a background tab, an in-app browser that pre-warms the page off-screen, or
+    a visitor who switches away during load all produce the same result — React
+    renders fine, the callback never runs, and the opaque boot shell sits on top
+    of a perfectly good app. Reproduced on both engines: "headline is COVERED,
+    curtain z9999 rgb(13,21,34)", which is this shell, over a rendered page.
+
+    So: whichever of the frame and the timer arrives first wins, and the timer
+    does not care about visibility. `handed` makes it once-only. The boot layer
+    also dismisses itself on seeing #root populated, so this handshake is now a
+    convenience rather than the only way out.
+  */
+  let handed = false;
+  const handOver = () => {
+    if (handed) return;
+    handed = true;
     try {
       markStage("REACT_MOUNTED");
       window.__FIQ_MOUNTED__?.();
     } catch {
       /* the shell is a fallback, not a dependency */
     }
-  });
+  };
+
+  if (typeof requestAnimationFrame === "function") requestAnimationFrame(handOver);
+  setTimeout(handOver, 150);
 }
 
 try {
