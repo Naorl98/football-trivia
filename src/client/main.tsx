@@ -33,6 +33,7 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { markStage } from "./lib/startup";
 
 function start() {
   const container = document.getElementById("root");
@@ -46,7 +47,7 @@ function start() {
     return;
   }
 
-  if (typeof window !== "undefined") window.__FIQ_STAGE__ = "JS_LOADED";
+  markStage("JS_STARTED");
 
   ReactDOM.createRoot(container).render(
     <React.StrictMode>
@@ -64,6 +65,7 @@ function start() {
   // took down.
   requestAnimationFrame(() => {
     try {
+      markStage("REACT_MOUNTED");
       window.__FIQ_MOUNTED__?.();
     } catch {
       /* the shell is a fallback, not a dependency */

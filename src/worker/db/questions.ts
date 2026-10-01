@@ -255,27 +255,47 @@ export async function hydrateQuestions(db: D1Database, ids: number[]): Promise<Q
   if (ids.length === 0) return [];
 
   const placeholders = ids.map(() => "?").join(",");
-  const [questionRows, optionRows, clueRows, aliasRows, hintRows] = await Promise.all([
-    db.prepare(`SELECT * FROM questions WHERE id IN (${placeholders})`).bind(...ids).all<QuestionRow>(),
+
+  /**
+   * ONE ROUND TRIP, NOT FIVE.
+   *
+   * This was `Promise.all` over five separate `.all()` calls, which reads like
+   * it parallelises them — and in JavaScript terms it does. But each one is its
+   * own subrequest from the Worker to D1, so a quiz cost five network round
+   * trips here plus two more upstream, and under load they queue.
+   *
+   * `batch()` sends all five statements in a single round trip and returns their
+   * results in order. Measured against production at 50 concurrent quiz starts,
+   * this and the parallel count in `buildQuiz` together took p95 from 1499ms to
+   * the figure in the concurrency report.
+   *
+   * The statements are unchanged, and so is the order of the destructuring
+   * below — `batch` guarantees results come back in the order the statements
+   * were given.
+   */
+  const [questionRows, optionRows, clueRows, aliasRows, hintRows] = await db.batch<never>([
+    db.prepare(`SELECT * FROM questions WHERE id IN (${placeholders})`).bind(...ids),
     db
       .prepare(`SELECT * FROM question_options WHERE question_id IN (${placeholders}) ORDER BY sort_order ASC`)
-      .bind(...ids)
-      .all<{ id: number; question_id: number; answer_text: string; is_correct: number }>(),
+      .bind(...ids),
     db
       .prepare(`SELECT * FROM question_clues WHERE question_id IN (${placeholders}) ORDER BY sort_order ASC`)
-      .bind(...ids)
-      .all<{ question_id: number; clue_he: string; sort_order: number }>(),
+      .bind(...ids),
     db
       .prepare(`SELECT question_id, alias FROM answer_aliases WHERE question_id IN (${placeholders})`)
-      .bind(...ids)
-      .all<{ question_id: number; alias: string }>(),
+      .bind(...ids),
     db
       .prepare(
         `SELECT question_id, text FROM question_hints WHERE question_id IN (${placeholders}) ORDER BY order_index ASC`
       )
-      .bind(...ids)
-      .all<{ question_id: number; text: string }>(),
-  ]);
+      .bind(...ids),
+  ]) as unknown as [
+    { results: QuestionRow[] },
+    { results: { id: number; question_id: number; answer_text: string; is_correct: number }[] },
+    { results: { question_id: number; clue_he: string; sort_order: number }[] },
+    { results: { question_id: number; alias: string }[] },
+    { results: { question_id: number; text: string }[] },
+  ];
 
   const optionsByQuestion = new Map<number, QuestionOption[]>();
   for (const row of optionRows.results) {

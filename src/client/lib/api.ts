@@ -37,6 +37,7 @@
 
 import type { AnswerRecord, Quiz, QuizChallenge, QuizConfiguration, ScoreBreakdown } from "../../shared/types";
 import type { MultiplayerMode } from "../../shared/multiplayer/types";
+import { noteRequestId, requestFinished, requestStarted } from "./startup";
 
 export type ApiErrorKind =
   /** The request never reached anyone: no network, DNS, or the socket died. */
@@ -196,6 +197,24 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   const timeoutMs = options.timeoutMs ?? TIMEOUT_CHEAP_MS;
   const maxAttempts = options.retryable ? BACKOFF_MS.length : 1;
 
+  // Bracketed for the startup stage machine, in a try/finally below so a throw
+  // on any path still closes the bracket — an in-flight counter that leaks would
+  // mean APP_READY is never reached, and the whole point of the stage is to be
+  // trustworthy when something has gone wrong.
+  requestStarted();
+  try {
+    return await attemptAll<T>(path, options, timeoutMs, maxAttempts);
+  } finally {
+    requestFinished();
+  }
+}
+
+async function attemptAll<T>(
+  path: string,
+  options: RequestOptions,
+  timeoutMs: number,
+  maxAttempts: number
+): Promise<T> {
   let last: ApiError = new ApiError("server", COPY.server);
 
   for (let i = 0; i < maxAttempts; i++) {
@@ -207,6 +226,11 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 
     try {
       const response = await attempt(path, options, timeoutMs);
+
+      // The Worker stamps every response with this. Keeping it is what lets a
+      // failure on a device be matched against the server's own log line for
+      // the same request.
+      noteRequestId(path, response.status, response.headers.get("X-Request-Id"));
 
       if (response.ok || options.acceptStatuses?.includes(response.status)) {
         if (options.acceptStatuses?.includes(response.status) && !response.ok) {

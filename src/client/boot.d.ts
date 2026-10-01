@@ -17,8 +17,12 @@ interface FiqStartupError {
 
 declare global {
   interface Window {
-    /** HTML_LOADED | JS_LOADED | REACT_MOUNTED | APP_READY. */
+    /** The last startup stage reached. See lib/startup.ts for the sequence. */
     __FIQ_STAGE__?: string;
+    /** Every stage reached, with its time since navigation start. */
+    __FIQ_TIMELINE__?: { stage: string; at: number }[];
+    /** The last few server request ids, for correlating a failure with Worker logs. */
+    __FIQ_REQUEST_IDS__?: { id: string; path: string; status: number; at: number }[];
     /** Bounded ring of startup failures, for diagnosis. Never leaves the page. */
     __FIQ_ERRORS__?: FiqStartupError[];
     /** Called once React has rendered: dismisses the shell and cancels the failsafe. */

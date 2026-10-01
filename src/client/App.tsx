@@ -20,6 +20,7 @@ import { RoomDisplayPage } from "./pages/RoomDisplayPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { a11y } from "./lib/a11y";
 import { sound } from "./lib/sound";
+import { markRouteRendered } from "./lib/startup";
 
 export default function App() {
   const { pathname } = useLocation();
@@ -48,6 +49,10 @@ export default function App() {
     } catch (error) {
       console.warn("audio could not be armed", error);
     }
+
+    // The first route has painted. Recorded, never awaited: nothing in the tree
+    // reads a stage to decide whether to render, so this cannot gate the UI.
+    markRouteRendered();
   }, []);
 
   return (

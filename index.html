@@ -120,8 +120,22 @@
       (function () {
         "use strict";
 
-        var STAGES = { html: "HTML_LOADED", js: "JS_LOADED", mounted: "REACT_MOUNTED", ready: "APP_READY" };
+        /*
+          The stage names are shared with src/client/lib/startup.ts, which owns
+          the rest of the sequence. They have to match exactly: the boot layer
+          records the first one before any bundle exists, and the module records
+          the rest, so a mismatch would quietly split the timeline in two and
+          leave the first stage orphaned.
+
+          HTML_RECEIVED -> JS_STARTED -> REACT_MOUNTED -> HOME_RENDERED
+            -> [STARTUP_REQUESTS_STARTED -> STARTUP_REQUESTS_FINISHED] -> APP_READY
+        */
+        var STAGES = { html: "HTML_RECEIVED", js: "JS_STARTED", mounted: "REACT_MOUNTED", ready: "APP_READY" };
         window.__FIQ_STAGE__ = STAGES.html;
+
+        // Seeded here so the timeline is complete from the very first stage.
+        // startup.ts appends to this same array rather than creating its own.
+        window.__FIQ_TIMELINE__ = [{ stage: STAGES.html, at: 0 }];
 
         /** Diagnosis only. Bounded, so a failure loop cannot grow it without limit. */
         window.__FIQ_ERRORS__ = [];

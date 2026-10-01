@@ -19,8 +19,17 @@ function toFilter(config: QuizConfiguration): QuestionFilter {
 // (API layer) reports availableCount vs requestedCount to the client.
 export async function buildQuiz(db: D1Database, config: QuizConfiguration): Promise<Quiz> {
   const filter = toFilter(config);
-  const availableCount = await countAvailableQuestions(db, filter);
-  const ids = await pickQuestionIds(db, filter, config.questionCount, config.excludeQuestionIds ?? []);
+
+  // The count and the selection are independent — both are derived from the
+  // same filter and neither reads the other's result — so they go out together.
+  // They were sequential, which made quiz generation three round trips deep
+  // instead of two for no reason. Under concurrency that third trip is the one
+  // that queues.
+  const [availableCount, ids] = await Promise.all([
+    countAvailableQuestions(db, filter),
+    pickQuestionIds(db, filter, config.questionCount, config.excludeQuestionIds ?? []),
+  ]);
+
   const questions = await hydrateQuestions(db, ids);
 
   return {

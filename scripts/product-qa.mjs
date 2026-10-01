@@ -104,14 +104,34 @@ async function home(browser) {
   check("quick-start presets render", (await page.locator(".quick-btn").count()) >= 4);
   check("both multiplayer entries are on the surface", (await page.locator(".home-cta-mp").count()) === 2);
 
-  // The startup contract from index.html.
+  // The startup contract from index.html plus lib/startup.ts.
   const startup = await page.evaluate(() => ({
     stage: window.__FIQ_STAGE__ ?? null,
+    timeline: (window.__FIQ_TIMELINE__ ?? []).map((row) => row.stage),
     bootHidden: document.getElementById("boot")?.hasAttribute("hidden") ?? null,
     rootChildren: document.getElementById("root")?.childElementCount ?? -1,
     recorded: (window.__FIQ_ERRORS__ ?? []).length,
   }));
-  check("startup reached REACT_MOUNTED", startup.stage === "REACT_MOUNTED", String(startup.stage));
+
+  // APP_READY, not REACT_MOUNTED. This assertion used to stop at the mount,
+  // which was as far as the stages went — APP_READY was declared and never
+  // reached by anything. The full sequence is what makes a failed load
+  // diagnosable, so the test asserts the end of it.
+  check("startup reached APP_READY", startup.stage === "APP_READY", String(startup.stage));
+  check(
+    "the startup stages were recorded in order",
+    ["HTML_RECEIVED", "JS_STARTED", "REACT_MOUNTED", "HOME_RENDERED", "APP_READY"].every((stage) =>
+      startup.timeline.includes(stage)
+    ),
+    JSON.stringify(startup.timeline)
+  );
+  // The home page is deliberately data-free, so it must reach readiness without
+  // any request having gone out at all.
+  check(
+    "the home page reaches readiness with no startup request",
+    !startup.timeline.includes("STARTUP_REQUESTS_STARTED"),
+    JSON.stringify(startup.timeline)
+  );
   check("the loading shell was dismissed", startup.bootHidden === true);
   check("the app rendered into #root", startup.rootChildren > 0, String(startup.rootChildren));
   check("no startup error was recorded", startup.recorded === 0, JSON.stringify(startup));

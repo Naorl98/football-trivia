@@ -251,7 +251,44 @@ const PROBE = () => {
     };
   }
 
+  /*
+    MOUNT COUNTING, without instrumenting the product.
+
+    Each component's root element is tagged with a unique id the first time it
+    is seen. A component that unmounts and remounts produces a NEW element, and
+    therefore a new id, so the number of distinct ids per selector IS the number
+    of times that component mounted. React cannot reuse a destroyed DOM node, so
+    this cannot undercount a remount.
+
+    Counted on every census tick, which is twice a second — fast enough that a
+    remount loop shows up as a rising count rather than being missed between
+    samples.
+  */
+  data.mounts = {};
+  const MOUNT_SELECTORS = {
+    App: ".app-main",
+    Home: ".home",
+    Header: ".topbar",
+    Hero: ".hero",
+    Footer: ".foot",
+    PrivacyGate: ".pv-bar",
+  };
+  let mountSeq = 0;
+
+  function countMounts() {
+    for (const [name, selector] of Object.entries(MOUNT_SELECTORS)) {
+      const node = document.querySelector(selector);
+      if (!node) continue;
+      if (!node.__fiqMountTag) {
+        mountSeq += 1;
+        node.__fiqMountTag = mountSeq;
+        data.mounts[name] = (data.mounts[name] ?? 0) + 1;
+      }
+    }
+  }
+
   window.__FIQ_CENSUS__ = () => {
+    countMounts();
     const root = document.getElementById("root");
     return {
       at: since(),
@@ -694,6 +731,26 @@ async function longHold(browser) {
     heights.size <= 2,
     `heights seen: ${[...heights].join(", ")}`
   );
+
+  // The explicit mount ledger, reported as numbers rather than inferred.
+  const mounts = result.probe.mounts ?? {};
+  console.log(`    mounts over 30s: ${JSON.stringify(mounts)}`);
+  for (const [name, count] of Object.entries(mounts)) {
+    check(`30s hold: ${name} mounted once, not repeatedly`, count === 1, `${name} mounted ${count} times`);
+  }
+
+  // And the request ledger, which is what "one page load must not fire the same
+  // request dozens of times" actually means.
+  const requests = result.probe.requests ?? {};
+  console.log(`    requests over 30s: ${JSON.stringify(requests)}`);
+  const apiCalls = Object.entries(requests).filter(([path]) => path.startsWith("/api/"));
+  check(
+    "30s hold: the home page makes no API request at all",
+    apiCalls.length === 0,
+    JSON.stringify(apiCalls)
+  );
+  const repeated = Object.entries(requests).filter(([, n]) => n > 3);
+  check("30s hold: nothing is requested more than three times", repeated.length === 0, JSON.stringify(repeated));
 }
 
 // ====================================== scenario: repeated loads, held open

@@ -20,17 +20,51 @@ const app = new Hono<{ Bindings: Env }>();
  * The HTML shell is the exception and handles its own headers below, because it
  * is the only response that needs a CSP nonce.
  */
+/**
+ * A request id on every response, and one log line for anything slow or failed.
+ *
+ * WHY. "The page was blank at about nine o'clock" cannot be matched against
+ * anything on the server, so a browser-side failure and a server-side failure
+ * were indistinguishable after the fact. The id is returned as `X-Request-Id`,
+ * the client keeps the last twenty-five of them (see lib/startup.ts), and the
+ * Worker logs the same value — so a failure on a device can be looked up in the
+ * Worker's own record of that exact request.
+ *
+ * WHAT IS LOGGED: the id, method, pathname, status and duration. Not the query
+ * string, not headers, not bodies, not the client address — a diagnostic that
+ * records what a visitor was doing is not one worth having. Only errors and slow
+ * requests are logged; logging every asset hit would bury them.
+ */
 app.use("*", async (c, next) => {
+  const requestId = crypto.randomUUID();
+  const started = Date.now();
+
   await next();
+
   // A 101 is a WebSocket handshake: its headers belong to the protocol upgrade
   // and the Response carries the live socket, so it is left exactly as the
   // Durable Object produced it. Nothing in this file protects a socket anyway —
   // that is the room engine's job, over the socket, per message.
   if (c.res.status === 101) return;
-  if (c.res.headers.has("Content-Security-Policy")) return;
+
   const url = new URL(c.req.url);
-  for (const [key, value] of Object.entries(securityHeaders(url, null))) {
-    c.res.headers.set(key, value);
+  const duration = Date.now() - started;
+
+  c.res.headers.set("X-Request-Id", requestId);
+  if (!c.res.headers.has("Content-Security-Policy")) {
+    for (const [key, value] of Object.entries(securityHeaders(url, null))) {
+      c.res.headers.set(key, value);
+    }
+  }
+
+  if (c.res.status >= 500 || duration > 2000) {
+    console.error("slow-or-failed", {
+      requestId,
+      method: c.req.method,
+      path: url.pathname,
+      status: c.res.status,
+      ms: duration,
+    });
   }
 });
 
@@ -69,18 +103,83 @@ app.route("/api/health", healthRoutes);
  * the Worker log where it belongs.
  */
 app.onError((err, c) => {
+  const url = new URL(c.req.url);
   console.error("unhandled", {
-    path: new URL(c.req.url).pathname,
+    requestId: c.res?.headers?.get("X-Request-Id") ?? null,
+    path: url.pathname,
     method: c.req.method,
     name: err?.name,
     message: err?.message,
   });
-  const url = new URL(c.req.url);
+
   if (url.pathname.startsWith("/api/")) {
     return c.json({ error: "Internal error", messageHe: "משהו השתבש אצלנו. נסו שוב." }, 500);
   }
-  return new Response("Internal error", { status: 500, headers: securityHeaders(url, null) });
+
+  /**
+   * A FAILURE ON AN ASSET MUST NOT BE A BLANK PAGE.
+   *
+   * This branch is new, and it closes a hole that routing assets through the
+   * Worker opened. Before `run_worker_first`, a request for the JS bundle was
+   * answered by the asset layer and could not be affected by Worker code at
+   * all; now every asset request runs this file first, so a bug or a resource
+   * limit in here becomes a failed bundle — which is a blank page, the exact
+   * failure this whole effort is about. Trading a header policy for a new way
+   * to lose the app would be a bad bargain.
+   *
+   * So: if the Worker itself fails while serving the shell, answer with a
+   * standalone document that says so and offers a reload. It depends on no
+   * bundle, no stylesheet and no JavaScript, and it carries the same background
+   * colour as the app, so the worst case is a dark page with a sentence on it
+   * rather than a white one with nothing.
+   *
+   * A hashed asset still gets a plain error: a stylesheet or a script cannot
+   * usefully be replaced with prose, and index.html's boot layer is watching for
+   * a script that fails to load.
+   */
+  if (url.pathname.startsWith(HASHED_ASSET_PREFIX)) {
+    return new Response("Asset unavailable", {
+      status: 503,
+      headers: { ...securityHeaders(url, null), "Content-Type": "text/plain", "Cache-Control": "no-store" },
+    });
+  }
+
+  return new Response(FALLBACK_DOCUMENT, {
+    status: 503,
+    headers: {
+      ...securityHeaders(url, null),
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store",
+      "Retry-After": "5",
+    },
+  });
 });
+
+/**
+ * The last-resort document. No bundle, no stylesheet, no script.
+ *
+ * Deliberately not a React route and deliberately not dependent on anything: it
+ * is what gets served when the code that would normally serve the app is the
+ * thing that failed. The reload is a plain link rather than a script, so it
+ * works with JavaScript off and under any CSP.
+ */
+const FALLBACK_DOCUMENT = `<!doctype html>
+<html lang="he" dir="rtl"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark"><title>Football IQ</title>
+<style>
+html,body{margin:0;background:#0d1522;color:#f1f0ea;
+font-family:system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh}
+main{min-height:100vh;display:flex;flex-direction:column;align-items:center;
+justify-content:center;gap:16px;padding:24px;text-align:center}
+h1{margin:0;font-size:20px}p{margin:0;max-width:30ch;line-height:1.6;color:#9aa6b8;font-size:14px}
+a{display:inline-block;margin-top:4px;padding:11px 22px;border-radius:999px;
+background:#26c463;color:#07140b;text-decoration:none;font-weight:600}
+</style></head><body><main>
+<h1>לא הצלחנו לטעון את Football IQ</h1>
+<p>יש תקלה זמנית אצלנו. אפשר לנסות שוב בעוד רגע.</p>
+<a href="/">נסו שוב</a>
+</main></body></html>`;
 
 // ----------------------------------------------------------------------- assets
 
