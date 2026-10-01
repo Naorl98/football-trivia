@@ -33,24 +33,88 @@ export function PrivacyGate() {
 
   const showBar = !state.decided && !panelOpen;
 
-  // Publish the bar's height so anything else pinned to the bottom (the
-  // builder's start bar) can sit above it instead of underneath.
+  /**
+   * Publish the bar's height so anything else pinned to the bottom (the
+   * builder's start bar) can sit above it instead of underneath.
+   *
+   * THIS EFFECT TOOK THE WHOLE PRODUCT DOWN, and the shape of that is worth
+   * keeping written here, because nothing about the line that did it looked
+   * dangerous.
+   *
+   * It was `const observer = new ResizeObserver(publish)`, bare. Where
+   * `ResizeObserver` is unavailable — iOS before 13.4, and whatever WebKit a
+   * given in-app webview happens to carry — that throws
+   * `TypeError: ResizeObserver is not a constructor`. It throws from a PASSIVE
+   * EFFECT, which means it throws *after* the first paint: the header, the hero
+   * and the headline had all already rendered. React then propagates an error
+   * thrown in an effect to the nearest error boundary, and with none above it,
+   * it unmounts the entire root — so a fully drawn page emptied itself a moment
+   * later and left nothing but the background colour. Reproduced exactly:
+   *
+   *   headline appeared: yes
+   *   … 6s later: title null, cta null, header null, main null
+   *
+   * And it was intermittent for a reason that had nothing to do with the
+   * browser: the effect only runs while `showBar` is true, i.e. only for a
+   * visitor who has not answered the consent bar yet. Anyone who had already
+   * tapped "מאשר" never ran it again.
+   *
+   * So: the observer is feature-detected, and the whole body is wrapped. A
+   * bottom bar measuring its own height is a layout nicety. It gets one CSS
+   * custom property, and it is not permitted to cost anybody the game.
+   *
+   * Without the observer the offset is published once, which is correct for
+   * every case except the bar changing height after mount — and the fallback for
+   * that is a window `resize` listener, which every browser has.
+   */
   useEffect(() => {
     const root = document.documentElement;
-    if (!showBar) {
-      root.style.removeProperty("--dock-offset");
+
+    try {
+      if (!showBar) {
+        root.style.removeProperty("--dock-offset");
+        return;
+      }
+      const node = barRef.current;
+      if (!node) return;
+
+      const publish = () => {
+        try {
+          root.style.setProperty("--dock-offset", `${node.offsetHeight}px`);
+        } catch {
+          /* a style property that will not set is not worth an exception */
+        }
+      };
+      publish();
+
+      const Observer = typeof ResizeObserver === "function" ? ResizeObserver : null;
+      if (Observer) {
+        const observer = new Observer(publish);
+        observer.observe(node);
+        return () => {
+          observer.disconnect();
+          root.style.removeProperty("--dock-offset");
+        };
+      }
+
+      // No ResizeObserver: a resize listener catches the case that matters
+      // (the bar re-wrapping to two lines when the viewport narrows) without
+      // needing the API at all.
+      window.addEventListener("resize", publish);
+      return () => {
+        window.removeEventListener("resize", publish);
+        root.style.removeProperty("--dock-offset");
+      };
+    } catch {
+      // Belt and braces. Whatever went wrong, the consequence must be a bottom
+      // bar that does not reserve space — never a blank page.
+      try {
+        root.style.removeProperty("--dock-offset");
+      } catch {
+        /* nothing left to undo */
+      }
       return;
     }
-    const node = barRef.current;
-    if (!node) return;
-    const publish = () => root.style.setProperty("--dock-offset", `${node.offsetHeight}px`);
-    publish();
-    const observer = new ResizeObserver(publish);
-    observer.observe(node);
-    return () => {
-      observer.disconnect();
-      root.style.removeProperty("--dock-offset");
-    };
   }, [showBar]);
 
   return (

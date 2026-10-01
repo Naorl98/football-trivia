@@ -21,7 +21,7 @@
 // Deliberately a class component. Error boundaries are the one thing in React
 // that hooks still cannot express.
 
-import { Component, type ErrorInfo, type ReactNode } from "react";
+import { Component, Fragment, type ErrorInfo, type ReactNode } from "react";
 
 interface Props {
   children: ReactNode;
@@ -80,7 +80,22 @@ export class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (!this.state.error) {
-      return <div key={this.state.attempt}>{this.props.children}</div>;
+      /*
+        A KEYED FRAGMENT, NOT A KEYED DIV.
+
+        The key is what makes "try again" a real retry: changing it makes React
+        treat this as a different element and rebuild the subtree from scratch
+        rather than reusing instances that were mid-failure.
+
+        It was a `<div>` first, and that was a layout bug. `#root` is a flex
+        column whose direct children are the header (`flex: none`), `.app-main`
+        (`flex: 1`) and the footer; wrapping them in an unstyled block element
+        left `#root` with a single child and made `flex: 1` meaningless, so the
+        main region no longer filled the viewport and the footer no longer sat
+        at the bottom. A Fragment carries the key without putting a node in the
+        tree, which is exactly what is wanted here.
+      */
+      return <Fragment key={this.state.attempt}>{this.props.children}</Fragment>;
     }
 
     return (

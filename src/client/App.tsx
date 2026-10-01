@@ -5,6 +5,7 @@ import { Footer } from "./components/Footer";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { RouteAnnouncer } from "./components/RouteAnnouncer";
 import { PrivacyGate } from "./components/PrivacyGate";
+import { FeatureBoundary } from "./components/FeatureBoundary";
 import { HomePage } from "./pages/HomePage";
 import { BuilderPage } from "./pages/BuilderPage";
 import { QuizPage } from "./pages/QuizPage";
@@ -31,8 +32,22 @@ export default function App() {
   useEffect(() => {
     // Apply stored accessibility settings before first paint of the routes,
     // and arm the audio context on the first interaction of any kind.
-    a11y.init();
-    sound.bindGestures();
+    //
+    // Both are wrapped. Neither is the game: a visitor who gets default text
+    // sizing or silent audio has lost something small, and a throw here would
+    // otherwise propagate out of a passive effect and cost them the whole page
+    // — which is exactly how the privacy bar's layout measurement took the
+    // product down (see FeatureBoundary).
+    try {
+      a11y.init();
+    } catch (error) {
+      console.warn("accessibility settings could not be applied", error);
+    }
+    try {
+      sound.bindGestures();
+    } catch (error) {
+      console.warn("audio could not be armed", error);
+    }
   }, []);
 
   return (
@@ -46,9 +61,34 @@ export default function App() {
       {/* Faint halfway line and centre circle, behind everything. */}
       <div className="pitch-bg" aria-hidden="true" />
 
-      <ScrollToTop />
-      <RouteAnnouncer />
-      {!bare && <Header />}
+      {/*
+        THE CHROME IS OPTIONAL; THE ROUTE IS NOT.
+
+        Everything outside <main> is furniture — scroll restoration, a live
+        region for screen readers, the header, the footer, the consent bar. Each
+        is wrapped on its own so that a failure in one costs exactly that one.
+        Before this, any of them could throw from an effect after first paint
+        and unmount the whole root, which is what produced a fully rendered page
+        that emptied itself a second later.
+
+        The <Routes> below are deliberately NOT wrapped like this. If the quiz
+        board fails, rendering nothing would be the blank page this is all about;
+        that belongs to the root ErrorBoundary in main.tsx, which says something
+        and offers a way out.
+      */}
+      <FeatureBoundary feature="scroll-restoration">
+        <ScrollToTop />
+      </FeatureBoundary>
+
+      <FeatureBoundary feature="route-announcer">
+        <RouteAnnouncer />
+      </FeatureBoundary>
+
+      {!bare && (
+        <FeatureBoundary feature="header">
+          <Header />
+        </FeatureBoundary>
+      )}
 
       <main id="main" tabIndex={-1} className="app-main">
         <Routes>
@@ -67,8 +107,16 @@ export default function App() {
         </Routes>
       </main>
 
-      {!bare && <Footer />}
-      <PrivacyGate />
+      {!bare && (
+        <FeatureBoundary feature="footer">
+          <Footer />
+        </FeatureBoundary>
+      )}
+
+      {/* The one that actually did it. */}
+      <FeatureBoundary feature="privacy-gate">
+        <PrivacyGate />
+      </FeatureBoundary>
     </>
   );
 }

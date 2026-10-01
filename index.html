@@ -218,6 +218,62 @@
         }
 
         /**
+         * Watches for the app vanishing AFTER it rendered.
+         *
+         * This covers the failure that was actually reported: the header, hero
+         * and headline all drew correctly, and a moment later every bit of it
+         * was gone with only the background colour left. The cause was an
+         * unguarded `new ResizeObserver` in the consent bar's layout effect,
+         * which throws on browsers without it — from a passive effect, so after
+         * first paint — and React responds to an error thrown in an effect by
+         * unmounting the tree. That specific bug is fixed at source, and
+         * optional features are now individually contained, so it cannot happen
+         * that way again.
+         *
+         * This exists for the next one. By the time the app has mounted, the
+         * nine-second failsafe has already been disarmed — `settled` is true —
+         * so a post-mount collapse had nothing watching it and simply stayed
+         * blank. Now an empty #root re-arms the recovery screen.
+         *
+         * Debounced by a second, and it requires #root to be BOTH childless and
+         * textless, because React empties and refills the container within a
+         * single frame during an ordinary route change. A recovery screen that
+         * flashed up during navigation would be worse than the thing it is
+         * guarding against.
+         */
+        function watchForCollapse(root) {
+          if (typeof MutationObserver !== "function") return;
+
+          var pending = null;
+          var observer = new MutationObserver(function () {
+            var empty = root.childElementCount === 0 && (root.textContent || "").trim() === "";
+            if (!empty) {
+              if (pending) { clearTimeout(pending); pending = null; }
+              return;
+            }
+            if (pending) return;
+            pending = setTimeout(function () {
+              pending = null;
+              if (root.childElementCount > 0 || (root.textContent || "").trim() !== "") return;
+              note("post-mount-collapse", "#root emptied after a successful mount", "");
+              // settled was set by __FIQ_MOUNTED__; clear it so recover() runs.
+              settled = false;
+              if (boot) boot.removeAttribute("hidden");
+              recover(
+                "המשחק נעלם מהמסך",
+                "משהו הפסיק את המשחק אחרי שנטען. אפשר לנסות שוב."
+              );
+            }, 1000);
+          });
+
+          try {
+            observer.observe(root, { childList: true, subtree: false });
+          } catch (e) {
+            /* an observer we cannot attach is simply one less safety net */
+          }
+        }
+
+        /**
          * Called by main.tsx once React has actually put something on screen.
          *
          * "Mounted" is the only honest signal here. A bundle that parsed is not
@@ -230,6 +286,9 @@
           if (timer) { clearTimeout(timer); timer = null; }
           if (boot) boot.setAttribute("hidden", "hidden");
           clearReloadGuard();
+
+          var root = document.getElementById("root");
+          if (root) watchForCollapse(root);
         };
 
         /** Set once the first route has had its data; purely diagnostic. */

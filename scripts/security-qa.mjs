@@ -334,7 +334,16 @@ async function errorHygiene() {
 
   const health = await json("/api/health");
   check("health is 200", health.status === 200);
-  check("health says only that it is ok", JSON.stringify(health.body) === '{"status":"ok"}', health.text);
+  // Asserted by content rather than by exact JSON text: the response carries
+  // `ok: true` alongside `status` so that an uptime check written against the
+  // original shape keeps working. What matters is that it says it is up and
+  // says nothing else, which is what these two check.
+  check("health reports ok", health.body?.status === "ok", health.text);
+  check(
+    "health exposes nothing beyond its verdict",
+    Object.keys(health.body ?? {}).every((key) => key === "status" || key === "ok"),
+    health.text
+  );
 
   const deep = await json("/api/health?deep=1");
   check("deep health reports D1 and the DO bindings", deep.body?.database === "ok" && deep.body?.room === "ok", deep.text);
@@ -366,18 +375,42 @@ async function crossOrigin() {
 async function rateLimits() {
   section("rate limiting");
 
-  // The enumeration oracle. Fire past the limit and expect to be stopped.
-  //
-  // The attempt counts here track the configured limits in wrangler.jsonc, which
-  // are deliberately generous — they are set against a shared carrier address,
-  // not a single device, because the first version was tight enough to deny
-  // service to legitimate users. Raise these if the limits are raised.
-  let lookupLimited = false;
-  for (let i = 0; i < 170 && !lookupLimited; i++) {
-    const response = await fetch(`${BASE}/api/mp/rooms/${String(100000 + i)}`);
-    if (response.status === 429) lookupLimited = true;
+  /*
+    FIRED CONCURRENTLY, which is the whole trick.
+
+    These probes were sequential and reported "no 429 within 170 attempts"
+    against a limit of 120 per 60 seconds — which looked like a broken limiter
+    and was actually a broken test. 170 round trips to the edge take something
+    like forty seconds, and the platform's counter is per 60-second window, so a
+    burst that slow can straddle a window boundary and leave fewer than 120 on
+    either side of it. Nothing was wrong except the rate at which the test
+    asked.
+
+    Concurrency puts the whole burst inside one window, which is both the
+    realistic shape of abuse and the only way to assert the limit deterministically.
+  */
+  async function burst(label, total, concurrency, make) {
+    let limited = false;
+    let sent = 0;
+    for (let batch = 0; batch < Math.ceil(total / concurrency) && !limited; batch++) {
+      const statuses = await Promise.all(
+        Array.from({ length: concurrency }, (_, i) => {
+          sent++;
+          return make(batch * concurrency + i)
+            .then((r) => r.status)
+            .catch(() => 0);
+        })
+      );
+      if (statuses.includes(429)) limited = true;
+    }
+    check(`${label} are rate limited`, limited, `no 429 within ${sent} concurrent attempts`);
+    return limited;
   }
-  check("room-code lookups are rate limited", lookupLimited, "no 429 within 170 attempts");
+
+  // The enumeration oracle.
+  const lookupLimited = await burst("room-code lookups", 240, 30, (i) =>
+    fetch(`${BASE}/api/mp/rooms/${String(100000 + (i % 900000))}`)
+  );
 
   // And the refusal has to be usable: a status and a Retry-After, not a hang.
   if (lookupLimited) {
@@ -385,15 +418,12 @@ async function rateLimits() {
     check("a throttled response carries Retry-After", !!response.headers.get("retry-after") || response.status !== 429);
   }
 
-  let writeLimited = false;
-  for (let i = 0; i < 45 && !writeLimited; i++) {
-    const { status } = await json("/api/attempts", post({
+  await burst("D1 writes", 90, 15, () =>
+    fetch(`${BASE}/api/attempts`, post({
       answers: [{ correct: true, questionId: 1, selectedOptionId: null, timeMs: 1000 }],
       durationSeconds: 10,
-    }));
-    if (status === 429) writeLimited = true;
-  }
-  check("D1 writes are rate limited", writeLimited, "no 429 within 45 attempts");
+    }))
+  );
 }
 
 // ================================================================== driver
