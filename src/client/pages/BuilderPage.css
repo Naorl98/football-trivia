@@ -21,10 +21,25 @@
   --dock-h: 76px;
   display: flex;
   flex-direction: column;
-  min-height: calc(100dvh - var(--header-h));
   padding-block: 14px 0;
   padding-block-end: calc(var(--dock-h) + env(safe-area-inset-bottom, 0px));
 }
+
+/*
+  NO min-height CLAIM ON THIS ELEMENT, and that is the fix for a bug the
+  Playwright pass caught.
+
+  It used to say `min-height: calc(100dvh - var(--header-h))`, which reads
+  correctly — "fill what the header leaves" — and is wrong, because the app
+  shell also renders a footer. The page then measured 743px of content in a
+  664px viewport on an iPhone 14, at every single step, by exactly the footer's
+  height. The wizard itself fitted; the document scrolled anyway, which is the
+  thing the whole redesign is for.
+
+  Sized by its content instead. The shell is a flex column and the footer
+  carries `margin-block-start: auto`, so the footer still sits at the bottom of
+  a short page, and the dock is fixed and does not depend on this height at all.
+*/
 
 /* ------------------------------------------------------------------ header */
 .wiz-head {
@@ -345,13 +360,32 @@
 }
 
 /* ---------------------------------------------------------------- phones */
+/*
+  390×844 and 393×852.
+
+  MEASURED, which is the only way to tune this. After the min-height fix every
+  step fitted on a 430×932 phone and four of five fitted on a 390×844 one —
+  the scope step came out 691px in a 664px viewport, 27px over, because it
+  carries two scope cards plus eleven quick-pick chips in two labelled groups.
+  Nothing there is removable: the chips are the shortcut that makes the wizard
+  worth using, and splitting competitions from question shapes is the thing the
+  old builder got wrong.
+
+  So the step is tightened rather than trimmed: smaller card padding, smaller
+  chips, tighter gaps between the groups and under the header. The numbers below
+  come to about 45px, which clears the 27px with room for a longer label.
+*/
 @media (max-width: 420px) {
-  /* 390×844 and 393×852: the two tall mode cards still fit side by side, but
-     their padding comes down so the pair plus the dock clears the viewport. */
+  .wiz-head { margin-bottom: 12px; }
+  .wiz-body { gap: 14px; }
   .wiz-card { padding: 22px 10px; }
-  .wiz-card-row { padding: 16px 14px; }
+  .wiz-card-row { padding: 13px 14px; }
+  .wiz-group { gap: 8px; }
   .wiz-pill,
-  .wiz-chip { padding: 8px 12px; font-size: 0.84rem; }
+  .wiz-chip { padding: 7px 11px; font-size: 0.83rem; }
+  .wiz-chips, .wiz-pills { gap: 5px; }
+  .wiz-quick-label { margin-block: 8px 5px; }
+  .wiz-field-label { margin-bottom: 6px; }
 }
 
 /* --------------------------------------------------------------- desktop */
@@ -365,7 +399,6 @@
   .wiz {
     max-width: 560px;
     margin-inline: auto;
-    min-height: 0;
     padding-block: 32px 40px;
     padding-block-end: 40px;
   }

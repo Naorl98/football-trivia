@@ -42,7 +42,7 @@
 // rewriting all 30 of its rows again.
 
 import { D1Client, sqlValue } from "../src/server/sync/d1Client.ts";
-import { chunkByCost, maxWritesPerRun, planWrites } from "../src/server/sync/writeBudget.ts";
+import { maxWritesPerRun, planWrites } from "../src/server/sync/writeBudget.ts";
 import { normalizeAnswer } from "../src/shared/answerMatching.ts";
 import { generateKnowledgeQuestions, knowledgeKeyPrefixes, loadKnowledgeFacts } from "../src/server/football/pipeline.ts";
 import { curatedRecognition } from "../seed/recognition.ts";
@@ -59,6 +59,10 @@ import { contentHashFor } from "../seed/contentHash.ts";
 const args = process.argv.slice(2);
 const target = args.includes("--remote") ? "remote" : "local";
 const repair = args.includes("--repair");
+// Replaces every option set the rules would pick differently, not only the ones
+// that are actually wrong. See planRepair — it costs about 240,000 rows written
+// and buys plausibility rather than correctness.
+const fullOptions = args.includes("--full-options");
 const sampleSize = (() => {
   const at = args.indexOf("--sample");
   return at !== -1 ? Number(args[at + 1]) : 6;
@@ -411,7 +415,14 @@ for (const row of active) {
     // The generator that produced this question will not produce it again. The
     // fact behind it is gone, or it no longer passes the quality gates.
     findings.noLongerGeneratable.push({ id, key, questionHe, difficulty: band });
-    repairPlans.push({ id, key, changes: ["deactivate"], statements: [deactivate(id)], deactivate: true });
+    repairPlans.push({
+      id,
+      key,
+      changes: ["deactivate"],
+      statements: [deactivate(id)],
+      deactivate: true,
+      priority: 0,
+    });
   } else if (key) {
     findings.foreignKey.push({ id, key });
     after[band] = (after[band] ?? 0) + 1;
@@ -528,13 +539,50 @@ function planRepair({ id, row, want, options, clues, hints, aliases, scopes }) {
     parent.domain_tier = signals.tier ?? null;
   }
 
-  // ---- children ----
+  /*
+    ---- children ----
+
+    OPTION SETS ARE ONLY REPLACED WHEN THEY ARE WRONG, not whenever they differ.
+
+    The distractor engine ranks by plausibility now, so it picks a different —
+    usually better — set for essentially every stored question: 11,916 of them.
+    Replacing all of those costs about 240,000 rows written, two and a half days
+    of the free-tier allowance, and buys no correctness. The questions in
+    question already have four options of the right type with one correct answer.
+
+    What MUST be replaced is an option set containing something ineligible: a
+    national team in a club question, a reserve side, an answer of the wrong
+    type. That is 2,400-odd questions and it is the invariant this phase exists
+    to establish.
+
+    `--full-options` does the whole thing for anyone who wants the plausibility
+    improvement and has the budget for it.
+  */
   const storedOptionTexts = options.map((o) => o.text);
   const wantOptionTexts = wantOptions.map((o) => o.text);
+  const storedTypes = options.map((o) => classifyOption(o.text));
+  const expectedType = archetype ? answerTypeFor(archetype, want.resolvedTeamType) : null;
+  const storedIsInvalid =
+    options.length !== 4 ||
+    options.filter((o) => o.correct).length !== 1 ||
+    (expectedType !== null &&
+      storedTypes.some((t, i) => {
+        // An option this audit cannot type is left alone: "unknown" is not
+        // evidence of "wrong", and guessing would rewrite correct questions.
+        if (!t.type) return false;
+        if (t.type !== expectedType) return true;
+        if (expectedType === "CLUB" && t.kind !== "CLUB") return true;
+        if (expectedType === "NATIONAL_TEAM" && t.kind !== "NATIONAL_TEAM") return true;
+        return i < 0;
+      })) ||
+    // The stored answer must be the one the rules now give.
+    (options.find((o) => o.correct)?.text ?? null) !== wantOptions[0].text;
+
   const optionsDiffer =
     !sameList(storedOptionTexts, wantOptionTexts) ||
     !sameList(options.map((o) => o.correct), wantOptions.map((o) => o.correct));
-  if (optionsDiffer) {
+  const replaceOptions = fullOptions ? optionsDiffer : storedIsInvalid;
+  if (replaceOptions) {
     changes.push("options");
     statements.push(`DELETE FROM question_options WHERE question_id = ${id};`);
     wantOptions.forEach((option, index) => {
@@ -618,6 +666,14 @@ function planRepair({ id, row, want, options, clues, hints, aliases, scopes }) {
     this whole function exists for.
   */
   if (changes.length > 0) {
+    // Hashed over the state the row will ACTUALLY be in, which in minimal mode
+    // keeps the stored options. Hashing the desired options instead would leave
+    // every repaired question permanently mismatched, so seed-apply would
+    // rewrite all ~30 of its rows on the next run — undoing the saving.
+    const resultingOptions = replaceOptions ? want.options : storedOptionTexts;
+    const resultingCorrectIndex = replaceOptions
+      ? want.correctIndex
+      : Math.max(0, options.findIndex((o) => o.correct));
     parent.content_hash = contentHashFor({
       id,
       q: {
@@ -627,8 +683,8 @@ function planRepair({ id, row, want, options, clues, hints, aliases, scopes }) {
         questionHe: want.questionHe,
         explanationHe: want.explanationHe,
         sourceLabel: want.sourceLabel,
-        options: want.options,
-        correctIndex: want.correctIndex,
+        options: resultingOptions,
+        correctIndex: resultingCorrectIndex,
         clues: wantClues,
         scopes: wantScopes,
       },
@@ -646,7 +702,34 @@ function planRepair({ id, row, want, options, clues, hints, aliases, scopes }) {
     statements.unshift(`UPDATE questions SET ${assignments.join(", ")} WHERE id = ${id};`);
   }
 
-  return { id, key: want.semanticKey, changes, statements, deactivate: false };
+  /*
+    PRIORITY, because this will not all fit in one day.
+
+    322,000 rows written at the free tier's 100,000 a day is three days of
+    repair, so the order it happens in decides what production looks like
+    tonight. Correctness first:
+
+      0  deactivations — the questions that should not be answerable at all
+      1  option sets with something ineligible in them — the hard invariant
+      2  a wrong answer, wrong difficulty or wrong archetype
+      3  wording: glued prepositions, loan phrasing, clue text
+      4  hints and scopes — real improvements, no correctness at stake
+
+    Re-running continues where it stopped, because a question that already
+    matches compares equal and produces no statements.
+  */
+  const priority = (() => {
+    if (replaceOptions) return 1;
+    if (changes.includes("difficulty") || changes.includes("canonical_answer") || changes.includes("archetype")) {
+      return 2;
+    }
+    if (changes.includes("question_he") || changes.includes("explanation_he") || changes.includes("clues")) {
+      return 3;
+    }
+    return 4;
+  })();
+
+  return { id, key: want.semanticKey, changes, statements, deactivate: false, priority };
 }
 
 // ---------------------------------------------------------------------------
@@ -727,7 +810,34 @@ sample("glued Hebrew preposition", findings.gluedPreposition, (f) => `#${f.id} $
 // ---------------------------------------------------------------------------
 // 7. Apply
 // ---------------------------------------------------------------------------
-const statements = repairPlans.flatMap((p) => p.statements);
+/*
+  WRITE COST, priced per column rather than per table.
+
+  writeBudget.ts prices a row in `questions` at 8 — one row plus its six
+  indexes — which is the right conservative number when you do not know what
+  changed. Here we do know, and the difference is large enough to decide whether
+  this repair takes one day or three.
+
+  D1 bills an index entry only when the index's columns change. Of the twelve
+  columns this repair touches, exactly three appear in an index: `difficulty`
+  (three indexes), `active` (three), and `category` (two). The other nine —
+  question_he, explanation_he, archetype, answer_entity_type, fact_confidence,
+  subject_fame, entity_prominence, domain_tier, quick_start_safe, content_hash —
+  are indexed nowhere, so changing them costs the row and nothing else.
+
+  A text-and-metadata repair is therefore 1 row written, not 8. Over 13,815
+  questions that is the difference between 110,000 rows and about 46,000.
+*/
+const INDEXED_QUESTION_COLUMNS = { difficulty: 3, active: 3, category: 2 };
+
+function priceParentUpdate(sql) {
+  let cost = 1;
+  for (const [column, indexes] of Object.entries(INDEXED_QUESTION_COLUMNS)) {
+    if (new RegExp(`\\b${column}\\s*=`).test(sql)) cost += indexes;
+  }
+  return cost;
+}
+
 const rowCounts = {
   question_options: 4,
   question_clues: 3,
@@ -735,12 +845,33 @@ const rowCounts = {
   answer_aliases: 3,
   question_scopes: 3,
 };
-const plan = planWrites(statements, rowCounts);
+
+function priceStatements(list) {
+  let total = 0;
+  for (const sql of list) {
+    if (/^UPDATE questions SET/.test(sql)) total += priceParentUpdate(sql);
+    else total += planWrites([sql], rowCounts).estimatedRowsWritten;
+  }
+  return total;
+}
+
+// Correctness first — see the priority note in planRepair.
+const ordered = [...repairPlans].sort((a, b) => (a.priority ?? 9) - (b.priority ?? 9) || a.id - b.id);
+const statements = ordered.flatMap((p) => p.statements);
+const estimated = priceStatements(statements);
+
+const byPriority = {};
+for (const plan of ordered) {
+  const key = String(plan.priority ?? 9);
+  byPriority[key] = (byPriority[key] ?? 0) + priceStatements(plan.statements);
+}
 
 console.log(`\nWRITES`);
-console.log(`  statements              : ${plan.statements.toLocaleString()}`);
-console.log(`  estimated rows written  : ${plan.estimatedRowsWritten.toLocaleString()}`);
+console.log(`  statements              : ${statements.length.toLocaleString()}`);
+console.log(`  estimated rows written  : ${estimated.toLocaleString()}`);
 console.log(`  budget this run         : ${maxWrites.toLocaleString()}`);
+console.log(`  option-set policy       : ${fullOptions ? "replace every set that differs" : "replace only invalid sets"}`);
+console.log(`  cost by priority        :`, byPriority);
 
 if (!repair) {
   console.log(`\nReport only. Re-run with --repair to apply.\n`);
@@ -763,16 +894,34 @@ if (statements.length === 0) {
 */
 let spent = 0;
 let written = 0;
-for (const chunk of chunkByCost(statements, Math.min(4000, maxWrites), rowCounts)) {
-  const cost = planWrites(chunk, rowCounts).estimatedRowsWritten;
-  if (spent + cost > maxWrites && written > 0) {
+// Chunked per question, so a chunk boundary never falls inside one question's
+// statements. `ordered` is already in priority order.
+let chunk = [];
+let chunkCost = 0;
+const chunks = [];
+for (const plan of ordered) {
+  const cost = priceStatements(plan.statements);
+  if (chunk.length > 0 && chunkCost + cost > 3000) {
+    chunks.push({ statements: chunk, cost: chunkCost });
+    chunk = [];
+    chunkCost = 0;
+  }
+  chunk.push(...plan.statements);
+  chunkCost += cost;
+}
+if (chunk.length > 0) chunks.push({ statements: chunk, cost: chunkCost });
+
+for (const batch of chunks) {
+  if (spent + batch.cost > maxWrites && written > 0) {
     console.log(`\n  stopped at the write budget — re-run to continue`);
     break;
   }
-  await db.execute(chunk);
-  spent += cost;
-  written += chunk.length;
-  console.log(`  wrote ${written.toLocaleString()}/${statements.length.toLocaleString()} statements (~${spent.toLocaleString()} rows)`);
+  await db.execute(batch.statements);
+  spent += batch.cost;
+  written += batch.statements.length;
+  console.log(
+    `  wrote ${written.toLocaleString()}/${statements.length.toLocaleString()} statements (~${spent.toLocaleString()} rows)`
+  );
 }
 
 console.log(`\nRepair applied: ${written.toLocaleString()} statement(s), ~${spent.toLocaleString()} rows written.`);
