@@ -15,7 +15,17 @@
 //  * Every question carries a semantic key so near-duplicates collapse.
 
 import { CLUBS, CLUB_BY_ID, type ClubRecord } from "../data/clubs.ts";
-import { PLAYERS, NATIONALITIES, type PlayerRecord } from "../data/players.ts";
+import { PLAYERS, PLAYER_ROLES, NATIONALITIES, type PlayerRecord } from "../data/players.ts";
+import {
+  BROAD_HE,
+  BROAD_POSITIONS,
+  CONFUSABLE_WITH,
+  DETAILED_HE,
+  resolvePosition,
+  supportsPreciseQuestion,
+} from "../../src/server/football/positions.ts";
+import { clubProminence } from "../../src/server/football/prominence.ts";
+import { hePrefix } from "../../src/server/football/career.ts";
 import {
   EURO_FINALS,
   LEAGUE_CHAMPIONS,
@@ -121,6 +131,24 @@ function clubFame(c: ClubRecord): Fame {
 }
 
 /**
+ * Club prominence on the shared 0–3 scale, for the difficulty model.
+ *
+ * Every club in this registry is `curated: true` by definition — the registry
+ * *is* the list of clubs a Hebrew-speaking fan recognises — so the score comes
+ * down to how many titles we hold for it, which is the one data-backed way to
+ * separate Barcelona from Maccabi Netanya without an opinion.
+ */
+function clubProminenceOf(c: ClubRecord): number {
+  return clubProminence({ curated: true, titles: CLUB_TITLE_COUNT.get(c.id) ?? 0 });
+}
+
+/** The prominence of the least well-known club among several. */
+function leastProminentClub(...clubs: ClubRecord[]): number | undefined {
+  const scores = clubs.map(clubProminenceOf);
+  return scores.length > 0 ? Math.max(...scores) : undefined;
+}
+
+/**
  * How close a set of club distractors sits to the answer.
  *
  * The distinction that matters: distractors taken from the player's *own* career
@@ -141,11 +169,26 @@ function firstLetterHint(name: string): string {
   return `השם מתחיל באות ${name.trim()[0]}`;
 }
 
-// Hebrew merges the preposition ב with a following definite article ה:
-// "ב" + "הליגה האירופית" is written "בליגה האירופית", not "בהליגה האירופית".
-function withBe(name: string): string {
-  return name.startsWith("ה") ? `ב${name.slice(1)}` : `ב${name}`;
-}
+// Hebrew prepositions before a name.
+//
+// TWO RULES, AND ONLY ONE OF THEM WAS HANDLED. "ב" merges with a following
+// definite article — "ב" + "הליגה האירופית" is "בליגה האירופית" — which is what
+// this helper was for. The rule it missed: a name in Latin script needs a maqaf,
+// so "מ" + "PSV איינדהובן" has to be "מ-PSV איינדהובן". Plain concatenation gives
+// "מPSV איינדהובן", which is two scripts jammed together and reads as a bug; the
+// audit found 14 curated explanations saying exactly that.
+//
+// withBe keeps the contraction because its callers pass competition names, where
+// the ה genuinely is an article. The proper-noun helpers below do not, because a
+// club called "הפועל תל אביב" would otherwise be rendered "בפועל תל אביב".
+const withBe = (name: string) => hePrefix("ב", name, { definiteArticle: true });
+
+/** "ב" before a proper noun — a club, a stadium, a country. */
+const inHe = (name: string) => hePrefix("ב", name);
+/** "מ" before a proper noun. */
+const fromHe = (name: string) => hePrefix("מ", name);
+/** "ל" before a proper noun. */
+const toHe = (name: string) => hePrefix("ל", name);
 
 // ---------------------------------------------------------------------------
 // Player career generators
@@ -164,7 +207,7 @@ function playerHints(player: PlayerRecord): string[] {
   const nat = NATIONALITIES[player.nat];
   const posHe = { GK: "שוער", DF: "מגן", MF: "קשר", FW: "חלוץ" }[player.pos];
   const hints = [];
-  if (nat) hints.push(`הוא ${nat.he === "ישראל" ? "ישראלי" : `נולד ב${nat.he}`}`);
+  if (nat) hints.push(`הוא ${nat.he === "ישראל" ? "ישראלי" : `נולד ${inHe(nat.he)}`}`);
   hints.push(`הוא שיחק בעמדת ${posHe}`);
   hints.push(firstLetterHint(player.he));
   return hints;
@@ -208,6 +251,20 @@ function playerScopes(player: PlayerRecord): SeedScope[] {
   return scopes;
 }
 
+/**
+ * Where a player's senior career began.
+ *
+ * THE WORDING IS THE FIX. This used to ask "באיזו קבוצה התחיל X את הקריירה
+ * הבוגרת שלו?" — which is close, but "התחיל" does not say which of the six
+ * career-start facts is meant (see src/server/football/career.ts), and in the
+ * provider-backed bank the same vagueness let a B-team spell be presented as a
+ * career start. The honest form names the fact: the senior debut.
+ *
+ * The CLAIM is unchanged and was always sound here. `firstListed` on a curated
+ * record means somebody verified that clubs[0] really is the first senior club —
+ * it is the one thing a provider record can never establish, because it is a
+ * claim about the absence of anything earlier.
+ */
 function generateFirstClub(): GeneratedQuestion[] {
   const out: GeneratedQuestion[] = [];
   for (const player of PLAYERS) {
@@ -234,10 +291,11 @@ function generateFirstClub(): GeneratedQuestion[] {
       difficulty: difficultyFor({
         archetype: "first_club",
         fame: playerFame(player),
+        entityProminence: clubProminenceOf(correct),
         distractors: clubDistractorCloseness(player, distractors),
       }),
-      questionHe: `באיזו קבוצה התחיל ${player.he} את הקריירה הבוגרת שלו?`,
-      explanationHe: `${player.he} פרץ מ${correct.he} לפני שהמשיך הלאה בקריירה.`,
+      questionHe: `באיזה מועדון ערך ${player.he} את הופעת הבכורה בקבוצה הבוגרת?`,
+      explanationHe: `${player.he} פרץ ${fromHe(correct.he)} לפני שהמשיך הלאה בקריירה.`,
       options: [correct.he, ...distractors.map((d) => d.he)],
       correctIndex: 0,
       scopes: playerScopes(player),
@@ -285,10 +343,13 @@ function generateAdjacentClubMoves(): GeneratedQuestion[] {
           difficulty: difficultyFor({
             archetype: "adjacent_move",
             fame: playerFame(player),
+            // The player is the subject; the two clubs are what he has to
+            // recognise, and the question is only as easy as the lesser of them.
+            entityProminence: leastProminentClub(from, to),
             distractors: clubDistractorCloseness(player, nextDistractors),
           }),
           questionHe: `לאיזו קבוצה עבר ${player.he} אחרי ${from.he}?`,
-          explanationHe: `אחרי התקופה ב${from.he}, ${player.he} עבר ל${to.he}.`,
+          explanationHe: `אחרי התקופה ${inHe(from.he)}, ${player.he} עבר ${toHe(to.he)}.`,
           options: [to.he, ...nextDistractors.map((d) => d.he)],
           correctIndex: 0,
           scopes: playerScopes(player),
@@ -316,10 +377,11 @@ function generateAdjacentClubMoves(): GeneratedQuestion[] {
           difficulty: difficultyFor({
             archetype: "adjacent_move",
             fame: playerFame(player),
+            entityProminence: leastProminentClub(from, to),
             distractors: clubDistractorCloseness(player, prevDistractors),
           }),
           questionHe: `באיזו קבוצה שיחק ${player.he} לפני ${to.he}?`,
-          explanationHe: `${player.he} הגיע ל${to.he} מ${from.he}.`,
+          explanationHe: `${player.he} הגיע ${toHe(to.he)} ${fromHe(from.he)}.`,
           options: [from.he, ...prevDistractors.map((d) => d.he)],
           correctIndex: 0,
           scopes: playerScopes(player),
@@ -442,8 +504,8 @@ function generateClubConnections(): GeneratedQuestion[] {
         fame: playerFame(player),
         distractors: "mixed",
       }),
-      questionHe: `איזה שחקן שיחק גם ב${a.he} וגם ב${b.he}?`,
-      explanationHe: `${player.he} שיחק גם ב${a.he} וגם ב${b.he} במהלך הקריירה שלו.`,
+      questionHe: `איזה שחקן שיחק גם ${inHe(a.he)} וגם ${inHe(b.he)}?`,
+      explanationHe: `${player.he} שיחק גם ${inHe(a.he)} וגם ${inHe(b.he)} במהלך הקריירה שלו.`,
       options: [player.he, ...distractors.map((d) => d.he)],
       correctIndex: 0,
       scopes: playerScopes(player),
@@ -478,13 +540,13 @@ function generateDidNotPlayFor(): GeneratedQuestion[] {
         distractors: "far",
       }),
       questionHe: `באיזו מהקבוצות הבאות ${player.he} מעולם לא שיחק?`,
-      explanationHe: `${player.he} שיחק ב${ownPicks.map((c) => c.he).join(", ")} — אך לא ב${never.he}.`,
+      explanationHe: `${player.he} שיחק ${inHe(ownPicks.map((c) => c.he).join(", "))} — אך לא ${inHe(never.he)}.`,
       options: [never.he, ...ownPicks.map((c) => c.he)],
       correctIndex: 0,
       scopes: playerScopes(player),
       sourceLabel: "מסלולי קריירה מאומתים",
       freeText: false,
-      hints: [`הקבוצה נמצאת ב${countryHe(never.country)}`],
+      hints: [`הקבוצה נמצאת ${inHe(countryHe(never.country))}`],
     });
   }
   return out;
@@ -695,7 +757,7 @@ function generateNationFinals(
         freeText: true,
         canonicalAnswer: winner.he,
         aliases: winner.aliases,
-        hints: [`הגמר נערך ב${final.hostHe}`, firstLetterHint(winner.he)],
+        hints: [`הגמר נערך ${inHe(final.hostHe)}`, firstLetterHint(winner.he)],
       });
     }
 
@@ -750,7 +812,7 @@ function generateWorldCupHosts(): GeneratedQuestion[] {
         distractors: "mixed",
       }),
       questionHe: `היכן נערך מונדיאל ${final.year}?`,
-      explanationHe: `מונדיאל ${final.year} נערך ב${final.hostHe}, ו${NATIONS[final.winner]?.he ?? ""} זכתה בתואר.`,
+      explanationHe: `מונדיאל ${final.year} נערך ${inHe(final.hostHe)}, ו${NATIONS[final.winner]?.he ?? ""} זכתה בתואר.`,
       options: [final.hostHe, ...distractors],
       correctIndex: 0,
       scopes: [
@@ -875,7 +937,7 @@ function generateClubFacts(): GeneratedQuestion[] {
         distractors: "mixed",
       }),
       questionHe: `באיזה אצטדיון משחקת ${c.he} את משחקי הבית שלה?`,
-      explanationHe: `${c.he} משחקת ב${c.stadiumHe}.`,
+      explanationHe: `${c.he} משחקת ${inHe(c.stadiumHe)}.`,
       options: [c.stadiumHe!, ...distractors.map((d) => d.stadiumHe!)],
       correctIndex: 0,
       scopes: [
@@ -886,7 +948,7 @@ function generateClubFacts(): GeneratedQuestion[] {
       freeText: true,
       canonicalAnswer: c.stadiumHe!,
       aliases: c.stadium ? [c.stadium] : [],
-      hints: [`המועדון פועל ב${countryHe(c.country)}`, firstLetterHint(c.stadiumHe!)],
+      hints: [`המועדון פועל ${inHe(countryHe(c.country))}`, firstLetterHint(c.stadiumHe!)],
     });
   }
 
@@ -910,7 +972,7 @@ function generateClubFacts(): GeneratedQuestion[] {
         distractors: "far",
       }),
       questionHe: `מאיזו מדינה מגיע מועדון ${c.he}?`,
-      explanationHe: `${c.he} הוא מועדון מ${countryHe(c.country)}.`,
+      explanationHe: `${c.he} הוא מועדון ${fromHe(countryHe(c.country))}.`,
       options: [countryHe(c.country), ...distractors.map(countryHe)],
       correctIndex: 0,
       scopes: [{ type: "COUNTRY", value: c.country }],
@@ -947,7 +1009,7 @@ function generateClubFacts(): GeneratedQuestion[] {
       scopes: [{ type: "COUNTRY", value: c.country }],
       sourceLabel: "נתוני מועדונים",
       freeText: false,
-      hints: [`המועדון פועל ב${countryHe(c.country)}`],
+      hints: [`המועדון פועל ${inHe(countryHe(c.country))}`],
     });
   }
 
@@ -1085,8 +1147,8 @@ function generateCareerSubPaths(): GeneratedQuestion[] {
           // "ברצף" (consecutively) is only true for a complete career list.
           explanationHe:
             player.seq === "full"
-              ? `${player.he} שיחק ב${slice.map((id) => clubOf(id).he).join(", ")} ברצף.`
-              : `${player.he} שיחק ב${slice.map((id) => clubOf(id).he).join(", ")} בסדר הזה.`,
+              ? `${player.he} שיחק ${inHe(slice.map((id) => clubOf(id).he).join(", "))} ברצף.`
+              : `${player.he} שיחק ${inHe(slice.map((id) => clubOf(id).he).join(", "))} בסדר הזה.`,
           clues: slice.map((id) => clubOf(id).he),
           options: [player.he, ...distractors.map((d) => d.he)],
           correctIndex: 0,
@@ -1137,8 +1199,8 @@ function whoAmIClueSets(player: PlayerRecord): ClueSet[] {
     clues: [
       natHe,
       positionHe,
-      `התחלתי את הקריירה הבוגרת ב${clubs[0].he}`,
-      `שיחקתי גם ב${clubs[clubs.length - 1].he}`,
+      `התחלתי את הקריירה הבוגרת ${inHe(clubs[0].he)}`,
+      `שיחקתי גם ${inHe(clubs[clubs.length - 1].he)}`,
     ],
   });
 
@@ -1149,7 +1211,7 @@ function whoAmIClueSets(player: PlayerRecord): ClueSet[] {
       clues: [
         natHe,
         positionHe,
-        `שיחקתי ב${countries.map(countryHe).join(", ")}`,
+        `שיחקתי ${inHe(countries.map(countryHe).join(", "))}`,
         `אחד המועדונים שלי הוא ${clubs[Math.floor(clubs.length / 2)].he}`,
       ],
     });
@@ -1257,14 +1319,14 @@ function guessClubClueSets(club: ClubRecord, famous: PlayerRecord[]): ClueSet[] 
     const stadium = club.stadiumHe ?? club.stadium!;
     sets.push({
       id: "stadium",
-      clues: [`אני פועל ב${country}`, `המגרש הביתי שלי הוא ${stadium}`],
+      clues: [`אני פועל ${inHe(country)}`, `המגרש הביתי שלי הוא ${stadium}`],
     });
   }
 
   if (club.founded) {
     sets.push({
       id: "founded",
-      clues: [`אני פועל ב${country}`, `נוסדתי בשנת ${club.founded}`],
+      clues: [`אני פועל ${inHe(country)}`, `נוסדתי בשנת ${club.founded}`],
     });
   }
 
@@ -1272,7 +1334,7 @@ function guessClubClueSets(club: ClubRecord, famous: PlayerRecord[]): ClueSet[] 
     sets.push({
       id: "players",
       clues: [
-        `אני פועל ב${country}`,
+        `אני פועל ${inHe(country)}`,
         `${famous[0].he} שיחק אצלי`,
         `גם ${famous[1].he} שיחק אצלי`,
       ],
@@ -1282,7 +1344,7 @@ function guessClubClueSets(club: ClubRecord, famous: PlayerRecord[]): ClueSet[] 
   if (club.nicknameHe) {
     sets.push({
       id: "nickname",
-      clues: [`אני פועל ב${country}`, `הכינוי שלי הוא ${club.nicknameHe}`],
+      clues: [`אני פועל ${inHe(country)}`, `הכינוי שלי הוא ${club.nicknameHe}`],
     });
   }
 
@@ -1338,10 +1400,33 @@ function generateGuessTheClub(): GeneratedQuestion[] {
         semanticKey: `guess_club:${club.id}:${set.id}`,
         mode: "GUESS_THE_CLUB",
         category: "GUESS_THE_CLUB",
+        /*
+          NO ERA WEIGHT HERE, and the reason is worth stating.
+
+          This used to pass `year: club.founded` for the founding-year clue set,
+          which pushed every one of those questions up by the full pre-1975 era
+          weight — 2.7 — and landed 49 of them in IMPOSSIBLE. That made the
+          curated bank's top band 96% "guess the club", so choosing "בלתי אפשרי"
+          meant playing a guess-the-club quiz. The band's own test caught it.
+
+          The era weight exists to say "this happened long ago, so it is less
+          well remembered". A club's founding year is not an event anybody
+          remembers; it is a number printed on the badge, and here it is printed
+          on the screen as the clue. The question is hard because founding years
+          are not knowledge most fans carry — which is what the archetype weight
+          already says.
+        */
         difficulty: difficultyFor({
           archetype: "guess_club",
+          // The club IS the subject here, so its recognisability belongs on the
+          // fame axis and nowhere else. Adding entityProminence as well would
+          // charge for the same thing twice.
           fame: clubFame(club),
-          year: set.id === "founded" ? club.founded : undefined,
+          // Which clue set it is, expressed as what it actually is: how well
+          // known the identifying fact is. A founding year is a fact almost
+          // nobody carries; a stadium, a nickname and a famous alumnus are facts
+          // a fan of that club does.
+          factProminence: set.id === "founded" ? "OBSCURE" : undefined,
           distractors: sameCountry.length >= 3 && clubFame(club) === 0 ? "near" : "mixed",
         }),
         questionHe: "איזה מועדון אני?",
@@ -1420,7 +1505,7 @@ function generateClubPairConnections(): GeneratedQuestion[] {
           // doing the work already.
             distractors: playerFame(player) === 0 ? "near" : "mixed",
           }),
-          questionHe: `איזה שחקן שיחק גם ב${a.he} וגם ב${b.he}?`,
+          questionHe: `איזה שחקן שיחק גם ${inHe(a.he)} וגם ${inHe(b.he)}?`,
           explanationHe: `${player.he} שיחק בשני המועדונים.`,
           options: [player.he, ...distractors.map((d) => d.he)],
           correctIndex: 0,
@@ -1459,7 +1544,7 @@ function generateClubCountryAndLeague(): GeneratedQuestion[] {
         category: "CLUBS",
         difficulty: difficultyFor({ archetype: "club_country", fame: clubFame(club), distractors: "far" }),
         questionHe: `באיזו מדינה משחק ${club.he}?`,
-        explanationHe: `${club.he} משחק ב${countryHe(club.country)}.`,
+        explanationHe: `${club.he} משחק ${inHe(countryHe(club.country))}.`,
         options: [countryHe(club.country), ...countryDistractors.map(countryHe)],
         correctIndex: 0,
         scopes: [{ type: "COUNTRY", value: club.country }],
@@ -1475,38 +1560,97 @@ function generateClubCountryAndLeague(): GeneratedQuestion[] {
 }
 
 /**
- * Which position a player plays.
+ * Position questions, at whatever precision the data supports.
  *
- * Four options, one of which is right, drawn from the four positions the
- * registry records — so the distractors are fixed rather than sampled.
+ * THE BUG THIS REPLACES. This generator used to translate the registry's `pos`
+ * straight into Hebrew — FW became "חלוץ" — and ask "באיזו עמדה משחק X?". For
+ * Mohamed Salah that produced a question asking for a position and answering
+ * with a role he has never played: he is a right winger, and "חלוץ" means
+ * striker. The data was not wrong. The question was the wrong question for it.
+ *
+ * So two questions are generated instead of one, and which ones depends on what
+ * is actually known:
+ *
+ *   `position:<id>`      the UNIT — "באיזו חוליה משחק X?" → "התקפה". Always
+ *                        available, because `pos` always is. This keeps the
+ *                        existing semantic key, so the 131 stored questions are
+ *                        repaired in place rather than replaced.
+ *   `position_role:<id>` the ROLE — "מה התפקיד המדויק של X?" → "קיצוני ימני".
+ *                        Only where PLAYER_ROLES names one, which is only where
+ *                        the role is uncontested.
+ *
+ * A goalkeeper gets only the unit question: for a keeper the unit and the role
+ * are the same word, so the second question would be the first one again.
  */
 function generatePlayerPositions(): GeneratedQuestion[] {
   const out: GeneratedQuestion[] = [];
-  const POS_HE: Record<PlayerRecord["pos"], string> = {
-    GK: "שוער",
-    DF: "מגן",
-    MF: "קשר",
-    FW: "חלוץ",
-  };
 
   for (const player of PLAYERS) {
     if (player.clubs.some((c) => !isReal(c))) continue;
-    const wrong = (Object.keys(POS_HE) as PlayerRecord["pos"][]).filter((p) => p !== player.pos);
+
+    const resolved = resolvePosition({
+      curatedRole: PLAYER_ROLES[player.id] ?? null,
+      seedBroad: player.pos,
+    });
+    if (!resolved.broad) continue;
+
+    const nationalityHint = [`השחקן הוא ${NATIONALITIES[player.nat]?.he ?? ""}`.trim()].filter(Boolean);
+
+    // ---- the unit. Four options, fixed rather than sampled: there are only four.
+    const broadWrong = BROAD_POSITIONS.filter((p) => p !== resolved.broad);
     out.push({
       semanticKey: `position:${player.id}`,
       mode: "CLASSIC",
       category: "PLAYERS",
-      difficulty: difficultyFor({ archetype: "club_country", fame: playerFame(player), distractors: "far" }),
-      questionHe: `באיזו עמדה משחק ${player.he}?`,
-      explanationHe: `${player.he} משחק בעמדת ${POS_HE[player.pos]}.`,
-      options: [POS_HE[player.pos], ...wrong.map((p) => POS_HE[p])],
+      difficulty: difficultyFor({
+        archetype: "position_broad",
+        fame: playerFame(player),
+        distractors: "far",
+      }),
+      questionHe: `באיזו חוליה משחק ${player.he}?`,
+      explanationHe:
+        resolved.broad === "GOALKEEPER"
+          ? `${player.he} הוא שוער.`
+          : `${player.he} משחק בחוליית ה${BROAD_HE[resolved.broad]}.`,
+      options: [BROAD_HE[resolved.broad], ...broadWrong.map((p) => BROAD_HE[p])],
       correctIndex: 0,
       scopes: playerScopes(player),
       sourceLabel: "מאגר שחקנים מאומת",
       freeText: true,
-      canonicalAnswer: POS_HE[player.pos],
+      canonicalAnswer: BROAD_HE[resolved.broad],
       aliases: [],
-      hints: [`השחקן הוא ${NATIONALITIES[player.nat]?.he ?? ""}`.trim()].filter(Boolean),
+      hints: nationalityHint,
+    });
+
+    // ---- the role, where one is established.
+    if (!supportsPreciseQuestion(resolved) || resolved.detailed === "GK") continue;
+    const role = resolved.detailed!;
+    // Distractors are roles a fan could plausibly mix up with this one. Offering
+    // "שוער" against "קיצוני ימני" is not a question, it is a formality.
+    const roleWrong = CONFUSABLE_WITH[role].filter((r) => DETAILED_HE[r] !== DETAILED_HE[role]).slice(0, 3);
+    if (roleWrong.length < 3) continue;
+
+    out.push({
+      semanticKey: `position_role:${player.id}`,
+      mode: "CLASSIC",
+      category: "PLAYERS",
+      difficulty: difficultyFor({
+        archetype: "position_precise",
+        fame: playerFame(player),
+        // Confusable roles by construction, which is what makes this harder than
+        // the unit question rather than a second copy of it.
+        distractors: "near",
+      }),
+      questionHe: `מה התפקיד המדויק של ${player.he}?`,
+      explanationHe: `${player.he} משחק בתפקיד ${DETAILED_HE[role]}.`,
+      options: [DETAILED_HE[role], ...roleWrong.map((r) => DETAILED_HE[r])],
+      correctIndex: 0,
+      scopes: playerScopes(player),
+      sourceLabel: "מאגר שחקנים מאומת",
+      freeText: true,
+      canonicalAnswer: DETAILED_HE[role],
+      aliases: [],
+      hints: [...nationalityHint, `הוא שחקן ${BROAD_HE[resolved.broad]}`],
     });
   }
   return out;

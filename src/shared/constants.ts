@@ -119,7 +119,38 @@ export const ENABLED_GAME_MODES: GameMode[] = [
   "GUESS_THE_CLUB",
 ];
 
-export const QUESTION_COUNTS = [5, 10, 20, 30, 50] as const;
+/**
+ * The domestic league each supported country has in the bank.
+ *
+ * Drives the wizard's country → league drill-down, so the step can only ever
+ * offer a league that exists: a country with no entry here skips the league
+ * question entirely rather than showing an empty list. Brazil and Argentina are
+ * absent deliberately — their clubs are in the bank, their domestic leagues are
+ * not exposed as a filter.
+ */
+export const LEAGUE_BY_COUNTRY: Record<string, string> = {
+  ENG: "PREMIER_LEAGUE",
+  ESP: "LA_LIGA",
+  ITA: "SERIE_A",
+  GER: "BUNDESLIGA",
+  FRA: "LIGUE_1",
+  POR: "LIGA_PORTUGAL",
+  NED: "EREDIVISIE",
+  ISR: "ISRAELI_PREMIER_LEAGUE",
+};
+
+/**
+ * Question-count presets.
+ *
+ * 15 was added for the wizard, whose step 2 offers 5/10/15/20 — four taps on one
+ * line, which is what "one screen, one decision" needs. 30 and 50 stay in the
+ * allow-list because stored challenges and daily configurations were created
+ * with them and must keep resolving.
+ */
+export const QUESTION_COUNTS = [5, 10, 15, 20, 30, 50] as const;
+
+/** What the wizard offers. The rest of QUESTION_COUNTS stays valid, just unlisted. */
+export const WIZARD_QUESTION_COUNTS = [5, 10, 15, 20] as const;
 
 // Deterministic, playful rank labels derived from accuracy percentage.
 export function rankFromAccuracy(accuracy: number): RankLabel {

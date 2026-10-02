@@ -1,17 +1,26 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  CATEGORIES,
   COMPETITIONS,
   COUNTRIES,
   DIFFICULTY_LABELS,
-  ENABLED_GAME_MODES,
-  GAME_MODE_LABELS,
-  QUESTION_COUNTS,
-  REGIONS,
+  WIZARD_QUESTION_COUNTS,
 } from "../../shared/constants";
-import type { AnswerMode, Category, Difficulty, GameMode, QuizConfiguration, Region } from "../../shared/types";
+import type { AnswerMode, Difficulty } from "../../shared/types";
 import { fetchAvailableCount, messageHeOf } from "../lib/api";
+import {
+  canAdvance,
+  countriesIn,
+  INITIAL_STATE,
+  leagueOf,
+  QUICK_PICKS,
+  stepsFor,
+  SUPPORTED_CONTINENTS,
+  summaryOf,
+  toConfiguration,
+  type StepId,
+  type WizardState,
+} from "../lib/builderWizard";
 import { startQuiz } from "../lib/startQuiz";
 import { sound } from "../lib/sound";
 import { Icon } from "../components/Icon";
@@ -19,29 +28,73 @@ import "./BuilderPage.css";
 
 const DIFFICULTY_OPTIONS: (Difficulty | "MIXED")[] = ["MIXED", "EASY", "NORMAL", "HARD", "EXPERT", "IMPOSSIBLE"];
 
+const ANSWER_MODE_LABELS: Record<AnswerMode, string> = {
+  FREE_TEXT: "תשובה חופשית",
+  MULTIPLE_CHOICE: "אמריקאי",
+};
+
+const competitionLabel = (code: string) =>
+  COMPETITIONS.find((c) => c.code === code)?.nameHe ?? code;
+const countryLabel = (code: string) => COUNTRIES.find((c) => c.code === code)?.nameHe ?? code;
+
+const STEP_TITLES: Record<StepId, string> = {
+  mode: "איך משחקים?",
+  settings: "הגדרות המשחק",
+  scope: "מאיפה השאלות?",
+  region: "איזה אזור?",
+  summary: "הכול מוכן",
+};
+
+/**
+ * The game-creation wizard.
+ *
+ * WHAT WAS WRONG WITH THE OLD BUILDER. Every control was on screen at once:
+ * seven region chips, three competition groups, eleven leagues, ten countries,
+ * fourteen categories, five game modes, six difficulties and five question
+ * counts — about sixty tap targets, on a page that scrolled for most of a phone
+ * screen and hid the start button below the fold. Nothing on it was broken.
+ * It just never told you what you were deciding.
+ *
+ * ONE SCREEN, ONE DECISION. Each step asks a single question, fits a 390×844
+ * phone without scrolling, and keeps its primary action visible. Steps the
+ * answers make unnecessary are skipped rather than disabled — choosing "כל
+ * העולם" means the geography step does not exist, not that it is greyed out.
+ *
+ * GOING BACK NEVER COSTS ANYTHING. All of it is one state object (see
+ * lib/builderWizard.ts), so a step that is revisited is still filled in. The
+ * steps are not separate forms and nothing is unmounted.
+ */
 export function BuilderPage() {
   const navigate = useNavigate();
-
-  const [region, setRegion] = useState<Region>("WORLD");
-  const [countries, setCountries] = useState<string[]>([]);
-  const [competitions, setCompetitions] = useState<string[]>(["ALL"]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [difficulty, setDifficulty] = useState<Difficulty | "MIXED">("MIXED");
-  const [questionCount, setQuestionCount] = useState<(typeof QUESTION_COUNTS)[number]>(10);
-  const [gameMode, setGameMode] = useState<GameMode>("CLASSIC");
-  // Free text is the default: it is the mode the product is actually about.
-  const [answerMode, setAnswerMode] = useState<AnswerMode>("FREE_TEXT");
-
-  const [availableCount, setAvailableCount] = useState<number | null>(null);
-  const [counting, setCounting] = useState(false);
+  const [state, setState] = useState<WizardState>(INITIAL_STATE);
+  const [index, setIndex] = useState(0);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [availableCount, setAvailableCount] = useState<number | null>(null);
+  const [counting, setCounting] = useState(false);
+  const headingRef = useRef<HTMLHeadingElement | null>(null);
 
-  const config: QuizConfiguration = useMemo(
-    () => ({ region, countries, competitions, categories, difficulty, questionCount, gameMode, answerMode }),
-    [region, countries, competitions, categories, difficulty, questionCount, gameMode, answerMode]
-  );
+  const steps = useMemo(() => stepsFor(state), [state]);
+  // The step list shrinks and grows as the scope changes, so the cursor is
+  // clamped rather than trusted. Without this, switching from "אזור מסוים" to
+  // "כל העולם" while standing on the region step would point past the end.
+  const step = steps[Math.min(index, steps.length - 1)];
+  const config = useMemo(() => toConfiguration(state), [state]);
 
+  const patch = (next: Partial<WizardState>) => {
+    sound.play("select");
+    setState((prev) => ({ ...prev, ...next }));
+  };
+
+  /*
+    Availability is read for the real configuration, debounced.
+
+    Shown on the settings step, where the difficulty and the count are chosen and
+    a thin pool is most likely, and again on the summary. It is the real
+    compatible pool count — the same number the engine will draw from — because a
+    builder that cheerfully offers 20 questions from a filter holding 14 has lied
+    before the game even starts.
+  */
   useEffect(() => {
     let cancelled = false;
     setCounting(true);
@@ -57,17 +110,30 @@ export function BuilderPage() {
     };
   }, [config]);
 
-  function pick<T>(list: T[], value: T, setter: (v: T[]) => void) {
+  // Each step change moves focus to the new heading. A wizard that swaps the
+  // whole screen without telling a screen reader is a wizard a screen reader
+  // user cannot follow.
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, [step]);
+
+  const atLast = step === "summary";
+  const none = availableCount === 0;
+  const short = availableCount !== null && availableCount > 0 && availableCount < state.questionCount;
+
+  function back() {
+    setError(null);
     sound.play("select");
-    setter(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
+    setIndex((i) => Math.max(0, Math.min(i, steps.length - 1) - 1));
   }
 
-  function choose<T>(value: T, setter: (v: T) => void) {
-    sound.play("select");
-    setter(value);
+  function next() {
+    setError(null);
+    sound.play("click");
+    setIndex((i) => Math.min(steps.length - 1, Math.min(i, steps.length - 1) + 1));
   }
 
-  async function handleStart() {
+  async function start() {
     setError(null);
     setStarting(true);
     sound.play("click");
@@ -80,230 +146,321 @@ export function BuilderPage() {
     }
   }
 
-  const groups = COMPETITIONS.filter((c) => c.type === "GROUP");
-  const leagues = COMPETITIONS.filter((c) => c.type !== "GROUP");
-
-  const none = availableCount === 0;
-  const short = availableCount !== null && availableCount > 0 && availableCount < questionCount;
-
-  const summary = [
-    { label: "מצב", value: answerMode === "FREE_TEXT" ? "תשובה חופשית" : "אמריקאי" },
-    { label: "סוג", value: GAME_MODE_LABELS[gameMode] },
-    {
-      label: "טווח",
-      value:
-        competitions.filter((c) => c !== "ALL").length > 0 || countries.length > 0
-          ? `${competitions.filter((c) => c !== "ALL").length + countries.length} נבחרו`
-          : REGIONS.find((r) => r.code === region)?.labelHe ?? "כל העולם",
-    },
-    { label: "קטגוריות", value: categories.length === 0 ? "הכול" : `${categories.length} נבחרו` },
-    { label: "קושי", value: difficulty === "MIXED" ? "מעורב" : DIFFICULTY_LABELS[difficulty] },
-    { label: "שאלות", value: String(questionCount) },
-  ];
+  const summary = summaryOf(state, {
+    answerMode: ANSWER_MODE_LABELS,
+    difficulty: DIFFICULTY_LABELS,
+    competition: competitionLabel,
+    country: countryLabel,
+  });
 
   return (
-    <div className="page-wide page build">
-      <h1 className="build-title a-fade-up">בנו חידון</h1>
-
-      {/* The first and most consequential choice, so it gets the most weight
-          on the page rather than sitting at the bottom as a pair of chips. */}
-      <section className="mode-pick a-fade-up" aria-label="מצב משחק">
-        <h2 className="build-label mode-pick-label">מצב משחק</h2>
-        <div className="seg" role="group" aria-label="מצב משחק">
-          {(
-            [
-              { key: "FREE_TEXT", label: "תשובה חופשית", icon: "keyboard" as const },
-              { key: "MULTIPLE_CHOICE", label: "אמריקאי", icon: "list" as const },
-            ] as const
-          ).map((option) => (
-            <button
-              key={option.key}
-              className={`seg-btn ${answerMode === option.key ? "is-on" : ""}`}
-              aria-pressed={answerMode === option.key}
-              onClick={() => choose(option.key as AnswerMode, setAnswerMode)}
-            >
-              <Icon name={option.icon} size={20} />
-              {option.label}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <div className="build-grid">
-      <div className="build-rows a-stagger">
-        <Row index={0} label="אזור / ליגות">
-          <Chips
-            items={REGIONS.map((r) => ({ key: r.code, label: r.labelHe }))}
-            on={(key) => region === key}
-            pick={(key) => choose(key as Region, setRegion)}
-            group="אזור"
-          />
-          <Chips
-            items={groups.map((c) => ({ key: c.code, label: c.nameHe }))}
-            on={(key) => competitions.includes(key)}
-            pick={(key) => choose([key], setCompetitions)}
-            group="קבוצות ליגות"
-          />
-          <Chips
-            items={leagues.map((c) => ({ key: c.code, label: c.nameHe }))}
-            on={(key) => competitions.includes(key)}
-            pick={(key) =>
-              pick(
-                competitions.filter((code) => !groups.some((g) => g.code === code)),
-                key,
-                setCompetitions
-              )
-            }
-            group="ליגות"
-          />
-          <Chips
-            items={COUNTRIES.map((c) => ({ key: c.code, label: c.nameHe }))}
-            on={(key) => countries.includes(key)}
-            pick={(key) => pick(countries, key, setCountries)}
-            group="מדינות"
-          />
-        </Row>
-
-        <Row index={1} label="קטגוריות">
-          <Chips
-            items={CATEGORIES.map((c) => ({ key: c.code, label: c.labelHe }))}
-            on={(key) => categories.includes(key as Category)}
-            pick={(key) => pick(categories, key as Category, setCategories)}
-            group="קטגוריות"
-          />
-          <Chips
-            items={ENABLED_GAME_MODES.map((m) => ({ key: m, label: GAME_MODE_LABELS[m] }))}
-            on={(key) => gameMode === key}
-            pick={(key) => choose(key as GameMode, setGameMode)}
-            group="סוג משחק"
-          />
-        </Row>
-
-        <Row index={2} label="רמת קושי">
-          <Chips
-            items={DIFFICULTY_OPTIONS.map((d) => ({
-              key: d,
-              label: d === "MIXED" ? "מעורב" : DIFFICULTY_LABELS[d],
-            }))}
-            on={(key) => difficulty === key}
-            pick={(key) => choose(key as Difficulty | "MIXED", setDifficulty)}
-            group="רמת קושי"
-          />
-        </Row>
-
-        <Row index={3} label="מספר שאלות">
-          <Chips
-            items={QUESTION_COUNTS.map((n) => ({ key: String(n), label: String(n) }))}
-            on={(key) => questionCount === Number(key)}
-            pick={(key) => choose(Number(key) as (typeof QUESTION_COUNTS)[number], setQuestionCount)}
-            group="מספר שאלות"
-          />
-        </Row>
+    <div className="page wiz">
+      <div className="wiz-head">
+        <button
+          className="wiz-back"
+          onClick={back}
+          disabled={index === 0}
+          aria-label="חזרה לשלב הקודם"
+        >
+          <Icon name="arrow" size={18} />
+        </button>
+        <h1 className="wiz-title" ref={headingRef} tabIndex={-1}>
+          {STEP_TITLES[step]}
+        </h1>
+        <p className="wiz-progress" aria-label={`שלב ${steps.indexOf(step) + 1} מתוך ${steps.length}`}>
+          <span className="wiz-progress-num">{steps.indexOf(step) + 1}</span>
+          <span className="wiz-progress-sep">/</span>
+          <span>{steps.length}</span>
+        </p>
       </div>
 
-      {/* Desktop only: fills the space beside a narrow form with something
-          useful — what you have actually chosen, and the way out. */}
-      <aside className="build-side" aria-label="סיכום הבחירה">
-        <div className="side-card">
-          <dl className="side-list">
-            {summary.map((item) => (
-              <div className="side-item" key={item.label}>
-                <dt>{item.label}</dt>
-                <dd>{item.value}</dd>
-              </div>
+      {/* The step body. `key` is the step id, so the fade runs on a change of
+          step and not on every keystroke inside one — and because the state
+          lives above this, remounting the body costs nothing. */}
+      <div className="wiz-body" key={step}>
+        {step === "mode" && (
+          <fieldset className="wiz-group wiz-group-tall">
+            <legend className="sr-only">מצב תשובה</legend>
+            {(
+              [
+                { key: "FREE_TEXT", label: "תשובה חופשית", note: "כותבים את התשובה", icon: "keyboard" as const },
+                { key: "MULTIPLE_CHOICE", label: "אמריקאי", note: "בוחרים מתוך אפשרויות", icon: "list" as const },
+              ] as const
+            ).map((option) => (
+              <button
+                key={option.key}
+                className={`wiz-card ${state.answerMode === option.key ? "is-on" : ""}`}
+                aria-pressed={state.answerMode === option.key}
+                onClick={() => patch({ answerMode: option.key as AnswerMode })}
+              >
+                <Icon name={option.icon} size={26} />
+                <span className="wiz-card-label">{option.label}</span>
+                <span className="wiz-card-note">{option.note}</span>
+              </button>
             ))}
-          </dl>
-          <p className="side-count">
-            {counting ? (
-              <span className="faint">בודק…</span>
-            ) : availableCount === null ? (
-              <span className="faint">לא הצלחנו לבדוק</span>
-            ) : none ? (
-              <span className="red">אין שאלות מתאימות</span>
-            ) : short ? (
-              <span className="amber">
-                <b className="num">{availableCount}</b> בלבד — החידון יתקצר
-              </span>
-            ) : (
-              <>
-                <b className="num green">{availableCount}</b> <span className="muted">שאלות זמינות</span>
-              </>
+          </fieldset>
+        )}
+
+        {step === "settings" && (
+          <>
+            <Field label="רמת קושי">
+              <div className="wiz-pills" role="group" aria-label="רמת קושי">
+                {DIFFICULTY_OPTIONS.map((d) => (
+                  <button
+                    key={d}
+                    className={`wiz-pill ${state.difficulty === d ? "is-on" : ""}`}
+                    aria-pressed={state.difficulty === d}
+                    onClick={() => patch({ difficulty: d })}
+                  >
+                    {d === "MIXED" ? "מעורב" : DIFFICULTY_LABELS[d]}
+                  </button>
+                ))}
+              </div>
+            </Field>
+
+            <Field label="מספר שאלות">
+              <div className="wiz-counts" role="group" aria-label="מספר שאלות">
+                {WIZARD_QUESTION_COUNTS.map((n) => (
+                  <button
+                    key={n}
+                    className={`wiz-count ${state.questionCount === n ? "is-on" : ""}`}
+                    aria-pressed={state.questionCount === n}
+                    onClick={() => patch({ questionCount: n })}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+            </Field>
+
+            <Availability
+              counting={counting}
+              count={availableCount}
+              requested={state.questionCount}
+            />
+          </>
+        )}
+
+        {step === "scope" && (
+          <>
+            <div className="wiz-group" role="group" aria-label="טווח השאלות">
+              <button
+                className={`wiz-card wiz-card-row ${state.scope === "WORLD" ? "is-on" : ""}`}
+                aria-pressed={state.scope === "WORLD"}
+                onClick={() => patch({ scope: "WORLD", quickPick: null })}
+              >
+                <Icon name="globe" size={22} />
+                <span className="wiz-card-label">כל העולם</span>
+              </button>
+              <button
+                className={`wiz-card wiz-card-row ${state.scope === "REGION" ? "is-on" : ""}`}
+                aria-pressed={state.scope === "REGION"}
+                onClick={() => patch({ scope: "REGION", quickPick: null })}
+              >
+                <Icon name="shield" size={22} />
+                <span className="wiz-card-label">אזור מסוים</span>
+              </button>
+            </div>
+
+            {/* Quick choices are a separate, labelled section — and they are
+                split in two, because a competition narrows WHERE the football
+                comes from while an archetype changes WHAT the question is. The
+                old builder put both in one chip row, which is how somebody
+                picked "מי אני?" expecting a filter. */}
+            <Field label="בחירות מהירות">
+              <div className="wiz-quick-label">תחרות</div>
+              <div className="wiz-chips" role="group" aria-label="תחרויות">
+                {QUICK_PICKS.filter((p) => p.kind === "COMPETITION").map((pick) => (
+                  <button
+                    key={pick.key}
+                    className={`wiz-chip ${state.quickPick === pick.key ? "is-on" : ""}`}
+                    aria-pressed={state.quickPick === pick.key}
+                    onClick={() => patch({ scope: "PRESET", quickPick: pick.key })}
+                  >
+                    {pick.labelHe}
+                  </button>
+                ))}
+              </div>
+              <div className="wiz-quick-label">סוג שאלה</div>
+              <div className="wiz-chips" role="group" aria-label="סוגי שאלות">
+                {QUICK_PICKS.filter((p) => p.kind === "ARCHETYPE").map((pick) => (
+                  <button
+                    key={pick.key}
+                    className={`wiz-chip ${state.quickPick === pick.key ? "is-on" : ""}`}
+                    aria-pressed={state.quickPick === pick.key}
+                    onClick={() => patch({ scope: "PRESET", quickPick: pick.key })}
+                  >
+                    {pick.labelHe}
+                  </button>
+                ))}
+              </div>
+            </Field>
+          </>
+        )}
+
+        {step === "region" && (
+          /* Progressive drill-down: a level appears only once the one above it
+             has been answered, so the step never shows three lists at once. */
+          <>
+            <Field label="יבשת">
+              <div className="wiz-chips" role="group" aria-label="יבשת">
+                {SUPPORTED_CONTINENTS.map((continent) => (
+                  <button
+                    key={continent.code}
+                    className={`wiz-chip ${state.continent === continent.code ? "is-on" : ""}`}
+                    aria-pressed={state.continent === continent.code}
+                    onClick={() => patch({ continent: continent.code, country: null, league: null })}
+                  >
+                    {continent.labelHe}
+                  </button>
+                ))}
+              </div>
+            </Field>
+
+            {state.continent && (
+              <Field label="מדינה">
+                <div className="wiz-chips" role="group" aria-label="מדינה">
+                  <button
+                    className={`wiz-chip ${state.country === null ? "is-on" : ""}`}
+                    aria-pressed={state.country === null}
+                    onClick={() => patch({ country: null, league: null })}
+                  >
+                    כל היבשת
+                  </button>
+                  {countriesIn(state.continent).map((country) => (
+                    <button
+                      key={country.code}
+                      className={`wiz-chip ${state.country === country.code ? "is-on" : ""}`}
+                      aria-pressed={state.country === country.code}
+                      onClick={() => patch({ country: country.code, league: null })}
+                    >
+                      {country.nameHe}
+                    </button>
+                  ))}
+                </div>
+              </Field>
             )}
-          </p>
-          <button className="btn btn-primary btn-block" disabled={starting || none} onClick={handleStart}>
-            {starting ? "יוצר…" : "התחל משחק"}
-            {!starting && <Icon name="arrow" size={17} />}
-          </button>
-        </div>
-      </aside>
+
+            {state.country && leagueOf(state.country) && (
+              <Field label="ליגה">
+                <div className="wiz-chips" role="group" aria-label="ליגה">
+                  <button
+                    className={`wiz-chip ${state.league === null ? "is-on" : ""}`}
+                    aria-pressed={state.league === null}
+                    onClick={() => patch({ league: null })}
+                  >
+                    כל הליגות
+                  </button>
+                  <button
+                    className={`wiz-chip ${state.league !== null ? "is-on" : ""}`}
+                    aria-pressed={state.league !== null}
+                    onClick={() => patch({ league: leagueOf(state.country!) })}
+                  >
+                    {competitionLabel(leagueOf(state.country!)!)}
+                  </button>
+                </div>
+              </Field>
+            )}
+          </>
+        )}
+
+        {step === "summary" && (
+          <>
+            <dl className="wiz-summary">
+              {summary.map((item) => (
+                <div className="wiz-summary-row" key={item.label}>
+                  <dt>{item.label}</dt>
+                  <dd>{item.value}</dd>
+                  <button
+                    className="wiz-edit"
+                    onClick={() => {
+                      sound.play("select");
+                      setIndex(Math.max(0, steps.indexOf(item.step)));
+                    }}
+                  >
+                    שינוי
+                  </button>
+                </div>
+              ))}
+            </dl>
+            <Availability counting={counting} count={availableCount} requested={state.questionCount} />
+          </>
+        )}
       </div>
 
-      {/* Availability is stated plainly, and a filter that cannot fill the quiz
-          says so before the player commits — never silently after. */}
-      <div className="build-bar">
-        <div className="page build-bar-inner">
-          <p className="build-count" role="status" aria-live="polite">
-            {counting ? (
-              <span className="faint">בודק…</span>
-            ) : availableCount === null ? (
-              <span className="faint">לא הצלחנו לבדוק זמינות</span>
-            ) : none ? (
-              <span className="red">אין שאלות מתאימות — הרחיבו את הסינון</span>
-            ) : short ? (
-              <span className="amber">
-                יש <b className="num">{availableCount}</b> שאלות בלבד — החידון יהיה בן {availableCount}
-              </span>
-            ) : (
-              <span className="muted">
-                <b className="num green">{availableCount}</b> שאלות זמינות
-              </span>
-            )}
-          </p>
-          <button className="btn btn-primary" disabled={starting || none} onClick={handleStart}>
-            {starting ? "יוצר…" : "התחל משחק"}
-            {!starting && <Icon name="arrow" size={17} />}
-          </button>
+      {/* The action sits in a sticky dock that respects the iPhone safe area and
+          never covers content: the body reserves its height. */}
+      <div className="wiz-dock">
+        <div className="page wiz-dock-inner">
+          {error && (
+            <p className="wiz-error" role="alert">
+              {error}
+            </p>
+          )}
+          {atLast ? (
+            <button className="btn btn-primary btn-block" disabled={starting || none} onClick={start}>
+              {starting ? "יוצר…" : "התחל משחק"}
+              {!starting && <Icon name="arrow" size={17} />}
+            </button>
+          ) : (
+            <button
+              className="btn btn-primary btn-block"
+              disabled={!canAdvance(state, step)}
+              onClick={next}
+            >
+              המשך
+              <Icon name="arrow" size={17} />
+            </button>
+          )}
         </div>
-        {error && (
-          <p className="build-error" role="alert">
-            {error}
-          </p>
-        )}
       </div>
     </div>
   );
 }
 
-function Row({ index, label, children }: { index: number; label: string; children: React.ReactNode }) {
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <section className="build-row" style={{ "--i": index } as React.CSSProperties}>
-      <h2 className="build-label">{label}</h2>
-      <div className="build-field">{children}</div>
+    <section className="wiz-field">
+      <h2 className="wiz-field-label">{label}</h2>
+      {children}
     </section>
   );
 }
 
-function Chips({
-  items,
-  on,
-  pick,
-  group,
+/**
+ * The real compatible pool count.
+ *
+ * Three states, and the middle one is the point: a filter that holds fewer
+ * questions than were asked for says so here, before the player commits, rather
+ * than producing a short quiz without explanation. Questions are never
+ * duplicated to fill a quota.
+ */
+function Availability({
+  counting,
+  count,
+  requested,
 }: {
-  items: { key: string; label: string }[];
-  on: (key: string) => boolean;
-  pick: (key: string) => void;
-  group: string;
+  counting: boolean;
+  count: number | null;
+  requested: number;
 }) {
   return (
-    <div className="chips" role="group" aria-label={group}>
-      {items.map((item) => (
-        <button key={item.key} className="chip" aria-pressed={on(item.key)} onClick={() => pick(item.key)}>
-          <span className="chip-tick" aria-hidden="true">
-            <Icon name="check" size={12} strokeWidth={3} />
-          </span>
-          {item.label}
-        </button>
-      ))}
-    </div>
+    <p className="wiz-avail" role="status" aria-live="polite">
+      {counting ? (
+        <span className="faint">בודק…</span>
+      ) : count === null ? (
+        <span className="faint">לא הצלחנו לבדוק זמינות</span>
+      ) : count === 0 ? (
+        <span className="red">אין שאלות מתאימות — הרחיבו את הסינון</span>
+      ) : count < requested ? (
+        <span className="amber">
+          קיימות <b className="num">{count.toLocaleString("he-IL")}</b> שאלות שמתאימות לבחירה
+        </span>
+      ) : (
+        <span className="muted">
+          <b className="num green">{count.toLocaleString("he-IL")}</b> שאלות זמינות
+        </span>
+      )}
+    </p>
   );
 }

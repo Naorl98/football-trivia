@@ -10,29 +10,12 @@
 import { D1Client, sqlValue } from "../src/server/sync/d1Client.ts";
 import { normalizeAnswer } from "../src/shared/answerMatching.ts";
 import { chunkByCost, maxWritesPerRun, planWrites } from "../src/server/sync/writeBudget.ts";
-import {
-  generateCareerPaths,
-  generateClubConnections,
-  generateCompetitionParticipation,
-  generateCompetitionWinners,
-  generateCupFinalQuestions,
-  generateDidNotPlayFor,
-  generateKnockoutProgressionQuestions,
-  generateGuessTheClub,
-  generateManagerQuestions,
-  generatePreviousClubQuestions,
-  generateTopScorerQuestions,
-  generateTransferQuestions,
-  generateTrophyQuestions,
-  generateVenueQuestions,
-  generateWhoAmI,
-  indexCareers,
-  finalizeHints,
-  indexClubFacts,
-  notableClubNames,
-  seasonLabel,
-  validateAndDedupe,
-} from "../src/server/questions/knowledgeGenerators.ts";
+import { curatedRecognition } from "../seed/recognition.ts";
+import { answerTypeFor } from "../src/server/football/archetypes.ts";
+import { isQuickStartFriendly } from "../src/server/football/difficulty.ts";
+import { validateSemantics } from "../src/server/football/validate.ts";
+import { generateKnowledgeQuestions, loadKnowledgeFacts } from "../src/server/football/pipeline.ts";
+import { finalizeHints, validateAndDedupe } from "../src/server/questions/knowledgeGenerators.ts";
 
 const KB_ID_BASE = 500000;
 const target = process.argv.includes("--remote") ? "remote" : "local";
@@ -48,180 +31,17 @@ const db = new D1Client({
 
 console.log(`\nGenerating questions from the knowledge base → ${target} D1\n`);
 
-/**
- * Tidies provider-supplied names before they reach question text.
- *
- * API-Football returns the odd "Tomasz  Kuszczak" with a doubled space, which
- * reads as a typo in a question and, worse, normalises to a different free-text
- * answer than the same name written once. Whitespace only — nothing here renames
- * or re-spells anybody.
- */
-const cleanName = (value) => (typeof value === "string" ? value.replace(/\s+/g, " ").trim() : value);
-const NAME_COLUMNS = ["player_name", "team_name", "from_team_name", "to_team_name", "coach_name", "name", "runner_up_name", "competition_name", "venue_name"];
-function tidyNames(rows) {
-  for (const row of rows) {
-    for (const column of NAME_COLUMNS) {
-      if (row[column] != null) row[column] = cleanName(row[column]);
-    }
-  }
-  return rows;
-}
+/*
+  ---- Read the facts and generate.
 
-// ---- Read the facts.
-const teams = await db.query(`
-  SELECT t.id, t.name, t.name_he, t.country_name, t.founded,
-         v.name AS venue_name, MIN(c.priority) AS competition_priority,
-         -- A club's own division, preferred over whatever competition the join
-         -- happens to reach first. Without the type filter a club that has played
-         -- in Europe gets local_code 'UCL', and then its "league" hint names the
-         -- Champions League while its cup hint names it again.
-         (SELECT c2.local_code
-            FROM team_seasons ts2
-            JOIN competitions c2 ON c2.id = ts2.competition_id
-           WHERE ts2.team_id = t.id AND c2.local_code IS NOT NULL
-           ORDER BY CASE WHEN c2.type = 'LEAGUE' THEN 0 ELSE 1 END, c2.priority, c2.id
-           LIMIT 1) AS local_code
-    FROM teams t
-    LEFT JOIN venues v ON v.id = t.venue_id
-    LEFT JOIN team_seasons ts ON ts.team_id = t.id
-    LEFT JOIN competitions c ON c.id = ts.competition_id
-   GROUP BY t.id
-`);
-
-const winners = await db.query(`
-  SELECT cw.competition_id, c.name AS competition_name, c.local_code AS competition_local_code,
-         c.priority AS competition_priority, cw.season,
-         w.name AS team_name, r.name AS runner_up_name, w.country_name AS team_country,
-         cs.start_date, cs.end_date
-    FROM competition_winners cw
-    JOIN competitions c ON c.id = cw.competition_id
-    JOIN teams w ON w.id = cw.team_id
-    LEFT JOIN teams r ON r.id = cw.runner_up_team_id
-    LEFT JOIN competition_seasons cs
-           ON cs.competition_id = cw.competition_id AND cs.season = cw.season
-`);
-for (const row of winners) {
-  row.season_label = seasonLabel(Number(row.season), row.start_date, row.end_date);
-}
-
-const transfers = await db.query(`
-  SELECT pt.player_id, p.name AS player_name,
-         pt.from_team_id, ft.name AS from_team_name,
-         pt.to_team_id, tt.name AS to_team_name,
-         pt.transfer_date, pt.transfer_type
-    FROM player_transfers pt
-    JOIN players p ON p.id = pt.player_id
-    LEFT JOIN teams ft ON ft.id = pt.from_team_id
-    LEFT JOIN teams tt ON tt.id = pt.to_team_id
-`);
-
-const players = await db.query(`SELECT id, name, name_he, nationality, position FROM players`);
-
-const trophies = await db.query(`
-  SELECT tr.player_id, p.name AS player_name, tr.competition_name, tr.country_name, tr.season, tr.place
-    FROM player_trophies tr
-    JOIN players p ON p.id = tr.player_id
-`);
-
-// Every known player-at-club relationship, however it was learned — a squad
-// listing, a transfer, or a scoring record. Club Connection and Who Am I are
-// both built from this, so they see a career assembled from all three sources
-// rather than transfers alone.
-const playerTeams = await db.query(`
-  SELECT pt.player_id, p.name AS player_name, p.position, p.nationality,
-         pt.team_id, t.name AS team_name, t.country_name, pt.season, pt.start_date
-    FROM player_teams pt
-    JOIN players p ON p.id = pt.player_id
-    JOIN teams t ON t.id = pt.team_id
-`);
-
-// Cup fixtures. Only the rounds the generators reason about are read: a group or
-// league phase is hundreds of rows that settle nothing on their own.
-const cupFixtures = await db.query(`
-  SELECT f.id, f.competition_id, c.name AS competition_name, c.local_code AS competition_local_code,
-         c.priority AS competition_priority, f.season, f.round,
-         f.home_team_id, f.away_team_id, h.name AS home_team_name, a.name AS away_team_name,
-         f.home_goals, f.away_goals, f.home_penalties, f.away_penalties, f.status,
-         cs.start_date, cs.end_date
-    FROM fixtures f
-    JOIN competitions c ON c.id = f.competition_id
-    LEFT JOIN teams h ON h.id = f.home_team_id
-    LEFT JOIN teams a ON a.id = f.away_team_id
-    LEFT JOIN competition_seasons cs ON cs.competition_id = f.competition_id AND cs.season = f.season
-   WHERE LOWER(TRIM(f.round)) IN ('final','semi-finals','quarter-finals','round of 16')
-`);
-
-/**
- * Who took part in each competition-season, and for which of them the fixture
- * list is complete enough to argue from absence.
- *
- * Participation questions turn on three clubs *not* having played, so they are
- * only offered for a competition-season whose fixtures were imported whole.
- */
-const participationRows = await db.query(`
-  SELECT ts.competition_id, ts.season, t.name AS team_name,
-         c.name AS competition_name, c.local_code AS competition_local_code, c.priority AS competition_priority,
-         cs.start_date, cs.end_date,
-         (SELECT COUNT(*) FROM fixtures f
-           WHERE f.competition_id = ts.competition_id AND f.season = ts.season) AS fixture_count
-    FROM team_seasons ts
-    JOIN teams t ON t.id = ts.team_id
-    JOIN competitions c ON c.id = ts.competition_id
-    LEFT JOIN competition_seasons cs ON cs.competition_id = ts.competition_id AND cs.season = ts.season
-   WHERE c.type = 'CUP'
-`);
-
-const coachSpells = await db.query(`
-  SELECT ct.coach_id, co.name AS coach_name, co.nationality,
-         ct.team_id, t.name AS team_name, ct.start_date, ct.end_date
-    FROM coach_teams ct
-    JOIN coaches co ON co.id = ct.coach_id
-    JOIN teams t ON t.id = ct.team_id
-`);
-
-const seasonStats = await db.query(`
-  SELECT s.player_id, p.name AS player_name, t.name AS team_name,
-         c.name AS competition_name, c.local_code AS competition_local_code,
-         c.priority AS competition_priority, s.season, s.goals, s.assists, s.appearances,
-         cs.start_date, cs.end_date
-    FROM player_season_stats s
-    JOIN players p ON p.id = s.player_id
-    JOIN competitions c ON c.id = s.competition_id
-    LEFT JOIN teams t ON t.id = s.team_id
-    LEFT JOIN competition_seasons cs
-           ON cs.competition_id = s.competition_id AND cs.season = s.season
-`);
-for (const row of seasonStats) {
-  row.season_label = seasonLabel(Number(row.season), row.start_date, row.end_date);
-}
-
-for (const rows of [teams, winners, transfers, players, trophies, playerTeams, coachSpells, seasonStats, cupFixtures, participationRows]) {
-  tidyNames(rows);
-}
-for (const row of cupFixtures) {
-  row.season_label = seasonLabel(Number(row.season), row.start_date, row.end_date);
-}
-
-// Grouped by competition-season. Only seasons with a stored fixture list get
-// participation questions, because those are the only ones where a club's absence
-// from the team sheet actually means it did not play.
-const cupParticipants = new Map();
-const cupSeasonMeta = new Map();
-for (const row of participationRows) {
-  if (Number(row.fixture_count) === 0) continue;
-  const key = `${row.competition_id}:${row.season}`;
-  cupParticipants.set(key, [...(cupParticipants.get(key) ?? []), String(row.team_name)]);
-  if (!cupSeasonMeta.has(key)) {
-    cupSeasonMeta.set(key, {
-      competitionId: Number(row.competition_id),
-      competitionName: String(row.competition_name),
-      localCode: row.competition_local_code ?? null,
-      priority: row.competition_priority ?? null,
-      season: Number(row.season),
-      seasonLabel: seasonLabel(Number(row.season), row.start_date, row.end_date),
-    });
-  }
-}
+  Both steps live in src/server/football/pipeline.ts, which the audit
+  (npm run questions:audit) also calls. That shared call is what lets the audit
+  say "this stored question would not be generated today" and mean it: it is
+  literally the same computation over the same rows, not a second
+  implementation of the same intent.
+*/
+const facts = await loadKnowledgeFacts(db, curatedRecognition());
+const { context, teams, players, transfers, winners, trophies, playerTeams, coachSpells, seasonStats } = facts;
 
 console.log(
   `  facts: ${teams.length} teams, ${players.length} players, ${transfers.length} transfers, ` +
@@ -230,74 +50,13 @@ console.log(
     `${seasonStats.length} season stat rows`
 );
 
-// ---- Generate candidates.
-const transfersByPlayer = new Map();
-for (const row of transfers) {
-  transfersByPlayer.set(row.player_id, [...(transfersByPlayer.get(row.player_id) ?? []), row]);
+const generation = generateKnowledgeQuestions(facts);
+const { byGenerator, candidates } = generation;
+
+console.log(`  team kinds:`, generation.teamKindCounts);
+if (Object.keys(generation.droppedCareerLinks).length > 0) {
+  console.log(`  player-club links dropped as non-club:`, generation.droppedCareerLinks);
 }
-
-const careers = indexCareers(playerTeams);
-const notable = notableClubNames(teams);
-
-// Clubs that actually contested each competition, used as believable distractors
-// for "who won X in season Y".
-const competitionClubs = await db.query(`
-  SELECT ts.competition_id, t.name AS team_name
-    FROM team_seasons ts
-    JOIN teams t ON t.id = ts.team_id
-`);
-const clubsByCompetition = new Map();
-for (const row of competitionClubs) {
-  const id = Number(row.competition_id);
-  clubsByCompetition.set(id, [...(clubsByCompetition.get(id) ?? []), String(row.team_name)]);
-}
-
-// Club countries, used to keep a "never played for" club on a different national
-// footing from every club the player is recorded at.
-const clubCountryById = new Map(teams.map((t) => [Number(t.id), t.country_name ?? null]));
-
-console.log(`  ${notable.size} of ${teams.length} clubs are competition-backed and askable`);
-
-/**
- * Which cups each club has played in, by club name.
- *
- * Gives career questions a competition scope, so a Champions League quiz reaches
- * the transfers and team-mates of the clubs that contested it rather than only
- * the two finals we hold. A scope, not a category: the question is still a
- * transfer question and is still counted as one.
- */
-const cupScopes = new Map();
-for (const row of participationRows) {
-  if (!row.competition_local_code) continue;
-  const name = String(row.team_name);
-  const codes = cupScopes.get(name) ?? new Set();
-  codes.add(String(row.competition_local_code));
-  cupScopes.set(name, codes);
-}
-for (const [name, codes] of cupScopes) cupScopes.set(name, [...codes]);
-
-// Club metadata for hints: country, league, ground, founding year, cups played.
-const clubFacts = indexClubFacts(teams, cupScopes);
-
-const byGenerator = {
-  competitionWinners: generateCompetitionWinners(winners, clubsByCompetition),
-  transferTo: generateTransferQuestions(transfers, teams, notable, cupScopes, clubFacts),
-  transferFrom: generatePreviousClubQuestions(transfers, teams, notable, cupScopes, clubFacts),
-  careerPath: generateCareerPaths(transfersByPlayer, players, cupScopes, clubFacts),
-  clubConnection: generateClubConnections(careers, { notable, cupScopes, clubFacts }),
-  didNotPlayFor: generateDidNotPlayFor(careers, { notable, clubCountryById }),
-  whoAmI: generateWhoAmI(careers),
-  guessTheClub: generateGuessTheClub(teams),
-  managers: generateManagerQuestions(coachSpells, clubFacts),
-  topScorers: generateTopScorerQuestions(seasonStats),
-  cupFinals: generateCupFinalQuestions(cupFixtures, cupParticipants, clubFacts),
-  knockouts: generateKnockoutProgressionQuestions(cupFixtures, cupParticipants, clubFacts),
-  cupParticipation: generateCompetitionParticipation(cupParticipants, cupSeasonMeta, [...notable], { clubFacts }),
-  venues: generateVenueQuestions(teams),
-  trophies: generateTrophyQuestions(trophies),
-};
-
-const candidates = Object.values(byGenerator).flat();
 
 console.log(`  candidates generated: ${candidates.length}`);
 for (const [name, list] of Object.entries(byGenerator)) {
@@ -428,6 +187,17 @@ const reasons = {};
 for (const r of rejected) reasons[r.reason] = (reasons[r.reason] ?? 0) + 1;
 console.log(`  accepted: ${accepted.length}, rejected: ${rejected.length}`, reasons);
 
+// Warnings do not block a question, but they are worth seeing: a glued Hebrew
+// preposition or a movement wording the provider does not actually support is a
+// wording problem, not a correctness one, and the count says how many there are.
+const warnings = {};
+for (const q of accepted) {
+  for (const issue of validateSemantics(q)) {
+    if (issue.severity === "WARN") warnings[issue.code] = (warnings[issue.code] ?? 0) + 1;
+  }
+}
+if (Object.keys(warnings).length > 0) console.log(`  warnings:`, warnings);
+
 if (accepted.length === 0) {
   console.log(`\nNothing new to write. Import more data first: npm run data:harvest\n`);
   process.exit(0);
@@ -532,17 +302,53 @@ function interleaveByCategory(questions) {
   return out;
 }
 
+/**
+ * The semantic facts stored alongside a question.
+ *
+ * Written so the audit can judge a question later without re-deriving how it was
+ * built, and so Quick Start can filter on familiarity in SQL rather than
+ * trusting the client. See migration 0008.
+ */
+function semanticColumns(q) {
+  const signals = q.difficultySignals ?? {};
+  const answerType = q.archetype
+    ? answerTypeFor(q.archetype, q.resolvedTeamType)
+    : null;
+  const quickStartSafe = isQuickStartFriendly({
+    band: q.difficulty,
+    subjectFame: signals.subjectFame ?? null,
+    entityProminence: signals.entityProminence ?? null,
+    tier: signals.tier ?? null,
+  });
+  return {
+    archetype: q.archetype ?? null,
+    answerEntityType: answerType,
+    factConfidence: q.factConfidence ?? null,
+    subjectFame: typeof signals.subjectFame === "number" ? signals.subjectFame : null,
+    entityProminence: typeof signals.entityProminence === "number" ? signals.entityProminence : null,
+    domainTier: signals.tier ?? null,
+    quickStartSafe: quickStartSafe ? 1 : 0,
+  };
+}
+
 /** SQL for one question, kept together so a question is never half-written. */
 function statementsForQuestion(q, id) {
   const statements = [];
+  const semantics = semanticColumns(q);
   statements.push(
     `INSERT INTO questions (id, public_id, mode, category, difficulty, question_he, explanation_he,
-       verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated)
+       verified, active, source_label, canonical_answer, supports_free_text, semantic_key, generated,
+       archetype, answer_entity_type, fact_confidence, subject_fame, entity_prominence, domain_tier,
+       quick_start_safe)
      VALUES (${id}, ${sqlValue(`kb_${id}`)}, ${sqlValue(q.mode)}, ${sqlValue(q.category)},
              ${sqlValue(q.difficulty)}, ${sqlValue(q.questionHe)}, ${sqlValue(q.explanationHe)},
              1, 1, ${sqlValue(q.sourceLabel)},
              ${q.freeText ? sqlValue(q.canonicalAnswer) : "NULL"}, ${q.freeText ? 1 : 0},
-             ${sqlValue(q.semanticKey)}, 1);`
+             ${sqlValue(q.semanticKey)}, 1,
+             ${sqlValue(semantics.archetype)}, ${sqlValue(semantics.answerEntityType)},
+             ${sqlValue(semantics.factConfidence)}, ${sqlValue(semantics.subjectFame)},
+             ${sqlValue(semantics.entityProminence)}, ${sqlValue(semantics.domainTier)},
+             ${semantics.quickStartSafe});`
   );
 
   q.options.forEach((option, index) => {

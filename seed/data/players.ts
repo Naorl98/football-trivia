@@ -236,3 +236,69 @@ export const NATIONALITIES: Record<string, { he: string; aliases: string[] }> = 
   LBR: { he: "ליבריה", aliases: ["Liberia"] },
   URS: { he: "ברית המועצות", aliases: ["Soviet Union", "USSR"] },
 };
+
+// ---------------------------------------------------------------------------
+// Precise playing roles
+//
+// WHY THIS IS A SEPARATE TABLE, AND WHY IT IS INCOMPLETE ON PURPOSE
+//
+// `pos` above is a UNIT — the front line, the midfield, the back four. It is not
+// a role. Production asked "באיזו עמדה משחק מוחמד סלאח?" and answered "חלוץ",
+// because a four-entry lookup turned FW into the Hebrew word for striker. Salah
+// has played the right wing for his entire Liverpool career. The question asked
+// for a precise fact and was answered from data that only supports a broad one.
+//
+// So the precise role lives here, separately, and ONLY where it is uncontested.
+// A player absent from this table is not an oversight — it is a statement that
+// his role is genuinely ambiguous, and the generator then asks the broad
+// question ("באיזו חוליה משחק X?" → "התקפה") which the data does support.
+//
+// Messi is the clearest case for leaving one out: right winger at Barcelona,
+// false nine under Guardiola, free role under Scaloni. Any single answer would
+// be defensible and none would be correct. Mbappé, Cristiano Ronaldo, Thomas
+// Müller, Totti, Rooney and Griezmann are out for the same reason.
+//
+// Every entry's role belongs to the same unit as the player's `pos`, so the two
+// can never contradict each other. Goalkeepers are absent deliberately: a keeper
+// is a keeper, so GK is derived from the unit in
+// src/server/football/positions.ts rather than restated here.
+// ---------------------------------------------------------------------------
+
+export type PlayerRole =
+  | "CB" | "LB" | "RB" | "LWB" | "RWB"
+  | "DM" | "CM" | "AM" | "LM" | "RM"
+  | "LW" | "RW" | "CF" | "ST";
+
+export const PLAYER_ROLES: Record<string, PlayerRole> = {
+  // ---- defenders ----
+  van_dijk: "CB", rudiger: "CB", pique: "CB", ramos: "CB", varane: "CB",
+  terry: "CB", ferdinand: "CB", thiago_silva: "CB", godin: "CB", nesta: "CB",
+  cannavaro: "CB", pepe: "CB", beckenbauer: "CB",
+  hakimi: "RB", cafu: "RB", dani_alves: "RB",
+  jordi_alba: "LB", evra: "LB", roberto_carlos: "LB", marcelo: "LB",
+
+  // ---- midfielders ----
+  busquets: "DM", rodri: "DM", kante: "DM", makelele: "DM", casemiro: "DM",
+  mascherano: "DM", pirlo: "DM", davids: "DM",
+  modric: "CM", kroos: "CM", gundogan: "CM", iniesta: "CM", xavi: "CM",
+  fabregas: "CM", xabi_alonso: "CM", pogba: "CM", gerrard: "CM", lampard: "CM",
+  scholes: "CM", verratti: "CM", ballack: "CM", seedorf: "CM", toure_y: "CM",
+  rakitic: "CM", kovacic: "CM",
+  de_bruyne: "AM", bruno_fernandes: "AM", musiala: "AM", zidane: "AM",
+  kaka: "AM", ozil: "AM", sneijder: "AM", deco: "AM", hagi: "AM",
+  beckham: "RM",
+
+  // ---- forwards ----
+  salah: "RW", saka: "RW", robben: "RW", figo: "RW",
+  neymar: "LW", vinicius: "LW", kvaratskhelia: "LW", ribery: "LW", mane: "LW",
+  hazard: "LW",
+  firmino: "CF", bergkamp: "CF",
+  haaland: "ST", lewandowski: "ST", ibrahimovic: "ST", suarez_l: "ST",
+  kane: "ST", osimhen: "ST", lautaro: "ST", torres_f: "ST", villa: "ST",
+  henry: "ST", giroud: "ST", anelka: "ST", trezeguet: "ST", owen: "ST",
+  shearer: "ST", ronaldo_r9: "ST", romario: "ST", aguero: "ST", tevez: "ST",
+  higuain: "ST", batistuta: "ST", cavani: "ST", forlan: "ST", drogba: "ST",
+  eto_o: "ST", lukaku: "ST", van_nistelrooy: "ST", van_basten: "ST",
+  kluivert: "ST", shevchenko: "ST", mandzukic: "ST", klose: "ST",
+  muller_g: "ST", inzaghi_f: "ST", weah_g: "ST",
+};

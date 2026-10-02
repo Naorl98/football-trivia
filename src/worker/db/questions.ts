@@ -17,6 +17,15 @@ export interface QuestionFilter {
   difficulty: Difficulty | "MIXED";
   gameMode: GameMode;
   answerMode: AnswerMode;
+  /**
+   * Restricts to questions cleared for the home page's one-tap path.
+   *
+   * "Hard but recognisable" cannot be expressed as a difficulty band — a
+   * question can be correctly labelled HARD and still be the wrong thing to put
+   * in front of somebody who tapped one button. `quick_start_safe` carries that
+   * judgement, set when the question was classified (migration 0008).
+   */
+  quickStartSafe?: boolean;
 }
 
 interface QuestionRow {
@@ -55,6 +64,10 @@ export function buildWhere(filter: QuestionFilter): { where: string; params: unk
   // answer plus aliases.
   if (filter.answerMode === "FREE_TEXT") {
     clauses.push("q.supports_free_text = 1");
+  }
+
+  if (filter.quickStartSafe) {
+    clauses.push("q.quick_start_safe = 1");
   }
 
   // "ALL" (or no selection) means "no competition restriction" — it must

@@ -82,15 +82,34 @@ export interface Question {
   hints: string[];
 }
 
+/**
+ * A preset game mode with its own difficulty rules.
+ *
+ * QUICK_START — the home page's one-tap path. EASY/NORMAL/HARD only, mixed, and
+ *               the HARD questions have to clear a familiarity guard.
+ * DAILY_CHALLENGE — mostly playable, with one or two questions above HARD at
+ *               the end.
+ *
+ * The preset DECIDES the difficulty bands. A client sending
+ * `{ preset: "QUICK_START", difficulty: "IMPOSSIBLE" }` gets the Quick Start
+ * bands, because the rule is about which questions are served and the quiz
+ * endpoint is public. See src/worker/engine/difficultyPolicy.ts.
+ */
+export type QuizPreset = "QUICK_START" | "DAILY_CHALLENGE";
+
+export const QUIZ_PRESETS: QuizPreset[] = ["QUICK_START", "DAILY_CHALLENGE"];
+
 export interface QuizConfiguration {
   region: Region | null;
   countries: string[]; // country codes
   competitions: string[]; // competition codes (may include group codes like TOP_5_EUROPE)
   categories: Category[];
   difficulty: Difficulty | "MIXED";
-  questionCount: 5 | 10 | 20 | 30 | 50;
+  questionCount: 5 | 10 | 15 | 20 | 30 | 50;
   gameMode: GameMode;
   answerMode: AnswerMode;
+  /** When set, the preset's difficulty rules override `difficulty` entirely. */
+  preset?: QuizPreset | null;
   // Question ids the player has seen recently. The engine de-prioritises them
   // so repeat sessions feel fresh; it never excludes them permanently.
   excludeQuestionIds?: number[];

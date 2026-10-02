@@ -36,11 +36,15 @@
     "questions:generate": "node scripts/questions-generate.mjs",
     "questions:generate:incremental": "node scripts/questions-generate.mjs",
     "questions:stats": "node scripts/questions-stats.mjs",
+    "questions:audit": "node scripts/questions-audit.mjs",
+    "questions:audit:remote": "node scripts/questions-audit.mjs --remote",
+    "questions:repair:remote": "node scripts/questions-audit.mjs --remote --repair",
     "db:report": "node scripts/d1-report.mjs",
     "db:report:remote": "node scripts/d1-report.mjs --remote",
     "test:mp:entry": "node scripts/mp-entry-qa.mjs",
     "qa:mobile": "node scripts/mobile-matrix-qa.mjs",
-    "qa:mobile:all": "node scripts/mobile-matrix-qa.mjs --phase=all --loads=100 --hold=15"
+    "qa:mobile:all": "node scripts/mobile-matrix-qa.mjs --phase=all --loads=100 --hold=15",
+    "qa:builder": "node scripts/builder-qa.mjs"
   },
   "repository": {
     "type": "git",

@@ -9,7 +9,9 @@
 // challenge links and stored daily quizzes keep resolving after a re-seed.
 
 import { writeFileSync, readFileSync, existsSync } from "node:fs";
-import { createHash } from "node:crypto";
+// The fingerprint is shared with scripts/questions-audit.mjs, which repairs
+// stored questions in place and has to write the same hash this emitter would.
+import { contentHashFor } from "../seed/contentHash.ts";
 import { seedQuestions } from "../seed/questions.ts";
 import { generateAll } from "../seed/generators/index.ts";
 import { CLUBS } from "../seed/data/clubs.ts";
@@ -69,37 +71,6 @@ const stats = { curated: 0, generated: 0, freeText: 0, byDifficulty: {}, byMode:
 /** id -> content hash, written alongside the SQL for the incremental applier. */
 const manifest = [];
 
-/**
- * Fingerprints everything that will land in D1 for one question.
- *
- * Hashed from the source data rather than the generated SQL text, so a
- * formatting change to the emitter does not invalidate the whole bank and
- * trigger a full rewrite. Anything that changes a stored value changes the
- * hash; nothing else does.
- */
-function contentHashFor({ id, q, freeTextSpec, hints, semanticKey }) {
-  return createHash("sha256")
-    .update(
-      JSON.stringify({
-        id,
-        mode: q.mode,
-        category: q.category,
-        difficulty: q.difficulty,
-        questionHe: q.questionHe,
-        explanationHe: q.explanationHe,
-        sourceLabel: q.sourceLabel,
-        options: q.options,
-        correctIndex: q.correctIndex,
-        clues: q.clues ?? [],
-        scopes: q.scopes ?? [],
-        freeText: freeTextSpec ?? null,
-        hints: hints ?? [],
-        semanticKey: semanticKey ?? null,
-      })
-    )
-    .digest("hex")
-    .slice(0, 32);
-}
 
 function emitQuestion({ id, publicId, q, semanticKey, generated, freeTextSpec, hints }) {
   stats.byDifficulty[q.difficulty] = (stats.byDifficulty[q.difficulty] || 0) + 1;

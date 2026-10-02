@@ -1,5 +1,6 @@
 import type { QuizConfiguration } from "../../shared/types";
-import { pickQuestionIds } from "./questions";
+import type { QuestionFilter } from "./questions";
+import { selectDailyChallenge } from "../engine/difficultyPolicy";
 
 export interface DailyChallengeRow {
   challengeDate: string;
@@ -11,11 +12,39 @@ export const DAILY_CONFIG: QuizConfiguration = {
   countries: [],
   competitions: ["ALL"],
   categories: [],
+  // MIXED is the honest value for the stored configuration, but it is not what
+  // decides the questions: `preset` does. The Daily Challenge draws a curve —
+  // mostly EASY/NORMAL/HARD with one or two above HARD at the end — which a
+  // single difficulty value cannot express.
   difficulty: "MIXED",
   questionCount: 10,
   gameMode: "CLASSIC",
   answerMode: "MULTIPLE_CHOICE",
+  preset: "DAILY_CHALLENGE",
 };
+
+const DAILY_FILTER: QuestionFilter = {
+  region: DAILY_CONFIG.region,
+  countries: DAILY_CONFIG.countries,
+  competitions: DAILY_CONFIG.competitions,
+  categories: DAILY_CONFIG.categories,
+  difficulty: DAILY_CONFIG.difficulty,
+  gameMode: DAILY_CONFIG.gameMode,
+  answerMode: DAILY_CONFIG.answerMode,
+};
+
+/**
+ * Builds the day's question set.
+ *
+ * Seeded by the challenge date, so the selection and its ordering are
+ * deterministic: two people comparing scores must have answered the same
+ * questions in the same order, and a rebuild after a question is deactivated
+ * must produce as close to the same challenge as the bank still allows.
+ */
+async function buildDailyIds(db: D1Database, date: string): Promise<number[]> {
+  const selection = await selectDailyChallenge(db, DAILY_FILTER, DAILY_CONFIG.questionCount, date);
+  return selection.ids;
+}
 
 async function selectDaily(db: D1Database, date: string): Promise<DailyChallengeRow | null> {
   const row = await db
@@ -49,19 +78,7 @@ export async function getOrCreateDailyChallenge(db: D1Database, date: string): P
     if (live === existing.questionIds.length) return existing;
     // Stored set went stale — rebuild it once and persist, so the day stays
     // consistent for everyone from here on.
-    const repaired = await pickQuestionIds(
-      db,
-      {
-        region: DAILY_CONFIG.region,
-        countries: DAILY_CONFIG.countries,
-        competitions: DAILY_CONFIG.competitions,
-        categories: DAILY_CONFIG.categories,
-        difficulty: DAILY_CONFIG.difficulty,
-        gameMode: DAILY_CONFIG.gameMode,
-        answerMode: DAILY_CONFIG.answerMode,
-      },
-      DAILY_CONFIG.questionCount
-    );
+    const repaired = await buildDailyIds(db, date);
     await db
       .prepare(`UPDATE daily_challenges SET question_ids_json = ? WHERE challenge_date = ?`)
       .bind(JSON.stringify(repaired), date)
@@ -69,19 +86,7 @@ export async function getOrCreateDailyChallenge(db: D1Database, date: string): P
     return { challengeDate: date, questionIds: repaired };
   }
 
-  const ids = await pickQuestionIds(
-    db,
-    {
-      region: DAILY_CONFIG.region,
-      countries: DAILY_CONFIG.countries,
-      competitions: DAILY_CONFIG.competitions,
-      categories: DAILY_CONFIG.categories,
-      difficulty: DAILY_CONFIG.difficulty,
-      gameMode: DAILY_CONFIG.gameMode,
-      answerMode: DAILY_CONFIG.answerMode,
-    },
-    DAILY_CONFIG.questionCount
-  );
+  const ids = await buildDailyIds(db, date);
 
   await db
     .prepare(`INSERT OR IGNORE INTO daily_challenges (challenge_date, question_ids_json) VALUES (?, ?)`)

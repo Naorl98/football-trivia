@@ -1,46 +1,214 @@
-.build {
-  padding-block: 24px 0;
-  /* Clears the fixed start bar. */
-  padding-block-end: 96px;
+/* ============================================================
+   The game-creation wizard
+   ============================================================
+
+   DESIGN RULES, which are the product's rules rather than taste:
+
+   1. ONE SCREEN, ONE DECISION. A step is a title, one question's controls, and
+      the way forward. Nothing scrolls on a 390×844 phone on the common paths.
+   2. THE ACTION IS ALWAYS VISIBLE. A sticky dock, inside the safe area, whose
+      height the body reserves — so it never covers the thing you are reading.
+   3. THE EXISTING LOOK, UNCHANGED. Deep navy, pitch green for "selected",
+      off-white type, gold reserved for the scoreline elsewhere. No
+      glassmorphism, no gradients, no giant cards.
+   4. ANIMATION IS DECORATION. Every step is fully laid out and interactive
+      before its fade starts, and nothing's visibility depends on an animation
+      finishing. The last time that was not true this app shipped a dark screen.
+*/
+
+.wiz {
+  /* The dock's height, reserved so the body can never sit under it. */
+  --dock-h: 76px;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - var(--header-h));
+  padding-block: 14px 0;
+  padding-block-end: calc(var(--dock-h) + env(safe-area-inset-bottom, 0px));
 }
 
-.build-title {
+/* ------------------------------------------------------------------ header */
+.wiz-head {
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.wiz-back {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text-2);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--t-2) var(--ease), border-color var(--t-2) var(--ease), opacity var(--t-2) var(--ease);
+}
+
+/* The page is RTL, so "back" points the other way from "forward". */
+.wiz-back svg { transform: scaleX(-1); }
+.wiz-back:hover:not(:disabled) { color: var(--text); border-color: var(--text-3); }
+.wiz-back:disabled { opacity: 0.3; cursor: default; }
+
+.wiz-title {
   font-family: var(--font-head);
   font-weight: 800;
-  font-size: clamp(1.5rem, 5.5vw, 2rem);
-  margin-bottom: 20px;
+  font-size: clamp(1.25rem, 5vw, 1.6rem);
+  line-height: 1.2;
+  margin: 0;
 }
 
-/* ============================================================
-   Game mode — the first and heaviest choice on the page
-   ============================================================ */
-.mode-pick {
-  margin-bottom: 22px;
-}
+/* Focused programmatically on each step change; the ring is the browser's. */
+.wiz-title:focus-visible { outline: 2px solid var(--green); outline-offset: 4px; border-radius: 4px; }
+.wiz-title:focus:not(:focus-visible) { outline: none; }
 
-.mode-pick-label {
-  margin-bottom: 8px;
-}
-
-.seg {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.seg-btn {
+/* Small, as asked: a counter, not a progress header. */
+.wiz-progress {
   display: flex;
+  align-items: baseline;
+  gap: 2px;
+  margin: 0;
+  font-family: var(--font-head);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.wiz-progress-num { color: var(--green); font-size: 0.95rem; }
+.wiz-progress-sep { opacity: 0.5; }
+
+/* -------------------------------------------------------------------- body */
+.wiz-body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  /* A short fade-and-rise between steps. The content is laid out and clickable
+     from frame one; this only changes how it arrives. */
+  animation: wiz-step var(--t-3) var(--ease);
+}
+
+@keyframes wiz-step {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wiz-body { animation: none; }
+}
+
+.wiz-group {
+  display: grid;
+  gap: 10px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+/* Step 1 only: two tall cards that fill the screen, because the answer mode is
+   the most consequential choice and deserves the weight. */
+.wiz-group-tall { grid-template-columns: 1fr 1fr; }
+
+.wiz-card {
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 18px 16px;
+  gap: 8px;
+  padding: 26px 14px;
   border: 2px solid var(--line-strong);
   border-radius: var(--r-md);
   background: var(--surface);
   color: var(--text-2);
+  cursor: pointer;
+  text-align: center;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    border-color var(--t-2) var(--ease),
+    background-color var(--t-2) var(--ease),
+    color var(--t-2) var(--ease),
+    transform var(--t-1) var(--ease);
+}
+
+.wiz-card svg { color: var(--text-3); transition: color var(--t-2) var(--ease); }
+.wiz-card:hover { color: var(--text); border-color: var(--text-3); }
+.wiz-card:active { transform: scale(0.985); }
+
+.wiz-card.is-on {
+  border-color: var(--green);
+  background: var(--green-wash);
+  color: var(--green-bright);
+}
+
+.wiz-card.is-on svg { color: var(--green); }
+
+.wiz-card-label {
   font-family: var(--font-head);
   font-weight: 700;
   font-size: 1.02rem;
+}
+
+.wiz-card-note {
+  font-size: 0.78rem;
+  color: var(--text-3);
+  line-height: 1.3;
+}
+
+.wiz-card.is-on .wiz-card-note { color: color-mix(in srgb, var(--green-bright) 70%, var(--text-2)); }
+
+/* A one-line variant for the scope step, where the choice is a label not a mode. */
+.wiz-card-row {
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 18px 18px;
+  text-align: start;
+}
+
+/* ------------------------------------------------------------------- fields */
+.wiz-field { min-width: 0; }
+
+.wiz-field-label {
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: var(--text-3);
+  margin: 0 0 8px;
+}
+
+.wiz-quick-label {
+  font-size: 0.74rem;
+  color: var(--text-3);
+  margin-block: 12px 6px;
+}
+
+.wiz-quick-label:first-of-type { margin-block-start: 0; }
+
+/* Difficulty: one compact row that wraps to two at most — never the long
+   vertical list the spec calls out. */
+.wiz-pills,
+.wiz-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.wiz-pill,
+.wiz-chip {
+  padding: 9px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--text-2);
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 0.88rem;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition:
@@ -50,205 +218,170 @@
     transform var(--t-1) var(--ease);
 }
 
-.seg-btn svg { color: var(--text-3); transition: color var(--t-2) var(--ease); }
+.wiz-pill:active,
+.wiz-chip:active { transform: scale(0.97); }
 
-.seg-btn:hover { color: var(--text); border-color: var(--text-3); }
-.seg-btn:active { transform: scale(0.98); }
+.wiz-pill:hover,
+.wiz-chip:hover { color: var(--text); border-color: var(--text-3); }
 
-/* Selected state carries the green border, wash and a filled icon — obvious at
-   a glance and still obvious in greyscale. */
-.seg-btn.is-on {
+.wiz-pill.is-on,
+.wiz-chip.is-on {
   border-color: var(--green);
   background: var(--green-wash);
   color: var(--green-bright);
-  animation: chip-pick var(--t-3) var(--pop);
 }
 
-.seg-btn.is-on svg { color: var(--green); }
-
-/* ============================================================
-   Layout
-   ============================================================ */
-.build-grid {
-  display: block;
-}
-
-.build-side { display: none; }
-
-.build-rows {
-  display: flex;
-  flex-direction: column;
-}
-
-/* A row is a label and its controls — no cards, no borders around each block.
-   The separators alone are enough structure at this density. */
-.build-row {
+/* Question count: four equal targets on one line. */
+.wiz-counts {
   display: grid;
-  grid-template-columns: 92px 1fr;
-  align-items: start;
-  gap: 14px;
-  padding-block: 15px;
-  border-block-start: 1px solid var(--line);
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
 }
 
-.build-row:first-child { border-block-start: 0; padding-block-start: 0; }
+.wiz-count {
+  padding: 14px 0;
+  border: 2px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text-2);
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 1.1rem;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    border-color var(--t-2) var(--ease),
+    background-color var(--t-2) var(--ease),
+    color var(--t-2) var(--ease);
+}
 
-.build-label {
+.wiz-count:hover { color: var(--text); border-color: var(--text-3); }
+
+.wiz-count.is-on {
+  border-color: var(--green);
+  background: var(--green-wash);
+  color: var(--green-bright);
+}
+
+/* ---------------------------------------------------------------- summary */
+.wiz-summary {
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.wiz-summary-row {
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  align-items: baseline;
+  gap: 12px;
+  padding: 13px 16px;
+}
+
+.wiz-summary-row + .wiz-summary-row { border-block-start: 1px solid var(--line); }
+
+.wiz-summary-row dt {
+  font-size: 0.76rem;
+  color: var(--text-3);
+}
+
+.wiz-summary-row dd {
+  margin: 0;
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.wiz-edit {
+  border: 0;
+  background: none;
+  padding: 2px 0;
+  color: var(--green);
   font-family: var(--font-head);
   font-weight: 600;
-  font-size: 0.86rem;
-  color: var(--text-3);
-  padding-block-start: 8px;
+  font-size: 0.78rem;
+  cursor: pointer;
 }
 
-.build-field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 0;
+.wiz-edit:hover { color: var(--green-bright); text-decoration: underline; }
+
+/* ----------------------------------------------------------- availability */
+.wiz-avail {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  text-align: center;
+  padding-block: 4px;
 }
 
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
+.wiz-avail b { font-size: 1.05rem; font-weight: 800; }
 
-/* Secondary chip groups inside one row read as a continuation, not a new
-   section, so they are only separated by their own wrapping. */
-.build-field .chips + .chips {
-  padding-block-start: 8px;
-  border-block-start: 1px dashed var(--line);
-}
-
-@media (max-width: 560px) {
-  .build-row {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
-  .build-label { padding-block-start: 0; }
-}
-
-/* ============================================================
-   Start bar
-   ============================================================ */
-.build-bar {
+/* ------------------------------------------------------------------- dock */
+.wiz-dock {
   position: fixed;
   inset-inline: 0;
   inset-block-end: var(--dock-offset, 0px);
   z-index: 60;
-  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  background: color-mix(in srgb, var(--bg) 94%, transparent);
   backdrop-filter: blur(8px);
   border-block-start: 1px solid var(--line-strong);
+  /* iPhone home-indicator clearance. */
+  padding-block-end: env(safe-area-inset-bottom, 0px);
   transition: inset-block-end var(--t-3) var(--ease);
 }
 
-.build-bar-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding-block: 11px;
-}
+.wiz-dock-inner { padding-block: 12px; }
 
-.build-count {
-  font-size: 0.85rem;
-  line-height: 1.4;
-}
-
-.build-count b { font-size: 1.05rem; font-weight: 800; }
-
-.build-error {
-  max-width: var(--page);
-  margin-inline: auto;
-  padding: 0 var(--gutter) 10px;
+.wiz-error {
+  margin: 0 0 8px;
   color: var(--red);
   font-size: 0.82rem;
   font-weight: 600;
+  text-align: center;
 }
 
-@media (max-width: 480px) {
-  .build-bar-inner {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-  }
-  .build-count { text-align: center; }
+/* ---------------------------------------------------------------- phones */
+@media (max-width: 420px) {
+  /* 390×844 and 393×852: the two tall mode cards still fit side by side, but
+     their padding comes down so the pair plus the dock clears the viewport. */
+  .wiz-card { padding: 22px 10px; }
+  .wiz-card-row { padding: 16px 14px; }
+  .wiz-pill,
+  .wiz-chip { padding: 8px 12px; font-size: 0.84rem; }
 }
 
-/* ============================================================
-   Desktop: two columns
-   ============================================================
-
-   Below this width the form is a single centred column with a sticky start
-   bar. Above it, the form would leave most of the screen empty, so the second
-   column takes that space with a live summary and the start button — and the
-   sticky bar is retired, because there is nowhere to scroll away from. */
+/* --------------------------------------------------------------- desktop */
 @media (min-width: 1024px) {
-  .build {
-    /* The fixed bar is gone up here, so the page no longer reserves room. */
-    padding-block-end: 48px;
+  /*
+    A centred, focused column — NOT a narrow strip beside an empty half-screen,
+    and not a full-width settings sheet. The wizard is the same wizard; it just
+    has room to breathe, and the action moves out of the fixed dock because there
+    is nothing to scroll away from.
+  */
+  .wiz {
+    max-width: 560px;
+    margin-inline: auto;
+    min-height: 0;
+    padding-block: 32px 40px;
+    padding-block-end: 40px;
   }
 
-  .build-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 280px;
-    gap: 40px;
-    align-items: start;
+  .wiz-body { gap: 24px; }
+  .wiz-card { padding: 32px 20px; }
+  .wiz-count { padding: 16px 0; font-size: 1.2rem; }
+
+  .wiz-dock {
+    position: static;
+    background: none;
+    backdrop-filter: none;
+    border-block-start: 0;
+    padding-block-end: 0;
+    margin-block-start: 8px;
   }
 
-  .build-side {
-    display: block;
-    position: sticky;
-    inset-block-start: calc(var(--header-h) + 18px);
-  }
-
-  .side-card {
-    padding: 18px;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: var(--r-lg);
-  }
-
-  .side-list { margin: 0 0 14px; }
-
-  .side-item {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 12px;
-    padding-block: 7px;
-  }
-
-  .side-item + .side-item { border-block-start: 1px solid var(--line); }
-
-  .side-item dt {
-    font-size: 0.78rem;
-    color: var(--text-3);
-  }
-
-  .side-item dd {
-    margin: 0;
-    font-family: var(--font-head);
-    font-weight: 600;
-    font-size: 0.86rem;
-    color: var(--text);
-    text-align: end;
-  }
-
-  .side-count {
-    font-size: 0.85rem;
-    text-align: center;
-    padding-block: 12px 14px;
-    border-block-start: 1px solid var(--line);
-  }
-
-  .side-count b { font-size: 1.1rem; font-weight: 800; }
-
-  .build-bar { display: none; }
-
-  /* With a wider column the label can sit beside its controls comfortably. */
-  .build-row { grid-template-columns: 110px 1fr; }
-
-  .seg-btn { padding: 20px 18px; font-size: 1.08rem; }
+  .wiz-dock-inner { padding: 0; max-width: none; }
 }

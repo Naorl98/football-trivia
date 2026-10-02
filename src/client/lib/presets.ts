@@ -13,6 +13,20 @@ const base = {
   questionCount: 10 as const,
   difficulty: "MIXED" as const,
   answerMode: "MULTIPLE_CHOICE" as const,
+  /**
+   * Every home-page preset is a Quick Start launch.
+   *
+   * That tag is what gets these quizzes the accessible difficulty mix —
+   * EASY/NORMAL/HARD only, with the HARD questions familiarity-guarded — and it
+   * is enforced server-side, in src/worker/engine/difficultyPolicy.ts. Setting
+   * it here is a declaration of intent, not the mechanism: the server would
+   * apply the same rules if the client sent nothing else at all, and it ignores
+   * `difficulty` entirely when a preset is present.
+   *
+   * The builder deliberately does NOT send this. Somebody who walks through the
+   * wizard and chooses "מומחה" has asked for Expert questions and gets them.
+   */
+  preset: "QUICK_START" as const,
 };
 
 /**

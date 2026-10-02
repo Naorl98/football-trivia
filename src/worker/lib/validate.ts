@@ -1,6 +1,14 @@
 import { COMPETITIONS, COUNTRIES, QUESTION_COUNTS } from "../../shared/constants.ts";
-import { DIFFICULTIES } from "../../shared/types.ts";
-import type { AnswerMode, Category, Difficulty, GameMode, QuizConfiguration, Region } from "../../shared/types.ts";
+import { DIFFICULTIES, QUIZ_PRESETS } from "../../shared/types.ts";
+import type {
+  AnswerMode,
+  Category,
+  Difficulty,
+  GameMode,
+  QuizConfiguration,
+  QuizPreset,
+  Region,
+} from "../../shared/types.ts";
 
 const VALID_COUNTRIES = new Set(COUNTRIES.map((c) => c.code));
 const VALID_COMPETITIONS = new Set(COMPETITIONS.map((c) => c.code));
@@ -76,6 +84,21 @@ export function parseQuizConfiguration(body: unknown): QuizConfiguration {
     throw new ValidationError("Invalid answerMode");
   }
 
+  /*
+    THE PRESET, AND WHY IT IS NOT A HINT.
+
+    A preset names a set of difficulty rules that the server enforces. It does
+    not travel alongside the client's `difficulty` as a suggestion — it replaces
+    it, in the engine, which is the only place the replacement cannot be
+    bypassed. An unknown preset is rejected rather than ignored: silently
+    dropping it would turn a Quick Start request into an unfiltered one, which
+    is exactly the leak this field exists to close.
+  */
+  const presetRaw = b.preset ?? null;
+  if (presetRaw !== null && !QUIZ_PRESETS.includes(presetRaw as QuizPreset)) {
+    throw new ValidationError("Invalid preset");
+  }
+
   // These are rendered as SQL integer literals rather than bound parameters
   // (see db/questions.ts), so they no longer compete for D1's parameter budget.
   // The cap is now only about request size, and duplicates are pointless work.
@@ -92,6 +115,7 @@ export function parseQuizConfiguration(body: unknown): QuizConfiguration {
     questionCount: questionCount as QuizConfiguration["questionCount"],
     gameMode: gameMode as GameMode,
     answerMode: answerMode as AnswerMode,
+    preset: presetRaw as QuizPreset | null,
     excludeQuestionIds: excludeQuestionIds as number[],
   };
 }
