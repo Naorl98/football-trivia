@@ -1,3 +1,38 @@
+/*
+  THE OPENING WHISTLE, AND THE BLANK SCREEN IT CAUSED.
+
+  This element is a 92%-opaque, full-screen, fixed curtain at z-index 150, and
+  until the fix below the only thing that ever took it off the screen was
+  `setTimeout(onDone, 940)` in Kickoff.tsx.
+
+  iOS suspends pending timers for a backgrounded page. So: tap play, and in the
+  one second the curtain is up switch apps, lock the screen, or take a
+  notification — the timers never fire, and on return the curtain is still
+  there at full opacity over a perfectly rendered quiz. Reproduced against
+  production with timers frozen:
+
+    kickPresent: true, opacity 1, covers viewport, root text 322 chars,
+    recoveryShown: false, watchdogSeesUsable: true
+
+  It was undetectable as well as unrecoverable. `pointer-events: none` means
+  elementFromPoint looks straight THROUGH the curtain and returns the quiz
+  input behind it, so the boot layer's hit test concluded the app was healthy
+  while the person holding the phone saw a dark rectangle. Dark, not white; the
+  content in the DOM; no recovery; intermittent; phone-only. Every detail of
+  three releases' worth of reports.
+
+  THE CSS IS NOW THE FAILSAFE, not the decoration.
+
+  `kick-safety` fades the curtain out and then takes it out of the paint
+  entirely, on the element itself, unconditionally — so the curtain disappears
+  even if no JavaScript ever runs again. A CSS animation is the right mechanism
+  precisely because of how it behaves on a hidden page: it is PAUSED rather
+  than cancelled, and it resumes when the page comes back. A suspended timer
+  may never fire; a suspended animation always finishes.
+
+  Kickoff.tsx still removes the element from the DOM on the normal path, and
+  now also on visibility restore. This is the floor under both.
+*/
 .kick {
   position: fixed;
   inset: 0;
@@ -7,7 +42,28 @@
   gap: 0;
   background: color-mix(in srgb, var(--bg-deep) 92%, transparent);
   pointer-events: none;
+  animation: kick-safety 1700ms linear both;
 }
+
+/*
+  Opaque for the flourish, then gone and unable to come back.
+
+  `visibility: hidden` as well as `opacity: 0`: opacity alone leaves the
+  element in the paint order, and a 0-opacity full-screen box is exactly the
+  thing that has to be ruled out rather than merely made invisible.
+*/
+@keyframes kick-safety {
+  0%, 55% { opacity: 1; visibility: visible; }
+  88%     { opacity: 0; }
+  100%    { opacity: 0; visibility: hidden; }
+}
+
+/*
+  Reduced motion turns every animation into 0.01ms (see animations.css), which
+  for this one is correct and important: the curtain is skipped entirely rather
+  than held. The component also returns null under reduced motion, so this is
+  belt and braces.
+*/
 
 .kick-out {
   animation: curtain-out 300ms var(--ease) both;

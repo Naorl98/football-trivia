@@ -1,4 +1,6 @@
+import { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { countMount, countRender } from "../lib/liveness";
 import { BallMark } from "./BallMark";
 import { SoundToggle } from "./SoundToggle";
 import { A11yMenu } from "./A11yMenu";
@@ -11,6 +13,9 @@ import "./Header.css";
  * not need navigation.
  */
 export function Header() {
+  countRender("Header");
+  useEffect(() => countMount("Header"), []);
+
   const { pathname } = useLocation();
   // A multiplayer room counts too: walking out of a live room costs other people
   // their game, so the links out are not on offer while one is open.

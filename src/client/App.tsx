@@ -20,10 +20,22 @@ import { RoomDisplayPage } from "./pages/RoomDisplayPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { a11y } from "./lib/a11y";
 import { sound } from "./lib/sound";
-import { markRouteRendered } from "./lib/startup";
+import { markRouteRendered, markStage } from "./lib/startup";
+import { countMount, countRender } from "./lib/liveness";
 
 export default function App() {
   const { pathname } = useLocation();
+
+  /*
+    Counted, because the one symptom never explained was titles "shaking".
+
+    A tree that remounts in a loop is blank for part of every cycle, throws
+    nothing, and logs nothing — so it looks exactly like an intermittent blank
+    screen and none of the previous guards would have seen it. App mounts once
+    per session; an unmount count above zero here is the bug.
+  */
+  countRender("App");
+  useEffect(() => countMount("App"), []);
 
   // The shared screen is furniture in a room, not a page someone is browsing:
   // the site header, the footer and the skip link would all be dead weight on a
@@ -50,8 +62,10 @@ export default function App() {
       console.warn("audio could not be armed", error);
     }
 
-    // The first route has painted. Recorded, never awaited: nothing in the tree
-    // reads a stage to decide whether to render, so this cannot gate the UI.
+    // The router resolved a route and the first one painted. Both recorded,
+    // neither awaited: nothing in the tree reads a stage to decide whether to
+    // render, so this cannot gate the UI.
+    markStage("ROUTER_READY");
     markRouteRendered();
   }, []);
 

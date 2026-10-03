@@ -12,7 +12,10 @@
 //
 //   HTML_RECEIVED              the shell parsed          (index.html)
 //   JS_STARTED                 the bundle evaluated      (main.tsx)
+//   REACT_CREATE_ROOT          createRoot returned       (main.tsx)
 //   REACT_MOUNTED              React put something up    (main.tsx)
+//   ROUTER_READY               the router resolved a route (App)
+//   BOOT_OVERLAY_REMOVED       the shell came down       (index.html / main.tsx)
 //   HOME_RENDERED              the first route painted   (App)
 //   STARTUP_REQUESTS_STARTED   the first API call went out
 //   STARTUP_REQUESTS_FINISHED  the last one settled
@@ -36,7 +39,10 @@
 export type StartupStage =
   | "HTML_RECEIVED"
   | "JS_STARTED"
+  | "REACT_CREATE_ROOT"
   | "REACT_MOUNTED"
+  | "ROUTER_READY"
+  | "BOOT_OVERLAY_REMOVED"
   | "HOME_RENDERED"
   | "STARTUP_REQUESTS_STARTED"
   | "STARTUP_REQUESTS_FINISHED"

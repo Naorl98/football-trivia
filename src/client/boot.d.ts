@@ -31,6 +31,15 @@ declare global {
     __FIQ_READY__?: () => void;
     /** Called by the error boundary, so the boot layer stops competing with it. */
     __FIQ_BOUNDARY__?: () => void;
+    /**
+     * Render/mount/unmount counts per component. See lib/liveness.ts.
+     *
+     * Read by scripts/blankscreen-qa.mjs to tell a remount loop — which is
+     * blank for part of every cycle and throws nothing — from a slow load.
+     */
+    __FIQ_COUNTS__?: Record<string, number>;
+    /** When and why the boot overlay came down. The one opaque thing outside #root. */
+    __FIQ_BOOT__?: { dismissed: boolean; reason: string; at: number };
   }
 }
 

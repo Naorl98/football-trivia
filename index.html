@@ -312,6 +312,42 @@
           if (!w || !h) return true;
           if (typeof document.elementFromPoint !== "function") return true;
 
+          /*
+            A STUCK DECORATIVE CURTAIN, which the hit test cannot see.
+
+            This is the gap that let the real bug through. The quiz's opening
+            whistle is a 92%-opaque full-screen element with
+            `pointer-events: none`, and that last property is the problem:
+            elementFromPoint SKIPS a pointer-transparent element and returns
+            what is behind it. So the probe found the quiz input, concluded the
+            app was reachable, and reported health while the screen was dark.
+
+            The test below asks the opposite question. An element that covers
+            the whole viewport, is opaque, and cannot be interacted with is by
+            definition not something the visitor can get past — no legitimate
+            overlay in this product is pointer-transparent, because every one of
+            them exists to be tapped. A flourish that is still there on three
+            consecutive samples six seconds apart has not finished, and the app
+            behind it is unreachable whatever the hit test says.
+
+            Narrow on purpose: opaque AND full-viewport AND pointer-events:none.
+            The scrims, sheets and panels all take pointer events and all pass.
+          */
+          var all = document.querySelectorAll("body *");
+          for (var c = 0; c < all.length; c++) {
+            var el = all[c];
+            var cs = window.getComputedStyle ? window.getComputedStyle(el) : null;
+            if (!cs) continue;
+            if (cs.position !== "fixed" && cs.position !== "absolute") continue;
+            if (cs.pointerEvents !== "none") continue;
+            if (cs.display === "none" || cs.visibility === "hidden") continue;
+            if (parseFloat(cs.opacity) < 0.6) continue;
+            var bg = cs.backgroundColor || "";
+            if (!bg || bg === "transparent" || bg.indexOf(", 0)") !== -1) continue;
+            var cb = el.getBoundingClientRect();
+            if (cb.width * cb.height >= w * h * 0.9) return false;
+          }
+
           // Three points down the middle of the screen. One hit inside #root is
           // enough — the app does not have to cover every pixel, it only has to
           // be reachable somewhere.
@@ -384,6 +420,25 @@
           if (timer) { clearTimeout(timer); timer = null; }
           if (boot) boot.setAttribute("hidden", "hidden");
           clearReloadGuard();
+
+          /*
+            Recorded, because "was the shell still up?" has been guesswork in
+            every previous investigation of this bug.
+
+            This overlay is the only element in the product that is opaque,
+            full-screen AND outside #root, so it is the only thing that can hide
+            a perfectly rendered app without React knowing anything is wrong.
+            A test — and a person reading a session on a handset that
+            misbehaved — can now read the answer instead of inferring it.
+          */
+          try {
+            window.__FIQ_BOOT__ = {
+              dismissed: true,
+              reason: String(reason).slice(0, 80),
+              at: Math.round(performance.now())
+            };
+            window.__FIQ_TIMELINE__.push({ stage: "BOOT_OVERLAY_REMOVED", at: Math.round(performance.now()) });
+          } catch (e) {}
 
           var root = document.getElementById("root");
           if (root) watchForCollapse(root);

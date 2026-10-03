@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { countMount, countRender } from "../lib/liveness";
 import { useNavigate } from "react-router-dom";
 import { QUICK_PRESETS, type QuickPreset } from "../lib/presets";
 import { startQuiz } from "../lib/startQuiz";
@@ -19,6 +20,9 @@ import "./HomePage.css";
  * to let someone play it.
  */
 export function HomePage() {
+  countRender("Home");
+  useEffect(() => countMount("Home"), []);
+
   const navigate = useNavigate();
   const [loadingKey, setLoadingKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);

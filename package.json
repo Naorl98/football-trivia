@@ -44,7 +44,9 @@
     "test:mp:entry": "node scripts/mp-entry-qa.mjs",
     "qa:mobile": "node scripts/mobile-matrix-qa.mjs",
     "qa:mobile:all": "node scripts/mobile-matrix-qa.mjs --phase=all --loads=100 --hold=15",
-    "qa:builder": "node scripts/builder-qa.mjs"
+    "qa:builder": "node scripts/builder-qa.mjs",
+    "qa:blank": "node scripts/blankscreen-qa.mjs",
+    "qa:blank:stress": "node scripts/blank-stress.mjs"
   },
   "repository": {
     "type": "git",

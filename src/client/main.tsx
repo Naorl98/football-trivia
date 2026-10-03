@@ -49,7 +49,12 @@ function start() {
 
   markStage("JS_STARTED");
 
-  ReactDOM.createRoot(container).render(
+  // Recorded before render(), so a failure inside the first render is
+  // distinguishable from a failure constructing the root at all.
+  const root = ReactDOM.createRoot(container);
+  markStage("REACT_CREATE_ROOT");
+
+  root.render(
     <React.StrictMode>
       <ErrorBoundary>
         <BrowserRouter>
