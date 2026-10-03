@@ -306,6 +306,7 @@ const findings = {
   unresolvedOptions: [],
   semanticDuplicates: [],
   noLongerGeneratable: [],
+  nonConvergentOptions: [],
   foreignKey: [],
 };
 
@@ -726,7 +727,19 @@ function planRepair({ id, row, want, archetype: storedArchetype, options, clues,
   */
   const storedOptionTexts = options.map((o) => o.text);
   const wantOptionTexts = wantOptions.map((o) => o.text);
-  const storedTypes = options.map((o) => classifyOption(o.text));
+  /*
+    Typed with the archetype as the tie-breaker, exactly as the audit loop does.
+
+    Without it this was non-convergent, and the symptom was unmistakable once
+    the two sets were printed side by side: eight KB_CLUB_COACH questions whose
+    stored options and wanted options were CHARACTER-FOR-CHARACTER IDENTICAL,
+    replaced on every run. `optionsDiffer` was false, but `storedIsInvalid` was
+    true, because a manager who also played — G. Jones, A. Slot, D. Digard —
+    types as PLAYER when nothing says a coach is wanted, and PLAYER is not
+    COACH. So each run deleted four option rows and reinserted the same four,
+    and the next run found the same fault.
+  */
+  const storedTypes = options.map((o) => classifyOption(o.text, answerType));
   // Already resolved above, including the RESOLVED_TEAM case the curated bank
   // does not declare. Recomputing it here would throw on the same questions.
   const expectedType = answerType;
@@ -776,7 +789,32 @@ function planRepair({ id, row, want, archetype: storedArchetype, options, clues,
   const optionsDiffer =
     !sameList(storedOptionTexts, wantOptionTexts) ||
     !sameList(options.map((o) => o.correct), wantOptions.map((o) => o.correct));
-  const replaceOptions = fullOptions ? optionsDiffer : storedIsInvalid;
+  /*
+    A REPAIR THAT WOULD WRITE THE SET IT ALREADY HAS IS NOT A REPAIR.
+
+    `storedIsInvalid` and `optionsDiffer` are two independent judgements, and
+    when the first says "wrong" while the second says "identical" they are in
+    contradiction: the rules want exactly what is stored, and the eligibility
+    test rejects it. Replacing then deletes four option rows and reinserts the
+    same four, the next run sees the same contradiction, and the repair never
+    converges — it just bills D1 on every pass, for ever.
+
+    That is not hypothetical either. It happened to eight KB_CLUB_COACH
+    questions whose options are managers who also played: typed without the
+    archetype as a hint they came back PLAYER, and PLAYER is not COACH. The
+    counts alone could not show it — eight option repairs pending looks
+    identical to eight option repairs still to do — and it only became visible
+    when the two sets were printed side by side.
+
+    So the contradiction is reported instead of written. A classifier gap should
+    cost a line in the report, not an unbounded write loop against production.
+  */
+  const contradiction = storedIsInvalid && !optionsDiffer;
+  if (contradiction) {
+    findings.nonConvergentOptions.push({ id, key: want.semanticKey, options: storedOptionTexts, types: storedTypes.map((t) => t.kind ?? "?"), expectedType });
+  }
+
+  const replaceOptions = (fullOptions ? optionsDiffer : storedIsInvalid) && !contradiction;
   if (replaceOptions) {
     changes.push("options");
     statements.push(`DELETE FROM question_options WHERE question_id = ${id};`);
@@ -966,6 +1004,7 @@ console.log(`\nAGAINST THE CURRENT RULES`);
 console.log(`  identical to what the rules produce       : ${unchanged}`);
 console.log(`  repairable in place                       : ${repairPlans.filter((p) => !p.deactivate).length}`);
 console.log(`  no longer generatable (deactivate)       : ${count(findings.noLongerGeneratable)}`);
+console.log(`  option sets the rules and the gate disagree on : ${count(findings.nonConvergentOptions)}`);
 console.log(`  keys this audit does not judge           : ${count(findings.foreignKey)}`);
 
 const changeCounts = {};
@@ -1028,6 +1067,11 @@ sample("semantically duplicate questions", findings.semanticDuplicates, (f) =>
   rewrites it and every run finds it wrong again. That is a bug in the rules, not
   a repair still to do, and it is invisible in a count.
 */
+sample(
+  "option sets the rules and the gate disagree on",
+  findings.nonConvergentOptions,
+  (f) => `#${f.id} ${f.key}\n      options: ${f.options.join(" | ")}\n      typed:   ${f.types.join(" | ")}  (archetype wants ${f.expectedType})`
+);
 sample(
   "option sets to replace",
   repairPlans.filter((p) => !p.deactivate && p.changes.includes("options")),
