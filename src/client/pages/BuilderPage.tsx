@@ -155,7 +155,9 @@ export function BuilderPage() {
     }
     let cancelled = false;
     const timer = setTimeout(() => {
-      fetchAvailability(config, dimensions, { anyMode: dimensions.includes("types") })
+      // Mode-spanning whenever the chosen type is mixed — not only on the type
+      // step — so every later step's counts match what the grid will draw.
+      fetchAvailability(config, dimensions, { anyMode: state.questionType === MIXED_TYPE_KEY })
         .then((res) => !cancelled && setOptions(res))
         .catch(() => !cancelled && setOptions(null));
     }, 180);
@@ -165,7 +167,7 @@ export function BuilderPage() {
     };
     // `config` is in the deps because a count is only true for the selection it
     // was measured under: changing the difficulty changes every country's count.
-  }, [config, dimensions]);
+  }, [config, dimensions, state.questionType]);
 
   // Each step change moves focus to the new heading. A wizard that swaps the
   // whole screen without telling a screen reader is a wizard a screen reader

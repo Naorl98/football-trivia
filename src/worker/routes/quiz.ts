@@ -3,6 +3,7 @@ import type { Env } from "../env";
 import { buildQuiz } from "../engine/questionEngine";
 import { countAvailableQuestions, type QuestionFilter } from "../db/questions";
 import { availabilityFilter, availabilityFor, type AvailabilityResult, type Dimension } from "../db/availability";
+import { MIXED_TYPE_KEY } from "../../shared/questionTypes";
 import { parseQuizConfiguration, ValidationError } from "../lib/validate";
 import { gate } from "../lib/ratelimit";
 import { cachedJson, putJson } from "../lib/edgeCache";
@@ -146,13 +147,22 @@ quizRoutes.post("/count", async (c) => {
   try {
     const body = await c.req.json();
     const config = parseQuizConfiguration(body);
+    /*
+      A mixed-type quiz spans modes, and so must its count.
+
+      buildQuiz already counts a mixed selection with no mode predicate — the
+      grid draws from Who Am I, Career Path and the classic quiz alike — so a
+      count that pinned `mode = 'CLASSIC'` here reported a third of the real
+      pool. The builder would then have disabled options it can serve perfectly
+      well, and shown a summary figure the quiz immediately contradicted.
+    */
     const filter: QuestionFilter = {
       region: config.region,
       countries: config.countries,
       competitions: config.competitions,
       categories: config.categories,
       difficulty: config.difficulty,
-      gameMode: config.gameMode,
+      gameMode: config.questionType === MIXED_TYPE_KEY ? null : config.gameMode,
       answerMode: config.answerMode,
     };
 
