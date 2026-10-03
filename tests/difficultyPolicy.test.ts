@@ -17,6 +17,7 @@ import {
   selectDailyChallenge,
   selectQuickStart,
 } from "../src/worker/engine/difficultyPolicy.ts";
+import { getOrCreateDailyChallenge } from "../src/worker/db/daily.ts";
 import {
   apportion,
   isQuickStartFriendly,
@@ -344,5 +345,85 @@ describe("the Daily Challenge", () => {
     const { db } = fakeD1(full());
     const selection = await selectDailyChallenge(db, FILTER, 10, "2026-10-03");
     assert.equal(new Set(selection.ids).size, selection.ids.length);
+  });
+});
+
+// ---------------------------------------------------------------------------
+/*
+  A STORED CHALLENGE IS CHECKED AGAINST THE BANK AS IT IS NOW.
+
+  The original staleness check asked only whether every stored id still resolved
+  to an active question. A difficulty reclassification leaves every id valid and
+  breaks the curve anyway, which is exactly what happened to 2026-10-03: it was
+  written minutes before the recalibration moved 3,169 questions out of HARD,
+  and afterwards served four above-HARD questions out of ten from a row that
+  looked perfectly healthy.
+*/
+describe("a stored Daily Challenge that the bank has moved under", () => {
+  /** A D1 fake with the stored challenge row, plus the selection fake's batch. */
+  function dailyD1(storedIds: number[], bandOf: (id: number) => Difficulty) {
+    const rows = bank({ EASY: 60, NORMAL: 60, HARD: 60, EXPERT: 60, IMPOSSIBLE: 60 });
+    const inner = fakeD1(rows);
+    let stored = [...storedIds];
+    const updates: number[][] = [];
+    const db = {
+      batch: (inner.db as unknown as { batch: unknown }).batch,
+      prepare: (sql: string) => ({
+        // Carries `sql`/`params` as well as the accessors, because the rebuild
+        // path hands these same statements to the selection fake's batch().
+        bind: (...params: unknown[]) => ({
+          sql,
+          params,
+          first: async () => {
+            if (/FROM daily_challenges/.test(sql)) {
+              return { challenge_date: params[0], question_ids_json: JSON.stringify(stored) };
+            }
+            if (/FROM\s+questions/.test(sql)) {
+              const ids = params.filter((p): p is number => typeof p === "number");
+              const above = ids.filter((id) => ["EXPERT", "IMPOSSIBLE"].includes(bandOf(id)));
+              return { live: ids.length, above_hard: above.length };
+            }
+            throw new Error(`unexpected query: ${sql}`);
+          },
+          run: async () => {
+            if (/UPDATE daily_challenges/.test(sql)) {
+              stored = JSON.parse(String(params[0]));
+              updates.push([...stored]);
+            }
+            return { success: true };
+          },
+        }),
+      }),
+    };
+    return { db: db as unknown as D1Database, updates, get stored() { return stored; } };
+  }
+
+  it("rebuilds when reclassification pushed it over the above-HARD cap", async () => {
+    // Four of the ten stored questions are now above HARD.
+    const storedIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    const harness = dailyD1(storedIds, (id) => (id <= 4 ? "IMPOSSIBLE" : "HARD"));
+    const result = await getOrCreateDailyChallenge(harness.db, "2026-10-03");
+    assert.equal(harness.updates.length, 1, "the stale row is repaired exactly once");
+    assert.notDeepEqual(result.questionIds, storedIds, "a new set was drawn");
+  });
+
+  it("leaves a challenge alone when its curve still holds", async () => {
+    const storedIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    const harness = dailyD1(storedIds, (id) => (id <= 1 ? "EXPERT" : "HARD"));
+    const result = await getOrCreateDailyChallenge(harness.db, "2026-10-03");
+    assert.equal(harness.updates.length, 0, "no write on the read path");
+    assert.deepEqual(result.questionIds, storedIds);
+  });
+
+  it("the rebuild it writes satisfies the cap, so it converges", async () => {
+    const rebuilt = await (async () => {
+      const inner = fakeD1(bank({ EASY: 60, NORMAL: 60, HARD: 60, EXPERT: 60, IMPOSSIBLE: 60 }));
+      return selectDailyChallenge(inner.db, FILTER, 10, "2026-10-03");
+    })();
+    assert.ok(
+      rebuilt.aboveHard <= DAILY_ABOVE_HARD_MAX,
+      `a rebuild that itself violates the cap would rewrite the row forever (${rebuilt.aboveHard})`
+    );
+    assert.ok(rebuilt.aboveHard >= DAILY_ABOVE_HARD_MIN);
   });
 });

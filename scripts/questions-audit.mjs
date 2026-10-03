@@ -862,7 +862,16 @@ function planRepair({ id, row, want, options, clues, hints, aliases, scopes }) {
     return 4;
   })();
 
-  return { id, key: want.semanticKey, changes, statements, deactivate: false, priority };
+  return {
+    id,
+    key: want.semanticKey,
+    changes,
+    statements,
+    deactivate: false,
+    priority,
+    storedOptions: storedOptionTexts,
+    wantOptions: wantOptionTexts,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -947,6 +956,20 @@ sample("answer type not what the archetype asks", findings.answerTypeMismatch, (
 );
 sample("semantically duplicate questions", findings.semanticDuplicates, (f) =>
   `#${f.id} ${f.questionHe}  (duplicate of #${f.duplicateOf})`
+);
+
+/*
+  Option-set replacements, shown with both sets.
+
+  An option repair that is still pending after a repair ran has not converged:
+  the set the rules want is itself failing the eligibility test, so every run
+  rewrites it and every run finds it wrong again. That is a bug in the rules, not
+  a repair still to do, and it is invisible in a count.
+*/
+sample(
+  "option sets to replace",
+  repairPlans.filter((p) => !p.deactivate && p.changes.includes("options")),
+  (f) => `#${f.id} ${f.key}\n      stored: ${(f.storedOptions ?? []).join(" | ")}\n      want:   ${(f.wantOptions ?? []).join(" | ")}`
 );
 
 // ---------------------------------------------------------------------------

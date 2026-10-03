@@ -1,6 +1,7 @@
-import type { QuizConfiguration } from "../../shared/types";
-import type { QuestionFilter } from "./questions";
-import { selectDailyChallenge } from "../engine/difficultyPolicy";
+import type { QuizConfiguration } from "../../shared/types.ts";
+import type { QuestionFilter } from "./questions.ts";
+import { selectDailyChallenge } from "../engine/difficultyPolicy.ts";
+import { ABOVE_HARD_BANDS, DAILY_ABOVE_HARD_MAX } from "../../server/football/difficulty.ts";
 
 export interface DailyChallengeRow {
   challengeDate: string;
@@ -55,17 +56,45 @@ async function selectDaily(db: D1Database, date: string): Promise<DailyChallenge
   return { challengeDate: row.challenge_date, questionIds: JSON.parse(row.question_ids_json) };
 }
 
-// Counts how many of the stored ids still resolve to an active question.
-// A stored set can go stale if questions are deactivated or removed from the
-// bank between the day's first request and a later one.
-async function countLiveQuestions(db: D1Database, ids: number[]): Promise<number> {
-  if (ids.length === 0) return 0;
+/*
+ * How much of a stored challenge still holds: how many of its questions are
+ * live, and how many of them are now above HARD.
+ *
+ * DEACTIVATION IS NOT THE ONLY WAY A STORED SET GOES STALE. The original check
+ * asked whether every id still resolved to an active question, which catches a
+ * question being withdrawn and nothing else. A difficulty RECLASSIFICATION
+ * leaves every id perfectly valid and silently breaks the thing the Daily
+ * Challenge is built around.
+ *
+ * That is not hypothetical. The semantic layer's recalibration moved 3,169
+ * questions from HARD to IMPOSSIBLE and 1,282 from HARD to EXPERT. The
+ * challenge stored for 2026-10-03 was written minutes before it, chose nine
+ * playable questions and one boss question under the old labels, and afterwards
+ * held FOUR above HARD out of ten — a challenge the policy would never build,
+ * served from a row that looked entirely healthy.
+ *
+ * So the invariant is checked against the bank as it is now, not as it was when
+ * the row was written. Both counts come back in one query: this runs on the
+ * read path for every Daily Challenge request, and the second round trip would
+ * be pure cost.
+ */
+async function storedSetHealth(
+  db: D1Database,
+  ids: number[]
+): Promise<{ live: number; aboveHard: number }> {
+  if (ids.length === 0) return { live: 0, aboveHard: 0 };
   const placeholders = ids.map(() => "?").join(",");
+  const aboveHard = ABOVE_HARD_BANDS.map(() => "?").join(",");
   const row = await db
-    .prepare(`SELECT COUNT(*) as cnt FROM questions WHERE active = 1 AND id IN (${placeholders})`)
-    .bind(...ids)
-    .first<{ cnt: number }>();
-  return row?.cnt ?? 0;
+    .prepare(
+      `SELECT COUNT(*) AS live,
+              SUM(CASE WHEN difficulty IN (${aboveHard}) THEN 1 ELSE 0 END) AS above_hard
+         FROM questions
+        WHERE active = 1 AND id IN (${placeholders})`
+    )
+    .bind(...ABOVE_HARD_BANDS, ...ids)
+    .first<{ live: number; above_hard: number | null }>();
+  return { live: row?.live ?? 0, aboveHard: row?.above_hard ?? 0 };
 }
 
 // Get-or-create, race-safe via the UNIQUE constraint on challenge_date:
@@ -74,8 +103,13 @@ async function countLiveQuestions(db: D1Database, ids: number[]): Promise<number
 export async function getOrCreateDailyChallenge(db: D1Database, date: string): Promise<DailyChallengeRow> {
   const existing = await selectDaily(db, date);
   if (existing) {
-    const live = await countLiveQuestions(db, existing.questionIds);
-    if (live === existing.questionIds.length) return existing;
+    const { live, aboveHard } = await storedSetHealth(db, existing.questionIds);
+    const allLive = live === existing.questionIds.length;
+    // A rebuild always draws its base from EASY/NORMAL/HARD alone and exactly
+    // `aboveHardTarget` boss questions, so the repaired set satisfies the cap
+    // and this converges rather than rewriting the row on every request.
+    const curveHolds = aboveHard <= DAILY_ABOVE_HARD_MAX;
+    if (allLive && curveHolds) return existing;
     // Stored set went stale — rebuild it once and persist, so the day stays
     // consistent for everyone from here on.
     const repaired = await buildDailyIds(db, date);
