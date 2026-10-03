@@ -299,43 +299,49 @@ async function builder(browser) {
   section("quiz builder");
   const { context, page, errors } = await newPlayer(browser);
 
-  await page.goto(`${BASE}/build`, { waitUntil: "networkidle" });
-  await page.locator(".build").waitFor({ timeout: 20000 });
+  /*
+    THE BUILDER IS A WIZARD NOW, so this section was asserting against markup
+    that no longer exists: `.build`, `.mode-pick`, `.chip`, `.build-count`,
+    `.build-bar`. It timed out on the first wait and took the whole production
+    product run down with it — a stale test reporting a healthy product as
+    broken, which is the failure mode the comment below this one was already
+    written about.
 
-  check("both answer modes are offered", (await page.locator(".mode-pick .seg-btn").count()) === 2);
-  check("filter chips render", (await page.locator(".chip").count()) > 10);
+    Layout and the exact per-flow query belong to scripts/builder-qa.mjs, which
+    drives all five flows at every viewport and reads the POST body. What is
+    checked here is what this suite is for: that the page loads, that the real
+    availability endpoint answers, and that a default build reaches a playable
+    question.
+  */
+  await page.goto(`${BASE}/build`, { waitUntil: "networkidle" });
+  await page.locator(".wiz").waitFor({ timeout: 20000 });
+
+  check("step one offers both answer modes", (await page.locator(".wiz-group .wiz-card").count()) === 2);
+  check("the step is numbered", /\d/.test(await page.locator(".wiz-progress").innerText().catch(() => "")));
+
+  const dockButton = page.locator(".wiz-dock button.btn-primary");
+  check("the primary action is present", await dockButton.isVisible());
+
+  // Free text → defaults → worldwide, which is FLOW A's shape and the one
+  // selection guaranteed to have questions behind it.
+  await page.locator(".wiz-card").first().click();
+  await dockButton.click();
+  await dockButton.click();
+  await page.locator(".wiz-card-label", { hasText: "כל העולם" }).click();
+  await dockButton.click();
 
   // Availability is the edge-cached count endpoint; it must produce a number.
+  // A selection with nothing behind it renders "אין שאלות מתאימות" and
+  // correctly disables the start button, so asserting a digit against an
+  // arbitrary narrow filter once reported a correct product as broken. The
+  // default worldwide selection cannot be empty.
+  await page.locator(".wiz-summary").waitFor({ timeout: 20000 });
   await page.waitForTimeout(1500);
-  const count = await page.locator(".build-count").innerText().catch(() => "");
+  const count = await page.locator(".wiz-avail").innerText().catch(() => "");
   check("availability reports a number", /\d/.test(count), count);
 
-  // Narrow the selection and confirm the figure RESPONDS, which is not the same
-  // as "contains a digit": a selection with nothing behind it renders the
-  // sentence "אין שאלות מתאימות — הרחיבו את הסינון" and correctly disables the
-  // start button. An earlier version of this test asserted a digit, picked a
-  // chip that happened to zero the pool, and then reported a product that was
-  // behaving exactly right as broken.
-  const chip = page.locator(".chip").nth(3);
-  await chip.click();
-  await page.waitForTimeout(1800);
-  const narrowed = await page.locator(".build-count").innerText().catch(() => "");
-  check("availability updates when filters change", narrowed !== count, `${count} -> ${narrowed}`);
-
-  // Start from a fresh page rather than trying to undo the chip. Toggling a
-  // chip off does not necessarily restore the previous selection — the chips sit
-  // in groups where deselecting the last member means something different from
-  // never having selected one — and the builder's default state ("all of
-  // football") is both the state that matters and guaranteed to have questions.
-  await page.goto(`${BASE}/build`, { waitUntil: "networkidle" });
-  await page.locator(".build").waitFor({ timeout: 20000 });
-  await page.waitForTimeout(2000);
-
-  // Scoped to the sticky bar: `.build .btn-primary.btn-block` also matches a
-  // button inside the side card that is off-screen at this viewport, and
-  // `.first()` across both was resolving to the invisible one.
-  const start = page.locator(".build-bar button.btn-primary");
-  check("start is enabled for the default selection", await start.isEnabled(), await page.locator(".build-count").innerText());
+  const start = page.locator(".wiz-dock button.btn-primary");
+  check("start is enabled for the default selection", await start.isEnabled(), count);
   await start.click();
   await page.waitForURL("**/play", { timeout: 30000 });
   await page.locator(".q").waitFor({ timeout: 25000 });

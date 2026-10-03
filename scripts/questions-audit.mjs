@@ -481,7 +481,10 @@ for (const row of active) {
   // ---- compare with what the rules produce today ----
   const want = key ? desired.get(key) : null;
   if (want) {
-    const plan = planRepair({ id, row, want, options, clues, hints: hintsById.get(id) ?? [], aliases: aliasesById.get(id) ?? [], scopes: scopesById.get(id) ?? [] });
+    // `archetype` is the one recovered from the semantic key. planRepair used to
+    // take it only from `want.archetype`, which the curated generators do not
+    // set — see the note on `effectiveArchetype` there.
+    const plan = planRepair({ id, row, want, archetype, options, clues, hints: hintsById.get(id) ?? [], aliases: aliasesById.get(id) ?? [], scopes: scopesById.get(id) ?? [] });
     if (plan.changes.length === 0) {
       unchanged++;
       after[band] = (after[band] ?? 0) + 1;
@@ -570,7 +573,7 @@ function sameList(a, b) {
  * a full delete-and-reinsert of the same question is about 30. Across 15,000
  * questions that difference is the whole free-tier daily allowance.
  */
-function planRepair({ id, row, want, options, clues, hints, aliases, scopes }) {
+function planRepair({ id, row, want, archetype: storedArchetype, options, clues, hints, aliases, scopes }) {
   const changes = [];
   const statements = [];
   const parent = {};
@@ -614,8 +617,65 @@ function planRepair({ id, row, want, options, clues, hints, aliases, scopes }) {
   // The semantic columns migration 0008 added. Written on every repair, so the
   // audit's own judgement is persisted and the next run has less to recompute.
   const signals = want.difficultySignals ?? {};
-  const archetype = want.archetype ?? null;
-  const answerType = archetype ? answerTypeFor(archetype, want.resolvedTeamType) : null;
+  /*
+    THE ARCHETYPE, FROM THE KEY WHEN THE GENERATOR DOES NOT DECLARE ONE.
+
+    This read `want.archetype` alone, and the curated generators in
+    seed/generators/ do not set that field — only the provider-backed ones do.
+    So for all 3,147 curated questions the archetype was null here, with two
+    consequences, one cosmetic and one not:
+
+      * `questions.archetype` and `answer_entity_type` were never backfilled for
+        them, which is why a third of the active bank still reads null.
+      * `expectedType` below was null, so the option-TYPE invariant — the one
+        this whole phase exists to establish — was skipped on every curated
+        question. The repair was checking the half of the bank that already
+        declared what it was asking.
+
+    It is the same gap that let seven goalkeeper questions keep offering "חלוץ"
+    as a unit through a full repair pass; the closed-vocabulary rule above
+    caught those by a different route, but positions were never the only
+    archetype at risk. storedKeys.ts exists precisely to recover this, the audit
+    loop already uses it for the entity-type findings, and those findings report
+    zero — so the invariant does hold. It just was not the repair that was
+    checking it.
+  */
+  const archetype = want.archetype ?? storedArchetype ?? null;
+
+  /*
+    RESOLVED_TEAM archetypes, for a bank that never declared which.
+
+    answerTypeFor throws when an archetype answers with either a club or a
+    national team and nothing says which — deliberately, because a silent
+    default is how a World Cup winner gets typed as a club. The provider-backed
+    generators resolve it from the competition type. The curated ones do not
+    carry the field at all, so recovering their archetype from the key turned
+    that guard into a crash on the first `ucl_runnerup` question.
+
+    The stored correct answer is the evidence, and classifying it is not a
+    guess. It does make the check tautological for the answer itself — of course
+    the answer has the type the answer has — but the invariant worth enforcing
+    here is about the DISTRACTORS: if the runner-up is a club, every option must
+    be a club. That is still fully checked, and it is the thing that was broken.
+  */
+  const resolvedTeamType =
+    want.resolvedTeamType ??
+    (() => {
+      const stored = options.find((o) => o.correct) ?? options[0];
+      const kind = stored ? classifyOption(stored.text).kind : null;
+      return kind === "NATIONAL_TEAM" || kind === "CLUB" ? kind : undefined;
+    })();
+  const answerType = (() => {
+    if (!archetype) return null;
+    try {
+      return answerTypeFor(archetype, resolvedTeamType);
+    } catch {
+      // Neither the generator nor the stored answer says which. Leaving the
+      // type unknown skips the option check for this one question, which is
+      // what the pre-recovery behaviour did for every curated question.
+      return null;
+    }
+  })();
   const quickStart = isQuickStartFriendly({
     band: want.difficulty,
     subjectFame: signals.subjectFame ?? null,
@@ -667,7 +727,9 @@ function planRepair({ id, row, want, options, clues, hints, aliases, scopes }) {
   const storedOptionTexts = options.map((o) => o.text);
   const wantOptionTexts = wantOptions.map((o) => o.text);
   const storedTypes = options.map((o) => classifyOption(o.text));
-  const expectedType = archetype ? answerTypeFor(archetype, want.resolvedTeamType) : null;
+  // Already resolved above, including the RESOLVED_TEAM case the curated bank
+  // does not declare. Recomputing it here would throw on the same questions.
+  const expectedType = answerType;
 
   /*
     A POSITION QUESTION HAS A CLOSED VOCABULARY, so "different" really is
