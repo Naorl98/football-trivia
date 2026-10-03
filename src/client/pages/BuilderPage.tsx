@@ -10,7 +10,8 @@ import {
   DIFFICULTY_CHOICES,
   DIFFICULTY_COMMON,
   INITIAL_STATE,
-  isOfferable,
+  isOfferableStrict,
+  isPickedLeague,
   offerableScopes,
   offerableTypes,
   pickerConfiguration,
@@ -34,6 +35,8 @@ const ANSWER_MODES: { key: AnswerMode; label: string }[] = [
 
 const competitionLabel = (code: string) => COMPETITIONS.find((c) => c.code === code)?.nameHe ?? code;
 const countryLabel = (code: string) => COUNTRIES.find((c) => c.code === code)?.nameHe ?? code;
+const continentLabel = (code: Region | null) =>
+  SUPPORTED_CONTINENTS.find((c) => c.code === code)?.labelHe ?? "";
 
 /**
  * Create a game.
@@ -115,6 +118,7 @@ export function BuilderPage() {
 
   const types = offerableTypes(options, state.questionCount, showMoreTypes);
   const scopes = offerableScopes(options, state.questionCount);
+  const picked = isPickedLeague(state);
   const total = options?.total ?? null;
   const canStart = total === null || total >= 1;
 
@@ -182,11 +186,13 @@ export function BuilderPage() {
           />
         ))}
         {/* The remaining types are real and stay reachable; nobody has to read
-            thirteen options to start a mixed game. */}
-        <Pill
-          label={showMoreTypes ? "פחות" : "עוד"}
-          on={false}
-          quiet
+            thirteen options to start a mixed game. Styled as an ACTION rather
+            than a pill — see the Action component for why the difference
+            matters more than the wording. */}
+        <Action
+          label={showMoreTypes ? "הצג פחות" : "עוד סוגים"}
+          icon={showMoreTypes ? "cross" : "sliders"}
+          expanded={showMoreTypes}
           onClick={() => {
             sound.play("select");
             setShowMoreTypes((v) => !v);
@@ -203,15 +209,13 @@ export function BuilderPage() {
             onClick={() => patch({ scope: choice.key, scopeCountry: null })}
           />
         ))}
-        {/* A competition chosen in the picker is not one of the pills, so it
-            gets one of its own — otherwise the selection would be invisible. */}
-        {state.scope !== SCOPE_ALL && !scopes.some((s) => s.key === state.scope) && (
-          <Pill label={scopeLabel(state)} on onClick={() => setPicker(true)} />
-        )}
-        <Pill
-          label="בחר ליגה"
-          on={false}
-          quiet
+        {/* A league chosen in the picker is not one of the pills, so it gets one
+            of its own — otherwise the narrower choice would be invisible beside
+            the quick scopes. It names the country too: "ספרד · לה ליגה". */}
+        {picked && <Pill label={scopeLabel(state)} on onClick={() => setPicker(true)} />}
+        <Action
+          label={picked ? "שנה ליגה" : "בחירת ליגה"}
+          icon="shield"
           onClick={() => {
             sound.play("select");
             setPicker(true);
@@ -304,6 +308,46 @@ function Pill({
 }
 
 /**
+ * A control that OPENS something, as opposed to one that selects something.
+ *
+ * THE DISTINCTION THESE TWO CONTROLS KEPT LOSING. The builder has two kinds of
+ * thing in the same rows: direct choices (הכל, טופ 6, מי אני?) and doors
+ * (בחירת ליגה, עוד סוגים). They were styled as the same pill with a dashed
+ * border and muted text, which made the doors read as LESS important than the
+ * choices beside them — the exact opposite of what they are. A player scanning
+ * the row saw a greyed-out chip and took it for an option that was unavailable.
+ *
+ * So a door looks like a door: full-strength text, a solid border, an icon that
+ * says what is behind it, and a chevron pointing the way. The chevron is the
+ * part that carries the meaning — it is the one mark in this screen that says
+ * "there is more through here" rather than "this is a thing you can pick".
+ */
+function Action({
+  label,
+  icon,
+  onClick,
+  expanded = false,
+}: {
+  label: string;
+  icon: string;
+  onClick: () => void;
+  expanded?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      className={`bld-action${expanded ? " is-expanded" : ""}`}
+      onClick={onClick}
+      aria-expanded={expanded || undefined}
+    >
+      <Icon name={icon as never} size={14} />
+      {label}
+      <Icon name="arrow" size={13} />
+    </button>
+  );
+}
+
+/**
  * Continent → country → league, on demand.
  *
  * A sheet rather than three steps: this is the one place in the builder where
@@ -341,15 +385,17 @@ function LeaguePicker({
     // level being browsed and those values change what has to be fetched.
   }, [continent, country, wanted, difficulty, answerMode, questionType, state]);
 
+  // Strict here, deliberately: a level is rendered only once its counts are in
+  // hand, so an option missing from the response has none rather than unknown.
   const continents = SUPPORTED_CONTINENTS.filter((c) =>
-    isOfferable(counts?.continents?.[c.code], wanted)
+    isOfferableStrict(counts?.continents, c.code, wanted)
   );
   const countryList = continent
-    ? countriesIn(continent).filter((c) => isOfferable(counts?.countries?.[c.code], wanted))
+    ? countriesIn(continent).filter((c) => isOfferableStrict(counts?.countries, c.code, wanted))
     : [];
   const competitionList = country
     ? competitionsForCountry(country).filter((code) =>
-        isOfferable(counts?.competitions?.[code], wanted)
+        isOfferableStrict(counts?.competitions, code, wanted)
       )
     : [];
 
@@ -376,9 +422,19 @@ function LeaguePicker({
           <button className="bld-sheet-back" onClick={back} aria-label="חזרה">
             <Icon name="arrow" size={16} />
           </button>
-          <h2 className="bld-sheet-title">
-            {country ? countryLabel(country) : continent ? "איזו מדינה?" : "איזו יבשת?"}
-          </h2>
+          {/* The flow is NAMED, every level, so the panel is obviously the
+              thing the button opened; the breadcrumb under it says how far in
+              you are and what you picked on the way. */}
+          <div className="bld-sheet-heading">
+            <h2 className="bld-sheet-title">בחירת ליגה</h2>
+            <p className="bld-sheet-crumb">
+              {country
+                ? `${continentLabel(continent)} › ${countryLabel(country)} › איזו ליגה?`
+                : continent
+                  ? `${continentLabel(continent)} › איזו מדינה?`
+                  : "איזו יבשת?"}
+            </p>
+          </div>
           <button className="bld-sheet-close" onClick={onClose} aria-label="סגירה">
             <Icon name="cross" size={15} />
           </button>

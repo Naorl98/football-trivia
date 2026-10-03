@@ -213,6 +213,27 @@ export function isOfferable(count: number | undefined, wanted: number): boolean 
   return count === undefined || count >= wanted;
 }
 
+/**
+ * The same rule, for a list whose counts have definitely arrived.
+ *
+ * WHY THE TWO DIFFER. A count GROUP BY only returns rows for options that have
+ * questions, so an option with NONE is absent from the response rather than
+ * present as a zero. On the main screen "absent" has to mean "shown", because
+ * availability lands a moment after the screen does and hiding everything
+ * unmeasured would make it flicker. Inside the picker the opposite is true: the
+ * level is rendered only once its counts are in hand, so a missing key is not
+ * "not yet", it is "none" — and the Conference League, which has no questions at
+ * all, was being offered on exactly that technicality.
+ */
+export function isOfferableStrict(
+  counts: Record<string, number> | undefined,
+  key: string,
+  wanted: number
+): boolean {
+  if (!counts) return true;
+  return (counts[key] ?? 0) >= wanted;
+}
+
 /** Question types to render, in row order, given what the pool can serve. */
 export function offerableTypes(
   availability: Availability | null,
@@ -265,13 +286,29 @@ export function repair(state: BuilderState, availability: Availability | null): 
   return next;
 }
 
-/** What the scope pill reads once the advanced picker has been used. */
+/**
+ * What the scope pill reads once the advanced picker has been used.
+ *
+ * A league chosen through the picker names its COUNTRY too — "ספרד · לה ליגה"
+ * rather than "לה ליגה". The country is the thing the player drilled through to
+ * get there, and a bare league name beside the quick-scope pills does not say
+ * that a narrower choice was made at all.
+ */
 export function scopeLabel(state: BuilderState): string {
   if (state.scope === SCOPE_ALL) return "הכל";
   const preset = PRESET_BY_KEY.get(state.scope);
   if (preset) return SCOPE_CHOICES.find((c) => c.key === state.scope)?.labelHe ?? preset.labelHe;
   const competition = COMPETITIONS.find((c) => c.code === state.scope);
-  return competition?.nameHe ?? state.scope;
+  const league = competition?.nameHe ?? state.scope;
+  const country = state.scopeCountry
+    ? COUNTRIES.find((c) => c.code === state.scopeCountry)?.nameHe
+    : null;
+  return country ? `${country} · ${league}` : league;
+}
+
+/** True when the scope came from the picker rather than a quick pill. */
+export function isPickedLeague(state: BuilderState): boolean {
+  return state.scope !== SCOPE_ALL && !PRESET_BY_KEY.has(state.scope);
 }
 
 /**

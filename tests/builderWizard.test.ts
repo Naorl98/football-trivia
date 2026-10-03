@@ -23,6 +23,7 @@ import {
   DIFFICULTY_COMMON,
   INITIAL_STATE,
   isOfferable,
+  isOfferableStrict,
   MAIN_TYPE_KEYS,
   MORE_TYPE_KEYS,
   offerableScopes,
@@ -326,6 +327,20 @@ describe("the optional league picker", () => {
         assert.ok(COMPETITIONS.some((c) => c.code === code), `${country.code} names ${code}`);
       }
     }
+  });
+
+  it("treats a missing count as none once the level's counts have arrived", () => {
+    /*
+      A count GROUP BY returns no row for an option with no questions, so the
+      Conference League — which has none — was absent from the response and
+      therefore "unknown", which the main screen permits. In the picker that
+      technicality was offering a league that cannot produce a single question.
+    */
+    assert.equal(isOfferableStrict({ LA_LIGA: 1258 }, "UECL", 10), false, "absent means none here");
+    assert.equal(isOfferableStrict({ LA_LIGA: 1258 }, "LA_LIGA", 10), true);
+    assert.equal(isOfferableStrict(undefined, "UECL", 10), true, "but not before they arrive");
+    // The main screen keeps the permissive rule, so it cannot flicker on open.
+    assert.equal(isOfferable(undefined, 10), true);
   });
 
   it("offers every continent, and the empty ones are filtered by their counts", () => {

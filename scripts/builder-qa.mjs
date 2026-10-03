@@ -148,7 +148,7 @@ const FLOWS = [
     id: "E",
     name: "a type from behind 'עוד'",
     taps: [
-      ["סוג", "עוד"],
+      ["סוג", "עוד סוגים"],
       ["סוג", "העברות"],
     ],
     expect: {
@@ -185,16 +185,39 @@ async function tap(page, row, label) {
         (r) => r.querySelector(".bld-row-label")?.textContent?.trim() === row
       );
       if (!target) return "no-row";
-      const pill = Array.from(target.querySelectorAll(".bld-pill")).find(
-        (p) => p.textContent?.trim() === label
-      );
-      if (!pill) return "no-pill";
-      pill.click();
+      // Falls through to the row's ACTION controls, so a flow can name a door
+      // the same way it names a choice — the player does not distinguish them
+      // when deciding what to tap, only when reading the screen.
+      const hit =
+        Array.from(target.querySelectorAll(".bld-pill")).find((p) => p.textContent?.trim() === label) ??
+        Array.from(target.querySelectorAll(".bld-action")).find((a) => a.textContent?.trim() === label);
+      if (!hit) return "no-pill";
+      hit.click();
       return "ok";
     },
     { row, label }
   );
   await page.waitForTimeout(260);
+  return found;
+}
+
+/**
+ * Taps one of the ACTION controls — the doors, not the choices.
+ *
+ * Separate from `tap` because they are a separate control: a test that found
+ * them with the pill selector would keep passing if they were restyled back
+ * into pills, which is the regression this pass exists to prevent.
+ */
+async function tapAction(page, label) {
+  const found = await page.evaluate((label) => {
+    const el = Array.from(document.querySelectorAll(".bld-action")).find(
+      (a) => a.textContent?.trim() === label
+    );
+    if (!el) return "no-action";
+    el.click();
+    return "ok";
+  }, label);
+  await page.waitForTimeout(300);
   return found;
 }
 
@@ -370,12 +393,82 @@ async function checkDynamicFiltering(page, viewport) {
 
   // Whatever survived must still be a game. This is the dead-end check: every
   // visible pill, tapped, has to produce a quiz.
+  void 0;
   const total = Number((afterTotal.match(/[0-9,]+/)?.[0] ?? "0").replace(/,/g, ""));
   record(total >= 20, `what is left can still fill the quiz @ ${viewport}`, `${afterTotal.trim()} (was ${beforeTotal.trim()})`);
 
   // And the screen still fits.
   const { scrollHeight, viewport: height } = await overflow(page);
   record(scrollHeight <= height + 8, `still fits after narrowing @ ${viewport}`, `${scrollHeight}px in ${height}px`);
+}
+
+/**
+ * The two doors must not look like the choices beside them.
+ *
+ * They were pills with a dashed border and muted text, which read as LESS
+ * important than the options around them — a greyed-out chip that looks
+ * unavailable rather than inviting. Asserted on the computed style rather than
+ * by eye, so a restyle back into a pill fails here.
+ */
+async function checkActionAffordance(page, viewport) {
+  await page.goto(`${BASE}/build`, { waitUntil: "domcontentloaded" });
+  await page.locator("h1.bld-title").first().waitFor({ timeout: 20000 });
+  await page.waitForTimeout(1600);
+
+  const seen = await page.evaluate(() => {
+    const read = (el) => {
+      const cs = getComputedStyle(el);
+      return {
+        text: el.textContent.trim(),
+        weight: Number(cs.fontWeight),
+        colour: cs.color,
+        borderStyle: cs.borderStyle,
+        chevrons: el.querySelectorAll("svg").length,
+      };
+    };
+    const pill = Array.from(document.querySelectorAll(".bld-pill")).find(
+      (p) => !p.getAttribute("aria-pressed") || p.getAttribute("aria-pressed") === "false"
+    );
+    return {
+      actions: Array.from(document.querySelectorAll(".bld-action")).map(read),
+      pill: pill ? read(pill) : null,
+    };
+  });
+
+  record(
+    seen.actions.length === 2,
+    `both doors are present @ ${viewport}`,
+    seen.actions.map((a) => a.text).join(" · ")
+  );
+
+  const labelled = seen.actions.every((a) => a.text.length > 3 && a.text !== "עוד");
+  record(labelled, `the doors say what they do @ ${viewport}`, seen.actions.map((a) => a.text).join(" · "));
+
+  const iconic = seen.actions.every((a) => a.chevrons >= 2);
+  record(iconic, `each door carries an icon and a chevron @ ${viewport}`, seen.actions.map((a) => `${a.text}=${a.chevrons}`).join(", "));
+
+  if (seen.pill) {
+    const bolder = seen.actions.every((a) => a.weight > seen.pill.weight);
+    const solid = seen.actions.every((a) => a.borderStyle === "solid");
+    record(
+      bolder && solid,
+      `a door is heavier and solid where an unselected choice is not @ ${viewport}`,
+      `door weight ${seen.actions[0]?.weight}/${seen.actions[0]?.borderStyle} vs pill ${seen.pill.weight}/${seen.pill.borderStyle}`
+    );
+  }
+
+  // Tapping the types door reveals more types, and only valid ones.
+  const before = await readRows(page);
+  await tapAction(page, "עוד סוגים");
+  await page.waitForTimeout(1500);
+  const after = await readRows(page);
+  record(
+    (after["סוג"] ?? []).length > (before["סוג"] ?? []).length,
+    `the types door reveals more types @ ${viewport}`,
+    `${(before["סוג"] ?? []).length} → ${(after["סוג"] ?? []).length}`
+  );
+  const collapsed = await tapAction(page, "הצג פחות");
+  record(collapsed === "ok", `and collapses again @ ${viewport}`, collapsed);
 }
 
 /**
@@ -389,7 +482,7 @@ async function checkLeaguePicker(page, viewport) {
   await page.locator("h1.bld-title").first().waitFor({ timeout: 20000 });
   await page.waitForTimeout(1600);
 
-  const opened = await tap(page, "מאיפה?", "בחר ליגה");
+  const opened = await tapAction(page, "בחירת ליגה");
   if (opened !== "ok") {
     record(false, `league picker opens @ ${viewport}`, opened);
     return;
@@ -627,6 +720,7 @@ for (const engine of ENGINES) {
         // The two behaviours the flat screen turns on, and neither is a flow:
         // that narrowing the request REMOVES options, and that the optional
         // geography picker drills down and hands a real league back.
+        await checkActionAffordance(page, profile.label);
         await checkDynamicFiltering(page, profile.label);
         await checkLeaguePicker(page, profile.label);
         if (profile === MOBILE[0]) {

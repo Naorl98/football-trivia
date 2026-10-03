@@ -116,14 +116,67 @@
    control: Expert and Impossible are still right there. */
 .bld-pill.is-common:not(.is-on) { color: var(--text); }
 
-/* "עוד" and "בחר ליגה" — doors, not choices, so they read quieter. */
-.bld-pill.is-quiet {
-  border-style: dashed;
-  border-color: var(--line);
-  color: var(--text-3);
-  font-weight: 500;
+/*
+  A DOOR, NOT A CHOICE.
+
+  "בחירת ליגה" and "עוד סוגים" open something; the pills beside them select
+  something. They used to be pills with a dashed border and muted text, which
+  made them read as LESS important than the options around them — a greyed-out
+  chip that looks unavailable rather than inviting. That was exactly backwards.
+
+  Three differences carry the distinction, and none of them is colour alone:
+
+    the chevron   the one mark on this screen that means "more through here"
+    full-strength text and a solid border, so it reads as live rather than spent
+    a leading icon naming what is behind it — a crest for leagues, sliders for
+    the rest of the question types
+
+  Deliberately NOT the green selected treatment: a door is not a selection, and
+  borrowing the selected style would say the opposite of what it does.
+*/
+.bld-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border: 1.5px solid var(--text-3);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text-3) 12%, transparent);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.1;
+  cursor: pointer;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    border-color var(--t-2) var(--ease),
+    background-color var(--t-2) var(--ease),
+    color var(--t-2) var(--ease),
+    transform var(--t-1) var(--ease);
 }
-.bld-pill.is-quiet:hover { color: var(--text-2); border-color: var(--text-3); }
+
+/* The chevron points the way in. In RTL "forward" is the other direction, and
+   when the section is open it points down at what it revealed. */
+.bld-action svg:last-child { transform: scaleX(-1); transition: transform var(--t-2) var(--ease); }
+.bld-action.is-expanded svg:last-child { transform: rotate(90deg); }
+
+.bld-action svg:first-child { color: var(--green); }
+
+.bld-action:hover {
+  border-color: var(--green);
+  background: var(--green-wash);
+  color: var(--green-bright);
+}
+.bld-action:active { transform: scale(0.96); }
+
+/* Open: still a door, visibly ajar. */
+.bld-action.is-expanded {
+  border-color: var(--green);
+  background: var(--green-wash);
+  color: var(--green-bright);
+}
 
 /* The question counts are one or two digits; centred and even-width reads as a
    segmented control rather than a ragged row. */
@@ -209,12 +262,23 @@
   flex: none;
 }
 
+.bld-sheet-heading { min-width: 0; text-align: center; }
+
 .bld-sheet-title {
   font-family: var(--font-head);
   font-weight: 700;
   font-size: 1rem;
   margin: 0;
-  text-align: center;
+}
+
+/* How far in, and what was picked on the way. */
+.bld-sheet-crumb {
+  margin: 1px 0 0;
+  font-size: 0.73rem;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .bld-sheet-back,
@@ -294,6 +358,7 @@
   .bld-row { gap: 4px; }
   .bld-row-label { font-size: 0.72rem; }
   .bld-pill { padding: 6px 10px; font-size: 0.83rem; }
+  .bld-action { padding: 6px 10px; font-size: 0.81rem; gap: 5px; }
   .bld-pill.is-narrow { min-width: 44px; }
   .bld-pills { gap: 4px; }
 }
@@ -311,6 +376,7 @@
   }
 
   .bld-pill { padding: 10px 15px; font-size: 0.92rem; }
+  .bld-action { padding: 10px 15px; font-size: 0.9rem; }
 
   .bld-dock {
     position: static;
