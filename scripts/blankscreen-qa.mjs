@@ -806,6 +806,99 @@ async function auditConcurrency(engine) {
   cannot, every "0 blank" result below is worthless — and this runs first so it
   says so before anything else is believed.
 */
+/**
+ * The root cause, as a standing regression test.
+ *
+ * Freezes pending timers the way iOS freezes them for a backgrounded page, with
+ * the quiz's opening curtain on screen, and asserts two things: that the curtain
+ * stops covering the app anyway (the CSS failsafe), and that it leaves the DOM
+ * when the page comes back (the visibility handler). Before the fix this left a
+ * 92%-opaque full-screen element over a perfectly rendered quiz, with no
+ * recovery and a watchdog reporting health.
+ */
+async function auditFrozenCurtain(engine) {
+  const browser = await launch(engine);
+  try {
+    const context = await browser.newContext({ ...mobile(engine) });
+    const page = await context.newPage();
+    await page.addInitScript(`
+      window.__frozen__ = false;
+      var realSetTimeout = window.setTimeout.bind(window);
+      window.setTimeout = function (fn, ms) {
+        var rest = Array.prototype.slice.call(arguments, 2);
+        return realSetTimeout(function () {
+          if (window.__frozen__) return;
+          try { fn.apply(null, rest); } catch (e) {}
+        }, ms);
+      };
+    `);
+
+    await page.goto(`${BASE}/`, { waitUntil: "domcontentloaded" });
+    await page.waitForTimeout(3500);
+    await page.evaluate(() => {
+      const b = document.querySelector(".quick-btn") || document.querySelector("main button");
+      if (b) b.click();
+    });
+    await page.waitForTimeout(900);
+    await page.evaluate(() => {
+      const b = document.querySelector(".mode-sheet button");
+      if (b) b.click();
+    });
+    const reached = await page
+      .waitForURL(/\/play/, { timeout: 30000 })
+      .then(() => true)
+      .catch(() => false);
+
+    if (!reached) {
+      record(false, `${engine} frozen-curtain setup`, "never reached /play");
+      await context.close();
+      return;
+    }
+
+    await page.evaluate(() => {
+      window.__frozen__ = true;
+    });
+    await page.waitForTimeout(6000);
+
+    const frozen = await page.evaluate(() => {
+      const k = document.querySelector(".kick");
+      if (!k) return { covering: false, opacity: null };
+      const cs = getComputedStyle(k);
+      const r = k.getBoundingClientRect();
+      const fullBleed = r.width >= innerWidth && r.height >= innerHeight;
+      return {
+        covering: fullBleed && cs.visibility !== "hidden" && Number(cs.opacity) > 0.05,
+        opacity: cs.opacity,
+        visibility: cs.visibility,
+      };
+    });
+    record(
+      !frozen.covering,
+      `${engine} curtain cannot survive frozen timers`,
+      `opacity ${frozen.opacity}, visibility ${frozen.visibility}`
+    );
+
+    const probe = await page.evaluate(PROBE);
+    const verdict = classify(probe);
+    record(!verdict.blank, `${engine} quiz usable with timers frozen`, `${verdict.kind} ${verdict.why ?? ""}`);
+
+    // And the page comes back.
+    await page.evaluate(() => {
+      window.__frozen__ = false;
+      document.dispatchEvent(new Event("visibilitychange"));
+      window.dispatchEvent(new Event("pageshow"));
+    });
+    await page.waitForTimeout(1500);
+    const gone = await page.evaluate(() => !document.querySelector(".kick"));
+    record(gone, `${engine} curtain leaves the DOM on visibility restore`, gone ? "removed" : "still present");
+
+    await context.close();
+  } finally {
+    await browser.close().catch(() => {});
+  }
+}
+
+
 async function selfTest(engine) {
   const browser = await launch(engine);
   const cases = [
@@ -902,6 +995,7 @@ console.log(`engines: ${ENGINES.join(", ")} | phase: ${PHASE} | artifacts: ${ART
 for (const engine of ENGINES) {
   try {
     if (PHASE === "all" || PHASE === "selftest") await selfTest(engine);
+    if (PHASE === "all" || PHASE === "curtain") await auditFrozenCurtain(engine);
     if (PHASE === "all" || PHASE === "loop") await auditRequestLoop(engine);
     if (PHASE === "all" || PHASE === "nojs") await auditNoScriptFloor(engine);
     await runEngine(engine);
