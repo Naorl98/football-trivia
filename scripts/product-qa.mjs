@@ -314,54 +314,37 @@ async function builder(browser) {
     question.
   */
   await page.goto(`${BASE}/build`, { waitUntil: "networkidle" });
-  await page.locator(".wiz").waitFor({ timeout: 20000 });
+  await page.locator(".bld").waitFor({ timeout: 20000 });
 
   /*
-    The wizard gained a question-type step, so step one is now "which kind of
-    questions" with thirteen cards rather than the two answer modes. Checked
-    here as a count rather than by name: this suite is about the page working,
-    and scripts/builder-qa.mjs is the one that drives every flow and asserts
-    the query. Naming the cards in both places is how one of them goes stale.
+    The builder is one screen now — five rows of pills, no steps — and the
+    whole point is that the defaults are already a game. So this suite checks
+    exactly that: the rows are there, availability answers, and Start works
+    WITHOUT touching anything.
+
+    Layout and per-flow query correctness belong to scripts/builder-qa.mjs,
+    which drives every flow at every viewport and reads the POST body. Naming
+    individual pills in both places is how one of them goes stale.
   */
-  check("step one offers a dozen question types", (await page.locator(".wiz-card").count()) >= 12);
-  check("the step is numbered", /[0-9]/.test(await page.locator(".wiz-progress").innerText().catch(() => "")));
-  check("every option carries a real availability count", (await page.locator(".wiz-card-count").count()) >= 12);
+  check("the builder shows five rows of settings", (await page.locator(".bld-row").count()) === 5);
+  check("the rows offer real choices", (await page.locator(".bld-pill").count()) >= 20);
 
-  const dockButton = page.locator(".wiz-dock button.btn-primary");
-  check("the primary action is present", await dockButton.isVisible());
-
-  // Defaults all the way through — מעורב type, free text, mixed difficulty, 10,
-  // worldwide — which is the one path guaranteed to have questions behind it.
-  await dockButton.click();
-  await page.waitForTimeout(350);
-  await dockButton.click();
-  await page.waitForTimeout(350);
-  await dockButton.click();
-  await page.waitForTimeout(350);
-  await page
-    .locator(".wiz-card")
-    .filter({ has: page.locator(".wiz-card-label", { hasText: /^כל העולם$/ }) })
-    .first()
-    .click();
-  await page.waitForTimeout(200);
-  await dockButton.click();
+  const start = page.locator(".bld-dock button.btn-primary");
+  check("the primary action is present without any interaction", await start.isVisible());
 
   // Availability is the edge-cached count endpoint; it must produce a number.
-  // A selection with nothing behind it renders "אין שאלות מתאימות" and
-  // correctly disables the start button, so asserting a digit against an
-  // arbitrary narrow filter once reported a correct product as broken. The
-  // default worldwide selection cannot be empty.
-  await page.locator(".wiz-summary").waitFor({ timeout: 20000 });
-  await page.waitForTimeout(1500);
-  const count = await page.locator(".wiz-avail").innerText().catch(() => "");
+  // The default selection is unfiltered, so it cannot be empty.
+  await page.waitForTimeout(2000);
+  const count = await page.locator(".bld-avail").innerText().catch(() => "");
   check("availability reports a number", /[0-9]/.test(count), count);
 
-  const start = page.locator(".wiz-dock button.btn-primary");
-  check("start is enabled for the default selection", await start.isEnabled(), count);
+  check("start is enabled for the defaults — one tap to a game", await start.isEnabled(), count);
   await start.click();
   await page.waitForURL("**/play", { timeout: 30000 });
   await page.locator(".q").waitFor({ timeout: 25000 });
-  check("a built quiz starts", (await page.locator(".q").innerText()).trim().length > 5);
+  check("a default build starts", (await page.locator(".q").innerText()).trim().length > 5);
+
+
 
   check("the console stayed clean", errors.length === 0, errors.slice(0, 3).join(" | "));
   await context.close();

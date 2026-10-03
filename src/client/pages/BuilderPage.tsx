@@ -1,138 +1,96 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { COMPETITIONS, COUNTRIES, DIFFICULTY_LABELS } from "../../shared/constants";
+import type { AnswerMode, Difficulty, Region } from "../../shared/types";
+import { fetchAvailability, messageHeOf, type AvailabilityResponse } from "../lib/api";
 import {
-  COMPETITIONS,
-  COUNTRIES,
-  DIFFICULTY_LABELS,
-  WIZARD_QUESTION_COUNTS,
-} from "../../shared/constants";
-import { MIXED_TYPE_KEY, QUESTION_TYPES } from "../../shared/questionTypes";
-import type { AnswerMode, Difficulty } from "../../shared/types";
-import { fetchAvailability, fetchAvailableCount, messageHeOf, type AvailabilityResponse } from "../lib/api";
-import {
-  canAdvance,
   competitionsForCountry,
+  COUNT_CHOICES,
   countriesIn,
-  dimensionFor,
+  DIFFICULTY_CHOICES,
+  DIFFICULTY_COMMON,
   INITIAL_STATE,
-  leagueOf,
-  orientationOf,
-  PRESETS,
-  SCOPE_COMPETITIONS,
-  stepsFor,
+  isOfferable,
+  offerableScopes,
+  offerableTypes,
+  pickerConfiguration,
+  repair,
+  SCOPE_ALL,
+  scopeLabel,
   SUPPORTED_CONTINENTS,
-  summaryOf,
   toConfiguration,
-  type ScopeKind,
-  type StepId,
-  type WizardState,
+  typeLabel,
+  type BuilderState,
 } from "../lib/builderWizard";
 import { startQuiz } from "../lib/startQuiz";
 import { sound } from "../lib/sound";
 import { Icon } from "../components/Icon";
 import "./BuilderPage.css";
 
-const DIFFICULTY_OPTIONS: (Difficulty | "MIXED")[] = ["MIXED", "EASY", "NORMAL", "HARD", "EXPERT", "IMPOSSIBLE"];
-
-/** The count the product recommends, highlighted rather than preselected-and-hidden. */
-const RECOMMENDED_COUNT = 10;
-
-const ANSWER_MODE_LABELS: Record<AnswerMode, string> = {
-  FREE_TEXT: "תשובה חופשית",
-  MULTIPLE_CHOICE: "אמריקאי",
-};
+const ANSWER_MODES: { key: AnswerMode; label: string }[] = [
+  { key: "FREE_TEXT", label: "פתוח" },
+  { key: "MULTIPLE_CHOICE", label: "אמריקאי" },
+];
 
 const competitionLabel = (code: string) => COMPETITIONS.find((c) => c.code === code)?.nameHe ?? code;
 const countryLabel = (code: string) => COUNTRIES.find((c) => c.code === code)?.nameHe ?? code;
 
-const STEP_TITLES: Record<StepId, string> = {
-  type: "איזה סוג שאלות?",
-  mode: "איך משחקים?",
-  settings: "הגדרות המשחק",
-  scope: "מאיפה השאלות?",
-  continent: "איזו יבשת?",
-  country: "איזו מדינה?",
-  league: "איזו ליגה?",
-  competition: "איזו תחרות?",
-  preset: "בחירות מהירות",
-  summary: "הכול מוכן",
-};
-
-/** A country list long enough to need a search box. */
-const SEARCHABLE_FROM = 10;
-
 /**
- * The game-creation wizard.
+ * Create a game.
  *
- * TWO FAILURE MODES, AND THIS IS THE SECOND PASS THROUGH THEM.
+ * ONE SCREEN, FIVE ROWS, AND START ALREADY WORKS.
  *
- * The original builder put every control on screen at once: about sixty tap
- * targets, a page that scrolled for most of a phone screen, and the start button
- * below the fold. Nothing on it was broken. It just never told you what you were
- * deciding.
+ * The eight-step wizard this replaces was not too sparse or too dense; it was
+ * too much CEREMONY. A player who wants a game should not have to answer four
+ * questions to get one, so the defaults here are a real quiz — free text, mixed
+ * difficulty, ten questions, mixed type, everywhere — and the screen opens with
+ * Start live and nothing that has to be touched.
  *
- * The wizard that replaced it fixed that and overshot. Four steps, two of which
- * offered two cards each, on a 390x844 screen — a title, two buttons and
- * seventy per cent empty space. That is not low cognitive load, it is a product
- * that looks like it has nothing in it.
+ * WHAT IS NOT ON SCREEN IS THE OTHER HALF. An option that cannot fill the
+ * requested quiz is absent, not disabled. The previous build greyed such options
+ * out and explained why, which is honest and still wrong: it turns the screen
+ * into a list of things you cannot have. Hiding them means every visible choice
+ * leads to a game, so a dead end is impossible rather than unlikely. See
+ * `isOfferable` and `repair` in lib/builderWizard.
  *
- * SO: THE SAME STRUCTURE, WITH THE CHOICES BACK. One screen still asks one
- * question and still fits a phone without scrolling. But each step now offers
- * what the DATA justifies — twelve question types, thirty countries, every
- * competition with questions behind it — as a compact card grid carrying an
- * icon, a one-line note and a real availability count. Density comes from
- * meaningful options and live numbers, never from making the cards bigger.
- *
- * COUNTS ARE REAL AND THEY GATE SELECTION. Every card shows what it would
- * actually give you, read from the bank through /api/quiz/options, and a card
- * that cannot fill the requested quiz is disabled with "לא מספיק שאלות כרגע"
- * rather than hidden. A builder that offers twenty questions from a filter
- * holding fourteen has lied before the game starts.
- *
- * GOING BACK NEVER COSTS ANYTHING. All of it is one state object (see
- * lib/builderWizard.ts), so a revisited step is still filled in. The steps are
- * not separate forms and nothing is unmounted.
+ * Geography is optional. "Everywhere", "the big six" and "Israel" are pills;
+ * continent → country → league lives behind "בחר ליגה" for the few who want it.
  */
 export function BuilderPage() {
   const navigate = useNavigate();
-  const [state, setState] = useState<WizardState>(INITIAL_STATE);
-  const [index, setIndex] = useState(0);
+  const [state, setState] = useState<BuilderState>(INITIAL_STATE);
+  const [showMoreTypes, setShowMoreTypes] = useState(false);
+  const [picker, setPicker] = useState(false);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [availableCount, setAvailableCount] = useState<number | null>(null);
-  const [counting, setCounting] = useState(false);
   const [options, setOptions] = useState<AvailabilityResponse | null>(null);
-  const [countryQuery, setCountryQuery] = useState("");
   const headingRef = useRef<HTMLHeadingElement | null>(null);
 
-  const steps = useMemo(() => stepsFor(state), [state]);
-  // The step list shrinks and grows as the scope changes, so the cursor is
-  // clamped rather than trusted. Without this, switching from "אזור מסוים" to
-  // "כל העולם" while standing on the country step would point past the end.
-  const step = steps[Math.min(index, steps.length - 1)];
   const config = useMemo(() => toConfiguration(state), [state]);
 
-  const patch = (next: Partial<WizardState>) => {
+  const patch = (next: Partial<BuilderState>) => {
     sound.play("select");
     setState((prev) => ({ ...prev, ...next }));
   };
 
   /*
-    Availability is read for the real configuration, debounced.
+    ONE REQUEST PER CHANGE, DEBOUNCED, FOR THE WHOLE SCREEN.
 
-    It is the real compatible pool count — the same number the engine will draw
-    from — because a builder that cheerfully offers 20 questions from a filter
-    holding 14 has lied before the game even starts.
+    `types` and `presets` come back together, and each is measured with its OWN
+    dimension removed — so a type's count reflects the chosen scope and a
+    preset's count reflects the chosen type. That is what makes the two rows
+    filter each other rather than only themselves. `total` is the figure beside
+    Start. Server-side it is one GROUP BY plus eleven capped counts in a single
+    batch, cached at the edge for five minutes; one tap never costs more than
+    one call.
   */
   useEffect(() => {
     let cancelled = false;
-    setCounting(true);
     const timer = setTimeout(() => {
-      fetchAvailableCount(config)
-        .then((res) => !cancelled && setAvailableCount(res.availableCount))
-        .catch(() => !cancelled && setAvailableCount(null))
-        .finally(() => !cancelled && setCounting(false));
-    }, 220);
+      fetchAvailability(config, ["types", "presets"], { anyMode: true })
+        .then((res) => !cancelled && setOptions(res))
+        .catch(() => !cancelled && setOptions(null));
+    }, 200);
     return () => {
       cancelled = true;
       clearTimeout(timer);
@@ -140,69 +98,25 @@ export function BuilderPage() {
   }, [config]);
 
   /*
-    Per-option counts for the step on screen, and only for that step.
+    A selection the latest counts can no longer serve is replaced, not kept.
 
-    The dimension is the step's own (see dimensionFor), because the server
-    answers each one with a single GROUP BY: asking for all five on every step
-    would pay five times over for four numbers nobody can see. A step with no
-    options to count — the answer mode, the summary — asks for nothing at all.
+    Choices interact — asking for twenty questions can empty a type that was
+    fine at five — and a state the screen no longer offers is the dead end in
+    slow motion. `repair` returns the same object when nothing is wrong, so this
+    cannot loop.
   */
-  const dimensions = useMemo(() => dimensionFor(step), [step]);
   useEffect(() => {
-    if (dimensions.length === 0) {
-      setOptions(null);
-      return;
-    }
-    let cancelled = false;
-    const timer = setTimeout(() => {
-      // Mode-spanning whenever the chosen type is mixed — not only on the type
-      // step — so every later step's counts match what the grid will draw.
-      fetchAvailability(config, dimensions, { anyMode: state.questionType === MIXED_TYPE_KEY })
-        .then((res) => !cancelled && setOptions(res))
-        .catch(() => !cancelled && setOptions(null));
-    }, 180);
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-    // `config` is in the deps because a count is only true for the selection it
-    // was measured under: changing the difficulty changes every country's count.
-  }, [config, dimensions, state.questionType]);
+    setState((prev) => repair(prev, options));
+  }, [options]);
 
-  // Each step change moves focus to the new heading. A wizard that swaps the
-  // whole screen without telling a screen reader is a wizard a screen reader
-  // user cannot follow.
   useEffect(() => {
     headingRef.current?.focus();
-    setCountryQuery("");
-  }, [step]);
+  }, []);
 
-  const atLast = step === "summary";
-  const none = availableCount === 0;
-  const stepNumber = steps.indexOf(step) + 1;
-
-  /**
-   * Whether an option with `count` questions can be chosen.
-   *
-   * The threshold is the requested quiz length, not an arbitrary floor: an
-   * option is "not enough" precisely when it cannot fill the quiz the player
-   * asked for, so picking 5 questions instead of 20 re-enables options and the
-   * reason is visible on the card. An unknown count never disables anything —
-   * a failed availability request must not lock the builder.
-   */
-  const enough = (count: number | undefined) => count === undefined || count >= state.questionCount;
-
-  function back() {
-    setError(null);
-    sound.play("select");
-    setIndex((i) => Math.max(0, Math.min(i, steps.length - 1) - 1));
-  }
-
-  function next() {
-    setError(null);
-    sound.play("click");
-    setIndex((i) => Math.min(steps.length - 1, Math.min(i, steps.length - 1) + 1));
-  }
+  const types = offerableTypes(options, state.questionCount, showMoreTypes);
+  const scopes = offerableScopes(options, state.questionCount);
+  const total = options?.total ?? null;
+  const canStart = total === null || total >= 1;
 
   async function start() {
     setError(null);
@@ -217,372 +131,295 @@ export function BuilderPage() {
     }
   }
 
-  const summary = summaryOf(state, {
-    answerMode: ANSWER_MODE_LABELS,
-    difficulty: DIFFICULTY_LABELS,
-    competition: competitionLabel,
-    country: countryLabel,
-  });
-
-  const continentCountries = state.continent ? countriesIn(state.continent) : [];
-  const searchable = continentCountries.length >= SEARCHABLE_FROM;
-  const visibleCountries = searchable
-    ? continentCountries.filter(
-        (c) =>
-          c.nameHe.includes(countryQuery.trim()) ||
-          c.nameEn.toLowerCase().includes(countryQuery.trim().toLowerCase())
-      )
-    : continentCountries;
-
   return (
-    <div className="page wiz">
-      <div className="wiz-head">
-        <button className="wiz-back" onClick={back} disabled={index === 0} aria-label="חזרה לשלב הקודם">
-          <Icon name="arrow" size={18} />
-        </button>
-        <h1 className="wiz-title" ref={headingRef} tabIndex={-1}>
-          {STEP_TITLES[step]}
-        </h1>
-        <p className="wiz-progress" aria-label={`שלב ${stepNumber} מתוך ${steps.length}`}>
-          <span className="wiz-progress-num">{stepNumber}</span>
-          <span className="wiz-progress-sep">/</span>
-          <span>{steps.length}</span>
-        </p>
-      </div>
+    <div className="page bld">
+      <h1 className="bld-title" ref={headingRef} tabIndex={-1}>
+        צור משחק
+      </h1>
 
-      {/* Orientation, from the third step on: what has been chosen already, in
-          one line. Not the summary — a player four steps in wants to remember
-          their answers, not read a receipt. */}
-      {stepNumber > 2 && !atLast && (
-        <p className="wiz-orient">{orientationOf(state, { answerMode: ANSWER_MODE_LABELS, difficulty: DIFFICULTY_LABELS })}</p>
-      )}
+      <Row label="איך עונים?">
+        {ANSWER_MODES.map((mode) => (
+          <Pill
+            key={mode.key}
+            label={mode.label}
+            on={state.answerMode === mode.key}
+            onClick={() => patch({ answerMode: mode.key })}
+          />
+        ))}
+      </Row>
 
-      {/* The step body. `key` is the step id, so the fade runs on a change of
-          step and not on every keystroke inside one — and because the state
-          lives above this, remounting the body costs nothing. */}
-      <div className="wiz-body" key={step}>
-        {step === "type" && (
-          /* Thirteen cards, so the list lives in a scroll area of its own. The
-             document must not scroll — that is the whole point of the wizard —
-             but a step with thirteen real choices cannot fit a 390x844 phone,
-             and the honest resolution is to move the overflow inside the step
-             where the header and the primary action stay put. */
-          <div className="wiz-grid wiz-grid-tight wiz-scroll" role="group" aria-label="סוג שאלות">
-            {/* Mixed first and visually marked as the recommendation: it is the
-                default, it shows off the breadth of the bank, and it is a real
-                draw across eleven types rather than an absent filter. */}
-            <OptionCard
-              icon="sliders"
-              label="מעורב"
-              note="מכל הסוגים"
-              count={options?.types?.[MIXED_TYPE_KEY]}
-              selected={state.questionType === MIXED_TYPE_KEY}
-              recommended
-              disabled={!enough(options?.types?.[MIXED_TYPE_KEY])}
-              onClick={() => patch({ questionType: MIXED_TYPE_KEY })}
-            />
-            {QUESTION_TYPES.map((type) => (
-              <OptionCard
-                key={type.key}
-                icon={type.icon}
-                label={type.labelHe}
-                note={type.noteHe}
-                count={options?.types?.[type.key]}
-                selected={state.questionType === type.key}
-                disabled={!enough(options?.types?.[type.key])}
-                onClick={() => patch({ questionType: type.key })}
-              />
-            ))}
-          </div>
+      <Row label="קושי">
+        {DIFFICULTY_CHOICES.map((d) => (
+          <Pill
+            key={d}
+            label={d === "MIXED" ? "מעורב" : DIFFICULTY_LABELS[d as Difficulty]}
+            on={state.difficulty === d}
+            common={DIFFICULTY_COMMON.includes(d)}
+            onClick={() => patch({ difficulty: d })}
+          />
+        ))}
+      </Row>
+
+      <Row label="שאלות">
+        {COUNT_CHOICES.map((n) => (
+          <Pill
+            key={n}
+            label={String(n)}
+            on={state.questionCount === n}
+            narrow
+            onClick={() => patch({ questionCount: n })}
+          />
+        ))}
+      </Row>
+
+      <Row label="סוג">
+        {types.map((key) => (
+          <Pill
+            key={key}
+            label={typeLabel(key)}
+            on={state.questionType === key}
+            onClick={() => patch({ questionType: key })}
+          />
+        ))}
+        {/* The remaining types are real and stay reachable; nobody has to read
+            thirteen options to start a mixed game. */}
+        <Pill
+          label={showMoreTypes ? "פחות" : "עוד"}
+          on={false}
+          quiet
+          onClick={() => {
+            sound.play("select");
+            setShowMoreTypes((v) => !v);
+          }}
+        />
+      </Row>
+
+      <Row label="מאיפה?">
+        {scopes.map((choice) => (
+          <Pill
+            key={choice.key}
+            label={choice.labelHe}
+            on={state.scope === choice.key}
+            onClick={() => patch({ scope: choice.key, scopeCountry: null })}
+          />
+        ))}
+        {/* A competition chosen in the picker is not one of the pills, so it
+            gets one of its own — otherwise the selection would be invisible. */}
+        {state.scope !== SCOPE_ALL && !scopes.some((s) => s.key === state.scope) && (
+          <Pill label={scopeLabel(state)} on onClick={() => setPicker(true)} />
         )}
+        <Pill
+          label="בחר ליגה"
+          on={false}
+          quiet
+          onClick={() => {
+            sound.play("select");
+            setPicker(true);
+          }}
+        />
+      </Row>
 
-        {step === "mode" && (
-          /* No "מעורב" here, deliberately. Mixing free text and multiple choice
-             inside one quiz means the input method changes under the player
-             between questions, which is a worse experience than either mode on
-             its own — the spec's own instruction is to prefer clarity over
-             forcing a Mixed option, and this is the step where that applies. */
-          <div className="wiz-grid wiz-grid-tall" role="group" aria-label="מצב תשובה">
-            {(
-              [
-                { key: "FREE_TEXT", label: "תשובה חופשית", note: "כותבים את התשובה", icon: "keyboard" },
-                { key: "MULTIPLE_CHOICE", label: "אמריקאי", note: "בוחרים מתוך אפשרויות", icon: "list" },
-              ] as const
-            ).map((option) => (
-              <OptionCard
-                key={option.key}
-                icon={option.icon}
-                label={option.label}
-                note={option.note}
-                selected={state.answerMode === option.key}
-                onClick={() => patch({ answerMode: option.key as AnswerMode })}
-              />
-            ))}
-          </div>
-        )}
-
-        {step === "settings" && (
-          <>
-            <Field label="רמת קושי">
-              <div className="wiz-pills" role="group" aria-label="רמת קושי">
-                {DIFFICULTY_OPTIONS.map((d) => (
-                  <button
-                    key={d}
-                    className={`wiz-pill ${state.difficulty === d ? "is-on" : ""} ${d === "MIXED" ? "is-rec" : ""}`}
-                    aria-pressed={state.difficulty === d}
-                    onClick={() => patch({ difficulty: d })}
-                  >
-                    {d === "MIXED" ? "מעורב" : DIFFICULTY_LABELS[d]}
-                  </button>
-                ))}
-              </div>
-              <p className="wiz-hint">
-                {state.difficulty === "MIXED"
-                  ? "תערובת מאוזנת — רוב השאלות שחקניות, עם טעימה מהרמות הגבוהות"
-                  : "כל השאלות באותה רמה"}
-              </p>
-            </Field>
-
-            <Field label="מספר שאלות">
-              <div className="wiz-counts" role="group" aria-label="מספר שאלות">
-                {WIZARD_QUESTION_COUNTS.map((n) => (
-                  <button
-                    key={n}
-                    className={`wiz-count ${state.questionCount === n ? "is-on" : ""} ${n === RECOMMENDED_COUNT ? "is-rec" : ""}`}
-                    aria-pressed={state.questionCount === n}
-                    onClick={() => patch({ questionCount: n })}
-                  >
-                    {n}
-                    {n === RECOMMENDED_COUNT && <span className="wiz-count-rec">מומלץ</span>}
-                  </button>
-                ))}
-              </div>
-            </Field>
-
-            <Availability counting={counting} count={availableCount} requested={state.questionCount} />
-          </>
-        )}
-
-        {step === "scope" && (
-          <div className="wiz-grid wiz-grid-fill" role="group" aria-label="טווח השאלות">
-            {(
-              [
-                { kind: "WORLD", icon: "globe", label: "כל העולם", note: "מכל הליגות והנבחרות", rec: true },
-                { kind: "REGION", icon: "shield", label: "אזור מסוים", note: "יבשת, מדינה או ליגה" },
-                { kind: "COMPETITION", icon: "flame", label: "תחרות", note: "ליגת האלופות, מונדיאל ועוד" },
-                { kind: "PRESET", icon: "sliders", label: "בחירות מהירות", note: "סטים מוכנים למשחק" },
-              ] as const
-            ).map((option) => (
-              <OptionCard
-                key={option.kind}
-                icon={option.icon}
-                label={option.label}
-                note={option.note}
-                recommended={"rec" in option ? option.rec : false}
-                selected={state.scope === option.kind}
-                onClick={() =>
-                  patch({
-                    scope: option.kind as ScopeKind,
-                    // Switching branch clears the other branches' answers, so a
-                    // half-finished drill-down cannot leak into a preset query.
-                    preset: null,
-                    competition: null,
-                    continent: null,
-                    country: null,
-                    league: null,
-                  })
-                }
-              />
-            ))}
-          </div>
-        )}
-
-        {step === "continent" && (
-          <div className="wiz-grid wiz-grid-tight wiz-grid-fill" role="group" aria-label="יבשת">
-            {SUPPORTED_CONTINENTS.map((continent) => {
-              const count = options?.continents?.[continent.code];
-              return (
-                <OptionCard
-                  key={continent.code}
-                  icon="globe"
-                  label={continent.labelHe}
-                  count={count}
-                  selected={state.continent === continent.code}
-                  disabled={!enough(count)}
-                  onClick={() => patch({ continent: continent.code, country: null, league: null })}
-                />
-              );
-            })}
-          </div>
-        )}
-
-        {step === "country" && (
-          <>
-            {searchable && (
-              <input
-                className="wiz-search"
-                type="search"
-                value={countryQuery}
-                onChange={(e) => setCountryQuery(e.target.value)}
-                placeholder="חיפוש מדינה"
-                aria-label="חיפוש מדינה"
-              />
-            )}
-            {/* A scroll area INSIDE the step, not a longer page. Twenty-one
-                European countries cannot fit a phone screen, and the one thing
-                the redesign must not undo is the document scrolling: the step
-                header and the primary action stay put while the list moves. */}
-            <div className={`wiz-scroll ${searchable ? "wiz-scroll-search" : ""}`}>
-              <div className="wiz-grid wiz-grid-tight" role="group" aria-label="מדינה">
-                <OptionCard
-                  icon="globe"
-                  label="כל היבשת"
-                  note="בלי לבחור מדינה"
-                  selected={state.country === null}
-                  onClick={() => patch({ country: null, league: null })}
-                />
-                {visibleCountries.map((country) => {
-                  const count = options?.countries?.[country.code];
-                  return (
-                    <OptionCard
-                      key={country.code}
-                      flag={country.flag}
-                      label={country.nameHe}
-                      count={count}
-                      selected={state.country === country.code}
-                      disabled={!enough(count)}
-                      onClick={() => patch({ country: country.code, league: null })}
-                    />
-                  );
-                })}
-              </div>
-              {visibleCountries.length === 0 && <p className="wiz-hint">לא נמצאה מדינה בשם הזה</p>}
-            </div>
-          </>
-        )}
-
-        {step === "league" && state.country && (
-          /* The domestic league AND the continental competitions the country's
-             clubs appear in. Scope matching is AND across dimensions now, so
-             "Spain" plus "Champions League" means Spanish clubs in the
-             Champions League — a real filter, and the reason this step has five
-             options instead of the two it had when it was built from
-             LEAGUE_BY_COUNTRY alone. */
-          <div className="wiz-grid wiz-grid-tight wiz-grid-fill" role="group" aria-label="ליגה">
-            <OptionCard
-              icon="sliders"
-              label="מעורב"
-              note="כל התחרויות במדינה"
-              count={options?.countries?.[state.country]}
-              selected={state.league === null}
-              recommended
-              onClick={() => patch({ league: null })}
-            />
-            {competitionsForCountry(state.country).map((code) => {
-              const count = options?.competitions?.[code];
-              return (
-                <OptionCard
-                  key={code}
-                  icon={code === leagueOf(state.country!) ? "trophy" : "flame"}
-                  label={competitionLabel(code)}
-                  count={count}
-                  selected={state.league === code}
-                  disabled={!enough(count)}
-                  onClick={() => patch({ league: code })}
-                />
-              );
-            })}
-          </div>
-        )}
-
-        {step === "competition" && (
-          <div className="wiz-scroll">
-            <div className="wiz-grid wiz-grid-tight" role="group" aria-label="תחרות">
-              {SCOPE_COMPETITIONS.map((competition) => {
-                const count = options?.competitions?.[competition.code];
-                return (
-                  <OptionCard
-                    key={competition.code}
-                    icon={competition.type === "LEAGUE" ? "trophy" : "flame"}
-                    label={competition.nameHe}
-                    count={count}
-                    selected={state.competition === competition.code}
-                    disabled={!enough(count)}
-                    onClick={() => patch({ competition: competition.code })}
-                  />
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {step === "preset" && (
-          <div className="wiz-scroll">
-            <div className="wiz-grid wiz-grid-wide" role="group" aria-label="בחירות מהירות">
-              {PRESETS.map((preset) => {
-                const count = options?.presets?.[preset.key];
-                const capped = count !== undefined && options?.presetCeiling === count;
-                return (
-                  <OptionCard
-                    key={preset.key}
-                    icon={preset.icon}
-                    label={preset.labelHe}
-                    note={preset.noteHe}
-                    count={count}
-                    countSuffix={capped ? "+" : ""}
-                    selected={state.preset === preset.key}
-                    disabled={!enough(count)}
-                    onClick={() => patch({ preset: preset.key })}
-                  />
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {step === "summary" && (
-          <>
-            <dl className="wiz-summary">
-              {summary.map((item) => (
-                <div className="wiz-summary-row" key={item.label}>
-                  <dt>{item.label}</dt>
-                  <dd>{item.value}</dd>
-                  <button
-                    className="wiz-edit"
-                    onClick={() => {
-                      sound.play("select");
-                      setIndex(Math.max(0, steps.indexOf(item.step)));
-                    }}
-                  >
-                    שינוי
-                  </button>
-                </div>
-              ))}
-            </dl>
-            <Availability counting={counting} count={availableCount} requested={state.questionCount} />
-          </>
-        )}
-      </div>
-
-      {/* The action sits in a sticky dock that respects the iPhone safe area and
-          never covers content: the body reserves its height. */}
-      <div className="wiz-dock">
-        <div className="page wiz-dock-inner">
+      <div className="bld-dock">
+        <div className="page bld-dock-inner">
           {error && (
-            <p className="wiz-error" role="alert">
+            <p className="bld-error" role="alert">
               {error}
             </p>
           )}
-          {atLast ? (
-            <button className="btn btn-primary btn-block" disabled={starting || none} onClick={start}>
-              {starting ? "יוצר…" : "התחל משחק"}
-              {!starting && <Icon name="arrow" size={17} />}
-            </button>
-          ) : (
-            <button className="btn btn-primary btn-block" disabled={!canAdvance(state, step)} onClick={next}>
-              המשך
-              <Icon name="arrow" size={17} />
-            </button>
+          <button className="btn btn-primary btn-block" disabled={starting || !canStart} onClick={start}>
+            {starting ? "יוצר…" : "התחל משחק"}
+            {!starting && <Icon name="arrow" size={17} />}
+          </button>
+          <p className="bld-avail" role="status" aria-live="polite">
+            {total === null ? (
+              <span className="faint">בודקים זמינות…</span>
+            ) : (
+              <>
+                <b className="num green">{total.toLocaleString("he-IL")}</b> שאלות מתאימות
+              </>
+            )}
+          </p>
+        </div>
+      </div>
+
+      {picker && (
+        <LeaguePicker
+          state={state}
+          onClose={() => setPicker(false)}
+          onPick={(competition, country) => {
+            sound.play("select");
+            setState((prev) => ({ ...prev, scope: competition, scopeCountry: country }));
+            setPicker(false);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <section className="bld-row">
+      <h2 className="bld-row-label">{label}</h2>
+      <div className="bld-pills" role="group" aria-label={label}>
+        {children}
+      </div>
+    </section>
+  );
+}
+
+/**
+ * One compact choice.
+ *
+ * Selection shows three ways — border, background and a tick — because colour
+ * alone fails for a colour-blind player and in bright sunlight, which is where
+ * a phone usually is.
+ */
+function Pill({
+  label,
+  on,
+  onClick,
+  common = false,
+  quiet = false,
+  narrow = false,
+}: {
+  label: string;
+  on: boolean;
+  onClick: () => void;
+  common?: boolean;
+  quiet?: boolean;
+  narrow?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      className={`bld-pill${on ? " is-on" : ""}${common ? " is-common" : ""}${quiet ? " is-quiet" : ""}${narrow ? " is-narrow" : ""}`}
+      aria-pressed={on}
+      onClick={onClick}
+    >
+      {on && <Icon name="check" size={13} />}
+      {label}
+    </button>
+  );
+}
+
+/**
+ * Continent → country → league, on demand.
+ *
+ * A sheet rather than three steps: this is the one place in the builder where
+ * drilling down is the point, and also the one place most players will never
+ * open. Each level shows only what can fill the requested quiz, measured against
+ * everything else already chosen, so the picker cannot be walked into a
+ * combination with nothing behind it.
+ */
+function LeaguePicker({
+  state,
+  onClose,
+  onPick,
+}: {
+  state: BuilderState;
+  onClose: () => void;
+  onPick: (competition: string, country: string | null) => void;
+}) {
+  const [continent, setContinent] = useState<Region | null>(null);
+  const [country, setCountry] = useState<string | null>(null);
+  const [counts, setCounts] = useState<AvailabilityResponse | null>(null);
+
+  const wanted = state.questionCount;
+  const { difficulty, answerMode, questionType } = state;
+
+  useEffect(() => {
+    let cancelled = false;
+    const dimensions = country ? ["competitions"] : continent ? ["countries"] : ["continents"];
+    fetchAvailability(pickerConfiguration(state, country), dimensions, { anyMode: true })
+      .then((res) => !cancelled && setCounts(res))
+      .catch(() => !cancelled && setCounts(null));
+    return () => {
+      cancelled = true;
+    };
+    // The rest of the selection is read so the counts respect it; only the
+    // level being browsed and those values change what has to be fetched.
+  }, [continent, country, wanted, difficulty, answerMode, questionType, state]);
+
+  const continents = SUPPORTED_CONTINENTS.filter((c) =>
+    isOfferable(counts?.continents?.[c.code], wanted)
+  );
+  const countryList = continent
+    ? countriesIn(continent).filter((c) => isOfferable(counts?.countries?.[c.code], wanted))
+    : [];
+  const competitionList = country
+    ? competitionsForCountry(country).filter((code) =>
+        isOfferable(counts?.competitions?.[code], wanted)
+      )
+    : [];
+
+  const back = () => {
+    if (country) setCountry(null);
+    else if (continent) setContinent(null);
+    else onClose();
+  };
+
+  const nothingHere =
+    (!continent && counts !== null && continents.length === 0) ||
+    (continent && !country && counts !== null && countryList.length === 0) ||
+    (country && counts !== null && competitionList.length === 0);
+
+  return (
+    <div className="bld-sheet-backdrop" onClick={onClose} role="presentation">
+      <div
+        className="bld-sheet"
+        role="dialog"
+        aria-label="בחירת ליגה"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="bld-sheet-head">
+          <button className="bld-sheet-back" onClick={back} aria-label="חזרה">
+            <Icon name="arrow" size={16} />
+          </button>
+          <h2 className="bld-sheet-title">
+            {country ? countryLabel(country) : continent ? "איזו מדינה?" : "איזו יבשת?"}
+          </h2>
+          <button className="bld-sheet-close" onClick={onClose} aria-label="סגירה">
+            <Icon name="cross" size={15} />
+          </button>
+        </div>
+
+        <div className="bld-sheet-body">
+          {!continent &&
+            continents.map((c) => (
+              <SheetRow
+                key={c.code}
+                label={c.labelHe}
+                count={counts?.continents?.[c.code]}
+                onClick={() => setContinent(c.code)}
+              />
+            ))}
+
+          {continent &&
+            !country &&
+            countryList.map((c) => (
+              <SheetRow
+                key={c.code}
+                label={`${c.flag} ${c.nameHe}`}
+                count={counts?.countries?.[c.code]}
+                onClick={() => setCountry(c.code)}
+              />
+            ))}
+
+          {country &&
+            competitionList.map((code) => (
+              <SheetRow
+                key={code}
+                label={competitionLabel(code)}
+                count={counts?.competitions?.[code]}
+                onClick={() => onPick(code, country)}
+              />
+            ))}
+
+          {nothingHere && (
+            <p className="bld-sheet-empty">
+              אין כאן מספיק שאלות. נסו פחות שאלות או קושי מעורב.
+            </p>
           )}
         </div>
       </div>
@@ -591,111 +428,18 @@ export function BuilderPage() {
 }
 
 /**
- * One selectable card: icon or flag, label, optional note, real count.
+ * One row in the picker, with its count.
  *
- * The count is what makes a dense grid informative rather than merely full.
- * "ישראל — 55" tells a player something true that no amount of card styling
- * can, and it is also the reason the card can be disabled honestly: the number
- * and the reason it is not selectable are the same fact.
+ * The one place counts appear, because it is the one place they help: choosing
+ * between Spain and Greece is a question about depth. On the main screen the
+ * same numbers on every pill would be noise.
  */
-function OptionCard({
-  icon,
-  flag,
-  label,
-  note,
-  count,
-  countSuffix = "",
-  selected,
-  disabled = false,
-  recommended = false,
-  onClick,
-}: {
-  icon?: string;
-  flag?: string;
-  label: string;
-  note?: string;
-  count?: number;
-  countSuffix?: string;
-  selected: boolean;
-  disabled?: boolean;
-  recommended?: boolean;
-  onClick: () => void;
-}) {
+function SheetRow({ label, count, onClick }: { label: string; count?: number; onClick: () => void }) {
   return (
-    <button
-      className={`wiz-card ${selected ? "is-on" : ""} ${disabled ? "is-off" : ""} ${recommended ? "is-rec" : ""}`}
-      aria-pressed={selected}
-      disabled={disabled}
-      onClick={onClick}
-      type="button"
-    >
-      {flag ? (
-        <span className="wiz-card-flag" aria-hidden="true">
-          {flag}
-        </span>
-      ) : (
-        icon && <Icon name={icon as never} size={22} />
-      )}
-      <span className="wiz-card-label">{label}</span>
-      {note && <span className="wiz-card-note">{note}</span>}
-      {disabled ? (
-        <span className="wiz-card-count is-off">לא מספיק שאלות כרגע</span>
-      ) : (
-        count !== undefined && (
-          <span className="wiz-card-count">
-            {count.toLocaleString("he-IL")}
-            {countSuffix} שאלות
-          </span>
-        )
-      )}
-      {recommended && !disabled && <span className="wiz-card-rec">מומלץ</span>}
+    <button type="button" className="bld-sheet-row" onClick={onClick}>
+      <span className="bld-sheet-row-label">{label}</span>
+      {count !== undefined && <span className="bld-sheet-count num">{count.toLocaleString("he-IL")}</span>}
+      <Icon name="arrow" size={14} />
     </button>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <section className="wiz-field">
-      <h2 className="wiz-field-label">{label}</h2>
-      {children}
-    </section>
-  );
-}
-
-/**
- * The real compatible pool count.
- *
- * Three states, and the middle one is the point: a filter that holds fewer
- * questions than were asked for says so here, before the player commits, rather
- * than producing a short quiz without explanation. Questions are never
- * duplicated to fill a quota.
- */
-function Availability({
-  counting,
-  count,
-  requested,
-}: {
-  counting: boolean;
-  count: number | null;
-  requested: number;
-}) {
-  return (
-    <p className="wiz-avail" role="status" aria-live="polite">
-      {counting ? (
-        <span className="faint">בודק…</span>
-      ) : count === null ? (
-        <span className="faint">לא הצלחנו לבדוק זמינות</span>
-      ) : count === 0 ? (
-        <span className="red">אין שאלות מתאימות — הרחיבו את הסינון</span>
-      ) : count < requested ? (
-        <span className="amber">
-          קיימות <b className="num">{count.toLocaleString("he-IL")}</b> שאלות שמתאימות לבחירה
-        </span>
-      ) : (
-        <span className="muted">
-          <b className="num green">{count.toLocaleString("he-IL")}</b> שאלות זמינות
-        </span>
-      )}
-    </p>
   );
 }

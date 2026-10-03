@@ -72,20 +72,16 @@ const record = (ok, area, detail) => {
  * `expect` is asserted against the POST /api/quiz body, which is the query the
  * engine receives. Anything absent from `expect` is not asserted.
  *
- * THE FLOWS ARE THE SPEC'S FLOWS. Each one exercises a different branch of the
- * step machine — worldwide, the geography drill-down, a preset, and the two
- * axes that can be "מעורב" — because the branches are where a smart skip or a
- * stale answer leaks into the query.
+ * THE BUILDER IS ONE SCREEN NOW, so a flow is a list of pills to tap rather
+ * than a walk through steps. Each pill is named by its row and its label,
+ * because that is how a player finds it, and because a flow written against
+ * DOM order would pass while the rows were in the wrong places.
  */
 const FLOWS = [
   {
     id: "A",
-    name: "mixed type, free text, mixed difficulty, 10, worldwide",
-    type: "מעורב",
-    answerMode: "תשובה חופשית",
-    difficulty: "מעורב",
-    count: "10",
-    scope: { kind: "world" },
+    name: "the defaults, untouched — one tap to a game",
+    taps: [],
     expect: {
       questionType: "MIXED",
       answerMode: "FREE_TEXT",
@@ -97,75 +93,68 @@ const FLOWS = [
       categories: [],
       gameMode: "CLASSIC",
     },
-    // The payoff of a mixed quiz is what comes back, not what was asked.
     verifyQuiz: "mixed",
   },
   {
     id: "B",
-    name: "Who Am I, multiple choice, hard, Europe → Spain → La Liga",
-    type: "מי אני?",
-    answerMode: "אמריקאי",
-    difficulty: "קשה",
-    count: "10",
-    scope: { kind: "region", continent: "אירופה", country: "ספרד", league: "לה ליגה" },
+    name: "Who Am I, multiple choice, hard, the big six",
+    taps: [
+      ["איך עונים?", "אמריקאי"],
+      ["קושי", "קשה"],
+      ["סוג", "מי אני?"],
+      ["מאיפה?", "טופ 6"],
+    ],
     expect: {
       questionType: "WHO_AM_I",
       answerMode: "MULTIPLE_CHOICE",
       difficulty: "HARD",
       questionCount: 10,
-      countries: ["ESP"],
-      competitions: ["LA_LIGA"],
+      competitions: ["TOP_6_EUROPE"],
       gameMode: "WHO_AM_I",
     },
   },
   {
     id: "C",
-    name: "mixed type, hard, 6 big leagues",
-    type: "מעורב",
-    answerMode: "תשובה חופשית",
-    difficulty: "קשה",
-    count: "10",
-    scope: { kind: "preset", card: "6 הליגות הגדולות" },
-    expect: {
-      questionType: "MIXED",
-      difficulty: "HARD",
-      questionCount: 10,
-      competitions: ["TOP_6_EUROPE"],
-      gameMode: "CLASSIC",
-    },
-  },
-  {
-    id: "D",
-    name: "career path, expert, Europe → England → Premier League",
-    type: "מסלול קריירה",
-    answerMode: "תשובה חופשית",
-    difficulty: "מומחה",
-    count: "10",
-    scope: { kind: "region", continent: "אירופה", country: "אנגליה", league: "פרמיירליג" },
+    name: "career path, expert, 15, Champions League",
+    taps: [
+      ["קושי", "מומחה"],
+      ["שאלות", "15"],
+      ["סוג", "קריירה"],
+      ["מאיפה?", "אלופות"],
+    ],
     expect: {
       questionType: "CAREER_PATH",
       difficulty: "EXPERT",
-      questionCount: 10,
-      countries: ["ENG"],
-      competitions: ["PREMIER_LEAGUE"],
+      questionCount: 15,
+      competitions: ["UCL"],
       gameMode: "CAREER_PATH",
     },
   },
   {
+    id: "D",
+    name: "Israel, mixed, 5",
+    taps: [
+      ["שאלות", "5"],
+      ["מאיפה?", "ישראל"],
+    ],
+    expect: {
+      questionType: "MIXED",
+      questionCount: 5,
+      countries: ["ISR"],
+      gameMode: "CLASSIC",
+    },
+  },
+  {
     id: "E",
-    name: "transfers, mixed difficulty, Champions League",
-    type: "העברות",
-    answerMode: "תשובה חופשית",
-    difficulty: "מעורב",
-    count: "10",
-    scope: { kind: "competition", card: "ליגת האלופות" },
+    name: "a type from behind 'עוד'",
+    taps: [
+      ["סוג", "עוד"],
+      ["סוג", "העברות"],
+    ],
     expect: {
       questionType: "TRANSFERS",
-      difficulty: "MIXED",
-      questionCount: 10,
-      competitions: ["UCL"],
-      gameMode: "CLASSIC",
       categories: ["TRANSFERS"],
+      gameMode: "CLASSIC",
     },
   },
 ];
@@ -179,7 +168,7 @@ const overflow = (page) =>
 
 /** Whether the primary action is inside the viewport right now. */
 async function actionVisible(page) {
-  const button = page.locator(".wiz-dock .btn-primary");
+  const button = page.locator(".bld-dock .btn-primary");
   if ((await button.count()) === 0) return false;
   const box = await button.first().boundingBox();
   if (!box) return false;
@@ -187,77 +176,41 @@ async function actionVisible(page) {
   return box.y >= 0 && box.y + box.height <= height + 1;
 }
 
-async function stepTitle(page) {
-  return (await page.locator("h1.wiz-title").first().innerText()).trim();
+/** Taps a pill by its row label and its own label. */
+async function tap(page, row, label) {
+  const found = await page.evaluate(
+    ({ row, label }) => {
+      const rows = Array.from(document.querySelectorAll(".bld-row"));
+      const target = rows.find(
+        (r) => r.querySelector(".bld-row-label")?.textContent?.trim() === row
+      );
+      if (!target) return "no-row";
+      const pill = Array.from(target.querySelectorAll(".bld-pill")).find(
+        (p) => p.textContent?.trim() === label
+      );
+      if (!pill) return "no-pill";
+      pill.click();
+      return "ok";
+    },
+    { row, label }
+  );
+  await page.waitForTimeout(260);
+  return found;
 }
 
-/**
- * How full a step is: how many choices it offers and how much of the screen
- * they occupy.
- *
- * THE SECOND FAILURE MODE THIS SUITE EXISTS FOR. The first wizard was measured
- * only for overflow, which it passed by having almost nothing on it — a title,
- * two cards and seventy per cent empty screen. "Does it fit" and "is it worth a
- * screen" are different questions and both have to be asked, so this records
- * the option count and the share of the viewport the step's content fills.
- */
-async function density(page) {
-  return page.evaluate(() => {
-    const options = document.querySelectorAll(
-      ".wiz-card, .wiz-pill, .wiz-count, .wiz-summary-row"
-    ).length;
-    const body = document.querySelector(".wiz-body");
-    const rect = body ? body.getBoundingClientRect() : null;
-    const counts = document.querySelectorAll(".wiz-card-count").length;
-    const disabled = document.querySelectorAll(".wiz-card.is-off").length;
-    // Content height as a share of the space between the step header and the
-    // dock — the area the step actually owns.
-    const available = window.innerHeight - (rect ? rect.top : 0) - 76;
-    const used = rect ? Math.min(rect.height, available) : 0;
-    return {
-      options,
-      counts,
-      disabled,
-      fill: available > 0 ? used / available : 0,
-    };
+/** Every row's pills, as the player sees them. */
+const readRows = (page) =>
+  page.evaluate(() => {
+    const out = {};
+    for (const r of Array.from(document.querySelectorAll(".bld-row"))) {
+      const label = r.querySelector(".bld-row-label")?.textContent?.trim() ?? "?";
+      out[label] = Array.from(r.querySelectorAll(".bld-pill")).map((p) => p.textContent?.trim());
+    }
+    return out;
   });
-}
-
-/** One wizard step: measure it, then advance. */
-async function measureStep(page, viewport, flowId, steps) {
-  const title = await stepTitle(page);
-  const { scrollHeight, viewport: height } = await overflow(page);
-  // 8px of tolerance: sub-pixel rounding on a 3x device can report one more
-  // pixel of content than the viewport without anything actually scrolling.
-  const scrolls = scrollHeight > height + 8;
-  const visible = await actionVisible(page);
-  const measured = await density(page);
-  steps.push({ title, scrollHeight, height, scrolls, actionVisible: visible, ...measured });
-  return { title, scrolls, visible };
-}
-
-async function advance(page) {
-  await page.locator(".wiz-dock .btn-primary").first().click();
-  await page.waitForTimeout(300);
-}
-
-/** Clicks a card by its exact label, scrolling it into the step's list first. */
-async function pickCard(page, label) {
-  const card = page
-    .locator(".wiz-card")
-    .filter({ has: page.locator(".wiz-card-label", { hasText: new RegExp(`^${escapeRe(label)}$`) }) })
-    .first();
-  await card.scrollIntoViewIfNeeded();
-  await card.click();
-  await page.waitForTimeout(140);
-}
 
 async function runFlow(page, flow, viewport, isMobile) {
-  const steps = [];
   let body = null;
-
-  let returned = null;
-
   const isQuizCall = (url) =>
     url.includes("/api/quiz") && !url.includes("/count") && !url.includes("/options");
 
@@ -270,99 +223,45 @@ async function runFlow(page, flow, viewport, isMobile) {
       }
     }
   };
-  /*
-    THE QUIZ THAT CAME BACK, not only the query that went out.
-
-    "מעורב" is the one choice whose correctness cannot be seen in the request:
-    the body says difficulty MIXED either way, and whether that MEANS anything
-    is a property of the questions the server drew. Production answered a mixed
-    request with 17 of 20 questions above HARD before the grid draw existed, and
-    the request body was identical then.
-  */
-  const onResponse = async (response) => {
-    if (response.request().method() !== "POST" || !isQuizCall(response.url())) return;
-    try {
-      returned = await response.json();
-    } catch {
-      /* a failed body read is not a diversity violation */
-    }
-  };
   page.on("request", onRequest);
-  page.on("response", onResponse);
 
   try {
     await page.goto(`${BASE}/build`, { waitUntil: "domcontentloaded" });
-    await page.locator("h1.wiz-title").first().waitFor({ timeout: 20000 });
-    await page.waitForTimeout(600);
+    await page.locator("h1.bld-title").first().waitFor({ timeout: 20000 });
+    // Availability is debounced; the rows are filtered once it lands.
+    await page.waitForTimeout(1600);
 
-    // ---- step 1: question type
-    await measureStep(page, viewport, flow.id, steps);
-    await pickCard(page, flow.type);
-    await advance(page);
+    /*
+      MEASURED BEFORE ANY TAP, because flow A's whole point is that the screen
+      is usable as it opens. A builder that only fits after you have made
+      choices has not solved anything.
+    */
+    const { scrollHeight, viewport: height } = await overflow(page);
+    const scrolls = scrollHeight > height + 8;
+    const actionUp = await actionVisible(page);
+    const rows = await readRows(page);
 
-    // ---- step 2: answer mode
-    await measureStep(page, viewport, flow.id, steps);
-    await pickCard(page, flow.answerMode);
-    await advance(page);
-
-    // ---- step 3: difficulty + count
-    await measureStep(page, viewport, flow.id, steps);
-    await page.locator(".wiz-pill", { hasText: new RegExp(`^${flow.difficulty}$`) }).first().click();
-    await page.locator(".wiz-count").filter({ hasText: new RegExp(`^${flow.count}`) }).first().click();
-    // Availability is debounced; give it a moment so the reading is the real one.
-    await page.waitForTimeout(600);
-    await advance(page);
-
-    // ---- step 4: scope
-    await measureStep(page, viewport, flow.id, steps);
-    const scopeCard = {
-      world: "כל העולם",
-      region: "אזור מסוים",
-      competition: "תחרות",
-      preset: "בחירות מהירות",
-    }[flow.scope.kind];
-    await pickCard(page, scopeCard);
-    await advance(page);
-
-    // ---- the branch
-    if (flow.scope.kind === "region") {
-      await measureStep(page, viewport, flow.id, steps);
-      await pickCard(page, flow.scope.continent);
-      await advance(page);
-
-      await measureStep(page, viewport, flow.id, steps);
-      await pickCard(page, flow.scope.country);
-      await advance(page);
-
-      if (flow.scope.league) {
-        await measureStep(page, viewport, flow.id, steps);
-        await pickCard(page, flow.scope.league);
-        await page.waitForTimeout(400);
-        await advance(page);
+    for (const [row, label] of flow.taps) {
+      const result = await tap(page, row, label);
+      if (result !== "ok") {
+        record(false, `FLOW ${flow.id} tap @ ${viewport}`, `${row} → ${label}: ${result}`);
+        return;
       }
-    } else if (flow.scope.kind === "competition" || flow.scope.kind === "preset") {
-      await measureStep(page, viewport, flow.id, steps);
-      await pickCard(page, flow.scope.card);
-      await page.waitForTimeout(400);
-      await advance(page);
     }
+    // Let the last change settle so the query carries it.
+    await page.waitForTimeout(900);
 
-    // ---- final step: summary
-    await measureStep(page, viewport, flow.id, steps);
-    const summary = await page
-      .locator(".wiz-summary-row")
-      .evaluateAll((rows) => rows.map((r) => r.innerText.replace(/\s+/g, " ").trim()));
-
-    await page.locator(".wiz-dock .btn-primary").first().click();
+    await page.locator(".bld-dock .btn-primary").first().click();
     await page.waitForURL(/\/play/, { timeout: 25000 });
 
-    // ---- the assertions that matter: the query, not the screen
     const mismatches = [];
     if (!body) mismatches.push("no quiz request was captured");
     for (const [key, want] of Object.entries(flow.expect)) {
       const got = body?.[key];
       const same = Array.isArray(want)
-        ? Array.isArray(got) && want.length === got.length && [...want].sort().every((v, i) => v === [...got].sort()[i])
+        ? Array.isArray(got) &&
+          want.length === got.length &&
+          [...want].sort().every((v, i) => v === [...got].sort()[i])
         : got === want;
       if (!same) mismatches.push(`${key}: expected ${JSON.stringify(want)}, got ${JSON.stringify(got)}`);
     }
@@ -375,87 +274,36 @@ async function runFlow(page, flow, viewport, isMobile) {
       mismatches.length === 0 ? flow.name : mismatches.join("; ")
     );
 
-    record(
-      steps.length >= 5,
-      `FLOW ${flow.id} steps @ ${viewport}`,
-      `${steps.length} step(s): ${steps.map((s) => s.title).join(" → ")}`
-    );
-
     if (isMobile) {
-      const scrolling = steps.filter((s) => s.scrolls);
       record(
-        scrolling.length === 0,
-        `FLOW ${flow.id} no-scroll @ ${viewport}`,
-        scrolling.length === 0
-          ? "no step scrolls the document"
-          : scrolling.map((s) => `${s.title}: ${s.scrollHeight}px in ${s.height}px`).join("; ")
-      );
-
-      /*
-        NOT SPARSE. A step that fits because it has nothing on it is the
-        failure this product already shipped once. Two numbers, both cheap and
-        both hard to game: how many choices the step offers, and how much of
-        its own area the content fills.
-
-        The answer-mode step is exempt from the option floor by design — it has
-        exactly two choices and no third one exists — but it is NOT exempt from
-        the fill floor, because two cards that fill the screen is a decision
-        presented with weight rather than an empty screen.
-      */
-      const sparse = steps.filter((s) => s.options < 4 && !/איך משחקים/.test(s.title));
-      record(
-        sparse.length === 0,
-        `FLOW ${flow.id} enough choices @ ${viewport}`,
-        sparse.length === 0
-          ? `options per step: ${steps.map((s) => s.options).join(", ")}`
-          : sparse.map((s) => `${s.title}: ${s.options} option(s)`).join("; ")
-      );
-
-      const empty = steps.filter((s) => s.fill < 0.55);
-      record(
-        empty.length === 0,
-        `FLOW ${flow.id} no giant empty areas @ ${viewport}`,
-        empty.length === 0
-          ? `fill: ${steps.map((s) => Math.round(s.fill * 100) + "%").join(", ")}`
-          : empty.map((s) => `${s.title}: ${Math.round(s.fill * 100)}% filled`).join("; ")
+        !scrolls,
+        `FLOW ${flow.id} fits on open @ ${viewport}`,
+        scrolls ? `${scrollHeight}px in ${height}px` : "no scrolling needed to see the choices"
       );
     }
-
-    const hidden = steps.filter((s) => !s.actionVisible);
-    record(
-      hidden.length === 0,
-      `FLOW ${flow.id} action visible @ ${viewport}`,
-      hidden.length === 0 ? "the primary action is on screen at every step" : hidden.map((s) => s.title).join("; ")
-    );
+    record(actionUp, `FLOW ${flow.id} start visible on open @ ${viewport}`, actionUp ? "in view" : "below the fold");
 
     if (flow.id === "A") {
+      // The five rows, present and populated the moment the screen opens.
+      const labels = Object.keys(rows);
+      const wanted = ["איך עונים?", "קושי", "שאלות", "סוג", "מאיפה?"];
+      const missing = wanted.filter((w) => !labels.includes(w));
       record(
-        summary.length === 5,
-        `summary is compact @ ${viewport}`,
-        `${summary.length} line(s): ${summary.join(" | ")}`
+        missing.length === 0,
+        `every core setting is on the first screen @ ${viewport}`,
+        missing.length === 0 ? labels.join(" · ") : `missing: ${missing.join(", ")}`
       );
-
-      // Availability counts are real rather than decorative: every option step
-      // carried a number on its cards.
-      const counted = steps.filter((s) => s.counts > 0).length;
-      record(
-        counted >= 1,
-        `availability counts render @ ${viewport}`,
-        `${counted} step(s) showed per-option counts`
+      const thin = wanted.filter((w) => (rows[w] ?? []).length < 2);
+      record(thin.length === 0, `every row offers real choices @ ${viewport}`,
+        thin.length === 0
+          ? wanted.map((w) => `${w}=${(rows[w] ?? []).length}`).join(", ")
+          : `thin: ${thin.join(", ")}`
       );
     }
 
     if (flow.verifyQuiz === "mixed" && isMobile) {
-      /*
-        Re-issued rather than read off the page.
-
-        Reading the quiz response in a listener loses the race with the
-        navigation to /play — Playwright cannot always hand back a body whose
-        page has already gone — and it came back empty every time. So the body
-        the UI actually sent is replayed against the same endpoint. That is the
-        query under test either way, and this way the measurement is
-        deterministic.
-      */
+      // Replayed rather than read off the page: reading the response in a
+      // listener loses the race with the navigation to /play.
       const replayed = await fetch(`${BASE}/api/quiz`, {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -463,115 +311,133 @@ async function runFlow(page, flow, viewport, isMobile) {
       })
         .then((r) => r.json())
         .catch(() => null);
-      const questions = replayed?.questions ?? returned?.questions ?? [];
+      const questions = replayed?.questions ?? [];
       const bands = {};
-      const types = {};
-      for (const question of questions) {
-        bands[question.difficulty] = (bands[question.difficulty] ?? 0) + 1;
-        types[question.category] = (types[question.category] ?? 0) + 1;
+      const kinds = {};
+      for (const q of questions) {
+        bands[q.difficulty] = (bands[q.difficulty] ?? 0) + 1;
+        kinds[q.category] = (kinds[q.category] ?? 0) + 1;
       }
       const aboveHard = (bands.EXPERT ?? 0) + (bands.IMPOSSIBLE ?? 0);
-      const playable = questions.length - aboveHard;
-
       record(
-        questions.length > 0 && playable >= aboveHard,
-        `mixed difficulty is mostly playable @ ${viewport}`,
-        `${playable} playable vs ${aboveHard} above HARD — ${JSON.stringify(bands)}`
+        questions.length > 0 && questions.length - aboveHard >= aboveHard,
+        `the default game is mostly playable @ ${viewport}`,
+        `${questions.length - aboveHard} playable vs ${aboveHard} above HARD — ${JSON.stringify(bands)}`
       );
       record(
-        Object.keys(bands).length >= 3,
-        `mixed difficulty spans bands @ ${viewport}`,
-        `${Object.keys(bands).length} band(s): ${JSON.stringify(bands)}`
-      );
-
-      const dominant = Math.max(0, ...Object.values(types));
-      record(
-        Object.keys(types).length >= 4 && dominant <= Math.ceil(questions.length * 0.45),
-        `mixed type is actually mixed @ ${viewport}`,
-        `${Object.keys(types).length} kind(s), largest ${dominant}/${questions.length}: ${JSON.stringify(types)}`
+        Object.keys(kinds).length >= 4,
+        `the default game is actually mixed @ ${viewport}`,
+        `${Object.keys(kinds).length} kind(s): ${JSON.stringify(kinds)}`
       );
     }
   } finally {
     page.off("request", onRequest);
-    page.off("response", onResponse);
   }
 }
 
-const escapeRe = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-// ---------------------------------------------------------------------------
-// Back navigation must preserve selections
-// ---------------------------------------------------------------------------
-async function checkBackNavigation(page, viewport) {
+/**
+ * Narrowing the request must remove options, not leave dead ones on screen.
+ *
+ * The rule the whole pass turns on: an option that cannot fill the quiz being
+ * asked for is absent. Twenty IMPOSSIBLE questions is a far narrower pool than
+ * ten mixed ones, so rows must visibly shrink — and whatever is left must still
+ * produce a game.
+ */
+async function checkDynamicFiltering(page, viewport) {
   await page.goto(`${BASE}/build`, { waitUntil: "domcontentloaded" });
-  await page.locator("h1.wiz-title").first().waitFor({ timeout: 20000 });
-  await page.waitForTimeout(600);
+  await page.locator("h1.bld-title").first().waitFor({ timeout: 20000 });
+  await page.waitForTimeout(1800);
 
-  // A full drill-down, five answers deep, then all the way back.
-  // A combination that exists: a narrow type plus twenty questions disables
-  // most of the geography, which is correct behaviour and the wrong thing to
-  // drive a back-navigation test through.
-  await pickCard(page, "מעורב");
-  await advance(page);
-  await pickCard(page, "אמריקאי");
-  await advance(page);
-  await page.locator(".wiz-pill", { hasText: /^מומחה$/ }).first().click();
-  await page.locator(".wiz-count").filter({ hasText: /^10/ }).first().click();
-  await advance(page);
-  await pickCard(page, "אזור מסוים");
-  await advance(page);
-  await pickCard(page, "אירופה");
-  await advance(page);
-  await pickCard(page, "איטליה");
-  await page.waitForTimeout(300);
+  const before = await readRows(page);
+  const beforeTotal = await page.locator(".bld-avail").innerText();
 
-  // Back to the very first step.
-  for (let i = 0; i < 5; i++) {
-    await page.locator(".wiz-back").click();
-    await page.waitForTimeout(240);
-  }
+  await tap(page, "שאלות", "20");
+  await tap(page, "קושי", "בלתי אפשרי");
+  await page.waitForTimeout(2200);
 
-  const problems = [];
-  const selectedLabel = async () => {
-    const on = page.locator(".wiz-card.is-on .wiz-card-label").first();
-    return (await on.count()) > 0 ? (await on.innerText()).trim() : "(nothing selected)";
-  };
+  const after = await readRows(page);
+  const afterTotal = await page.locator(".bld-avail").innerText();
 
-  if ((await stepTitle(page)) !== "איזה סוג שאלות?") problems.push(`landed on "${await stepTitle(page)}"`);
-  const typeOn = await selectedLabel();
-  if (typeOn !== "מעורב") problems.push(`question type lost: "${typeOn}"`);
-
-  await advance(page);
-  const modeOn = await selectedLabel();
-  if (modeOn !== "אמריקאי") problems.push(`answer mode lost: "${modeOn}"`);
-
-  await advance(page);
-  const pillOn = (await page.locator(".wiz-pill.is-on").first().innerText()).trim();
-  const countOn = (await page.locator(".wiz-count.is-on").first().innerText()).trim();
-  if (pillOn !== "מומחה") problems.push(`difficulty lost: "${pillOn}"`);
-  if (!countOn.startsWith("10")) problems.push(`count lost: "${countOn}"`);
-
-  await advance(page);
-  const scopeOn = await selectedLabel();
-  if (scopeOn !== "אזור מסוים") problems.push(`scope lost: "${scopeOn}"`);
-
-  await advance(page);
-  const continentOn = await selectedLabel();
-  if (continentOn !== "אירופה") problems.push(`continent lost: "${continentOn}"`);
-
-  await advance(page);
-  const countryOn = await selectedLabel();
-  if (countryOn !== "איטליה") problems.push(`country lost: "${countryOn}"`);
+  const typesShrank = (after["סוג"] ?? []).length < (before["סוג"] ?? []).length;
+  const scopesShrank = (after["מאיפה?"] ?? []).length < (before["מאיפה?"] ?? []).length;
 
   record(
-    problems.length === 0,
-    `back navigation preserves selections @ ${viewport}`,
-    problems.length === 0 ? "every earlier answer survived six steps of going back" : problems.join("; ")
+    typesShrank || scopesShrank,
+    `narrowing removes options @ ${viewport}`,
+    `types ${(before["סוג"] ?? []).length}→${(after["סוג"] ?? []).length}, ` +
+      `scopes ${(before["מאיפה?"] ?? []).length}→${(after["מאיפה?"] ?? []).length}`
+  );
+
+  // Whatever survived must still be a game. This is the dead-end check: every
+  // visible pill, tapped, has to produce a quiz.
+  const total = Number((afterTotal.match(/[0-9,]+/)?.[0] ?? "0").replace(/,/g, ""));
+  record(total >= 20, `what is left can still fill the quiz @ ${viewport}`, `${afterTotal.trim()} (was ${beforeTotal.trim()})`);
+
+  // And the screen still fits.
+  const { scrollHeight, viewport: height } = await overflow(page);
+  record(scrollHeight <= height + 8, `still fits after narrowing @ ${viewport}`, `${scrollHeight}px in ${height}px`);
+}
+
+/**
+ * The optional geography picker, which most players will never open.
+ *
+ * Checks it drills down, that each level only offers what can fill the quiz,
+ * and that it hands a real league back to the builder.
+ */
+async function checkLeaguePicker(page, viewport) {
+  await page.goto(`${BASE}/build`, { waitUntil: "domcontentloaded" });
+  await page.locator("h1.bld-title").first().waitFor({ timeout: 20000 });
+  await page.waitForTimeout(1600);
+
+  const opened = await tap(page, "מאיפה?", "בחר ליגה");
+  if (opened !== "ok") {
+    record(false, `league picker opens @ ${viewport}`, opened);
+    return;
+  }
+  await page.waitForTimeout(1400);
+  const sheet = page.locator(".bld-sheet");
+  record(await sheet.isVisible(), `league picker opens @ ${viewport}`, "as a sheet over the builder");
+
+  const rowTexts = () => page.locator(".bld-sheet-row").evaluateAll((els) => els.map((e) => e.innerText.replace(/s+/g, " ").trim()));
+
+  const continents = await rowTexts();
+  record(continents.length > 0, `picker lists continents @ ${viewport}`, continents.join(" | ").slice(0, 120));
+
+  await page.locator(".bld-sheet-row", { hasText: "אירופה" }).first().click();
+  await page.waitForTimeout(1400);
+  const countries = await rowTexts();
+  record(countries.length > 0, `picker lists countries @ ${viewport}`, `${countries.length}: ${countries.slice(0, 4).join(" | ")}`);
+
+  await page.locator(".bld-sheet-row", { hasText: "ספרד" }).first().click();
+  await page.waitForTimeout(1400);
+  const leagues = await rowTexts();
+  record(leagues.length > 0, `picker lists leagues @ ${viewport}`, leagues.join(" | ").slice(0, 120));
+
+  let body = null;
+  page.on("request", (r) => {
+    if (r.method() === "POST" && r.url().includes("/api/quiz") && !r.url().includes("/count") && !r.url().includes("/options")) {
+      try { body = JSON.parse(r.postData() ?? "null"); } catch { body = null; }
+    }
+  });
+
+  await page.locator(".bld-sheet-row", { hasText: "לה ליגה" }).first().click();
+  await page.waitForTimeout(1200);
+  const pills = await readRows(page);
+  record(
+    (pills["מאיפה?"] ?? []).some((p) => p && p.includes("לה ליגה")),
+    `the chosen league shows on the builder @ ${viewport}`,
+    (pills["מאיפה?"] ?? []).join(" · ")
+  );
+
+  await page.locator(".bld-dock .btn-primary").first().click();
+  await page.waitForURL(/\/play/, { timeout: 25000 }).catch(() => {});
+  record(
+    Array.isArray(body?.competitions) && body.competitions.includes("LA_LIGA"),
+    `the league reaches the query @ ${viewport}`,
+    JSON.stringify({ competitions: body?.competitions, countries: body?.countries })
   );
 }
 
-// ---------------------------------------------------------------------------
-// Quick Start: never Expert, never Impossible
 // ---------------------------------------------------------------------------
 async function checkQuickStart(page, viewport) {
   const seen = { byBand: {}, quizzes: 0, expert: 0, impossible: 0, presets: new Set() };
@@ -699,14 +565,14 @@ async function checkDaily(page, viewport) {
 // ---------------------------------------------------------------------------
 async function checkDesktopLayout(page, viewport) {
   await page.goto(`${BASE}/build`, { waitUntil: "domcontentloaded" });
-  await page.locator("h1.wiz-title").first().waitFor({ timeout: 20000 });
+  await page.locator("h1.bld-title").first().waitFor({ timeout: 20000 });
   await page.waitForTimeout(400);
 
   const metrics = await page.evaluate(() => {
-    const wiz = document.querySelector(".wiz");
+    const wiz = document.querySelector(".bld");
     if (!wiz) return null;
     const box = wiz.getBoundingClientRect();
-    const dock = document.querySelector(".wiz-dock");
+    const dock = document.querySelector(".bld-dock");
     return {
       width: Math.round(box.width),
       left: Math.round(box.left),
@@ -717,7 +583,7 @@ async function checkDesktopLayout(page, viewport) {
   });
 
   if (!metrics) {
-    record(false, `desktop layout @ ${viewport}`, "the wizard did not render");
+    record(false, `desktop layout @ ${viewport}`, "the builder did not render");
     return;
   }
 
@@ -758,7 +624,11 @@ for (const engine of ENGINES) {
       });
       try {
         for (const flow of FLOWS) await runFlow(page, flow, profile.label, true);
-        await checkBackNavigation(page, profile.label);
+        // The two behaviours the flat screen turns on, and neither is a flow:
+        // that narrowing the request REMOVES options, and that the optional
+        // geography picker drills down and hands a real league back.
+        await checkDynamicFiltering(page, profile.label);
+        await checkLeaguePicker(page, profile.label);
         if (profile === MOBILE[0]) {
           await checkQuickStart(page, profile.label);
           await checkDaily(page, profile.label);

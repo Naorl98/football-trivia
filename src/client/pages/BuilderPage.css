@@ -1,738 +1,332 @@
 /* ============================================================
-   The game-creation wizard
+   Create a game
    ============================================================
 
-   DESIGN RULES, which are the product's rules rather than taste:
+   DESIGN RULES, which are the product's rather than taste:
 
-   1. ONE SCREEN, ONE DECISION. A step is a title, one question's controls, and
-      the way forward. Nothing scrolls on a 390×844 phone on the common paths.
-   2. THE ACTION IS ALWAYS VISIBLE. A sticky dock, inside the safe area, whose
-      height the body reserves — so it never covers the thing you are reading.
-   3. THE EXISTING LOOK, UNCHANGED. Deep navy, pitch green for "selected",
-      off-white type, gold reserved for the scoreline elsewhere. No
-      glassmorphism, no gradients, no giant cards.
-   4. ANIMATION IS DECORATION. Every step is fully laid out and interactive
-      before its fade starts, and nothing's visibility depends on an animation
-      finishing. The last time that was not true this app shipped a dark screen.
+   1. ONE SCREEN. Five rows of choices and the action, inside a 390x844 phone,
+      with nothing important below the fold. The thing this replaced was an
+      eight-step wizard; the thing before that was a sixty-control page. Both
+      failed the same way — they asked the player to configure before playing.
+   2. PILLS, NOT CARDS. The previous build gave every option an icon, a
+      description and a count: 116px of card for one word. Density here comes
+      from the choices being small, not from the screen being full.
+   3. THE ACTION IS ALWAYS VISIBLE, in a sticky dock inside the safe area whose
+      height the body reserves, so it never covers the last row.
+   4. THE EXISTING LOOK. Deep navy, pitch green for "selected", off-white type.
+      No glassmorphism, no gradients, no settings-panel chrome.
 */
 
-.wiz {
-  /* The dock's height, reserved so the body can never sit under it. */
-  --dock-h: 76px;
+.bld {
+  /* The dock's height, reserved so the rows can never sit under it. */
+  --dock-h: 84px;
   display: flex;
   flex-direction: column;
-  padding-block: 14px 0;
+  gap: 10px;
+  padding-block: 12px 0;
   padding-block-end: calc(var(--dock-h) + env(safe-area-inset-bottom, 0px));
 }
 
 /*
-  NO min-height CLAIM ON THIS ELEMENT, and that is the fix for a bug the
-  Playwright pass caught.
+  No min-height on this element, and that is deliberate.
 
-  It used to say `min-height: calc(100dvh - var(--header-h))`, which reads
-  correctly — "fill what the header leaves" — and is wrong, because the app
-  shell also renders a footer. The page then measured 743px of content in a
-  664px viewport on an iPhone 14, at every single step, by exactly the footer's
-  height. The wizard itself fitted; the document scrolled anyway, which is the
-  thing the whole redesign is for.
-
-  Sized by its content instead. The shell is a flex column and the footer
-  carries `margin-block-start: auto`, so the footer still sits at the bottom of
-  a short page, and the dock is fixed and does not depend on this height at all.
+  `min-height: calc(100dvh - var(--header-h))` reads correctly and is wrong: the
+  app shell also renders a footer, so the page measured 743px of content in a
+  664px viewport at every size — by exactly the footer's height. Sized by its
+  content instead; the shell is a flex column whose footer carries
+  `margin-block-start: auto`, so a short page still pins the footer to the
+  bottom, and the dock is fixed and does not depend on this height at all.
 */
 
-/* ------------------------------------------------------------------ header */
-.wiz-head {
-  display: grid;
-  grid-template-columns: 36px 1fr auto;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 18px;
-}
-
-.wiz-back {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-sm);
-  background: var(--surface);
-  color: var(--text-2);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: color var(--t-2) var(--ease), border-color var(--t-2) var(--ease), opacity var(--t-2) var(--ease);
-}
-
-/* The page is RTL, so "back" points the other way from "forward". */
-.wiz-back svg { transform: scaleX(-1); }
-.wiz-back:hover:not(:disabled) { color: var(--text); border-color: var(--text-3); }
-.wiz-back:disabled { opacity: 0.3; cursor: default; }
-
-.wiz-title {
+.bld-title {
   font-family: var(--font-head);
   font-weight: 800;
-  font-size: clamp(1.25rem, 5vw, 1.6rem);
-  line-height: 1.2;
+  font-size: clamp(1.2rem, 5vw, 1.5rem);
+  line-height: 1.15;
   margin: 0;
 }
 
-/* Focused programmatically on each step change; the ring is the browser's. */
-.wiz-title:focus-visible { outline: 2px solid var(--green); outline-offset: 4px; border-radius: 4px; }
-.wiz-title:focus:not(:focus-visible) { outline: none; }
-
-/* Small, as asked: a counter, not a progress header. */
-.wiz-progress {
-  display: flex;
-  align-items: baseline;
-  gap: 2px;
-  margin: 0;
-  font-family: var(--font-head);
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--text-3);
-  font-variant-numeric: tabular-nums;
-}
-
-.wiz-progress-num { color: var(--green); font-size: 0.95rem; }
-.wiz-progress-sep { opacity: 0.5; }
-
-/* -------------------------------------------------------------------- body */
-.wiz-body {
-  flex: 1 1 auto;
+/* ------------------------------------------------------------------- a row */
+.bld-row {
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  /* A short fade-and-rise between steps. The content is laid out and clickable
-     from frame one; this only changes how it arrives. */
-  animation: wiz-step var(--t-3) var(--ease);
+  gap: 5px;
 }
 
-@keyframes wiz-step {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: none; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .wiz-body { animation: none; }
-}
-
-.wiz-group {
-  display: grid;
-  gap: 10px;
-  border: 0;
-  padding: 0;
+.bld-row-label {
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: var(--text-3);
   margin: 0;
+}
+
+.bld-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
   min-width: 0;
 }
 
-/* Step 1 only: two tall cards that fill the screen, because the answer mode is
-   the most consequential choice and deserves the weight. */
-.wiz-group-tall { grid-template-columns: 1fr 1fr; }
+/* ------------------------------------------------------------------ a pill */
+.bld-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  /* ~38px tall with this padding, which keeps a comfortable target while
+     fitting five rows and the dock on the shortest supported phone. */
+  padding: 7px 12px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-2);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.1;
+  cursor: pointer;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    border-color var(--t-2) var(--ease),
+    background-color var(--t-2) var(--ease),
+    color var(--t-2) var(--ease),
+    transform var(--t-1) var(--ease);
+}
 
-.wiz-card {
+.bld-pill:hover { color: var(--text); border-color: var(--text-3); }
+.bld-pill:active { transform: scale(0.96); }
+
+/*
+  Selected, shown three ways on purpose.
+
+  Border, background AND a tick, because colour alone fails for a colour-blind
+  player and in direct sunlight — which is where a phone usually is.
+*/
+.bld-pill.is-on {
+  border-color: var(--green);
+  background: var(--green-wash);
+  color: var(--green-bright);
+}
+
+.bld-pill.is-on svg { color: var(--green); }
+
+/* The three difficulties most people pick. A weight nudge, not a different
+   control: Expert and Impossible are still right there. */
+.bld-pill.is-common:not(.is-on) { color: var(--text); }
+
+/* "עוד" and "בחר ליגה" — doors, not choices, so they read quieter. */
+.bld-pill.is-quiet {
+  border-style: dashed;
+  border-color: var(--line);
+  color: var(--text-3);
+  font-weight: 500;
+}
+.bld-pill.is-quiet:hover { color: var(--text-2); border-color: var(--text-3); }
+
+/* The question counts are one or two digits; centred and even-width reads as a
+   segmented control rather than a ragged row. */
+.bld-pill.is-narrow {
+  min-width: 52px;
+  justify-content: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ----------------------------------------------------------------- the dock */
+.bld-dock {
+  position: fixed;
+  inset-inline: 0;
+  inset-block-end: 0;
+  z-index: 50;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(8px);
+  border-block-start: 1px solid var(--line);
+  padding-block-end: env(safe-area-inset-bottom, 0px);
+}
+
+.bld-dock-inner {
+  padding-block: 8px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 26px 14px;
-  border: 2px solid var(--line-strong);
-  border-radius: var(--r-md);
-  background: var(--surface);
-  color: var(--text-2);
-  cursor: pointer;
-  text-align: center;
-  -webkit-tap-highlight-color: transparent;
-  transition:
-    border-color var(--t-2) var(--ease),
-    background-color var(--t-2) var(--ease),
-    color var(--t-2) var(--ease),
-    transform var(--t-1) var(--ease);
+  gap: 5px;
 }
 
-.wiz-card svg { color: var(--text-3); transition: color var(--t-2) var(--ease); }
-.wiz-card:hover { color: var(--text); border-color: var(--text-3); }
-.wiz-card:active { transform: scale(0.985); }
-
-.wiz-card.is-on {
-  border-color: var(--green);
-  background: var(--green-wash);
-  color: var(--green-bright);
-}
-
-.wiz-card.is-on svg { color: var(--green); }
-
-.wiz-card-label {
-  font-family: var(--font-head);
-  font-weight: 700;
-  font-size: 1.02rem;
-}
-
-.wiz-card-note {
-  font-size: 0.78rem;
-  color: var(--text-3);
-  line-height: 1.3;
-}
-
-.wiz-card.is-on .wiz-card-note { color: color-mix(in srgb, var(--green-bright) 70%, var(--text-2)); }
-
-/* A one-line variant for the scope step, where the choice is a label not a mode. */
-.wiz-card-row {
-  flex-direction: row;
-  justify-content: flex-start;
-  gap: 12px;
-  padding: 18px 18px;
-  text-align: start;
-}
-
-/* ------------------------------------------------------------------- fields */
-.wiz-field { min-width: 0; }
-
-.wiz-field-label {
-  font-family: var(--font-head);
-  font-weight: 600;
-  font-size: 0.82rem;
-  color: var(--text-3);
-  margin: 0 0 8px;
-}
-
-.wiz-quick-label {
-  font-size: 0.74rem;
-  color: var(--text-3);
-  margin-block: 12px 6px;
-}
-
-.wiz-quick-label:first-of-type { margin-block-start: 0; }
-
-/* Difficulty: one compact row that wraps to two at most — never the long
-   vertical list the spec calls out. */
-.wiz-pills,
-.wiz-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.wiz-pill,
-.wiz-chip {
-  padding: 9px 14px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--r-pill);
-  background: var(--surface);
-  color: var(--text-2);
-  font-family: var(--font-head);
-  font-weight: 600;
-  font-size: 0.88rem;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition:
-    border-color var(--t-2) var(--ease),
-    background-color var(--t-2) var(--ease),
-    color var(--t-2) var(--ease),
-    transform var(--t-1) var(--ease);
-}
-
-.wiz-pill:active,
-.wiz-chip:active { transform: scale(0.97); }
-
-.wiz-pill:hover,
-.wiz-chip:hover { color: var(--text); border-color: var(--text-3); }
-
-.wiz-pill.is-on,
-.wiz-chip.is-on {
-  border-color: var(--green);
-  background: var(--green-wash);
-  color: var(--green-bright);
-}
-
-/* Question count: four equal targets on one line. */
-.wiz-counts {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-}
-
-.wiz-count {
-  padding: 14px 0;
-  border: 2px solid var(--line-strong);
-  border-radius: var(--r-sm);
-  background: var(--surface);
-  color: var(--text-2);
-  font-family: var(--font-head);
-  font-weight: 800;
-  font-size: 1.1rem;
-  font-variant-numeric: tabular-nums;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition:
-    border-color var(--t-2) var(--ease),
-    background-color var(--t-2) var(--ease),
-    color var(--t-2) var(--ease);
-}
-
-.wiz-count:hover { color: var(--text); border-color: var(--text-3); }
-
-.wiz-count.is-on {
-  border-color: var(--green);
-  background: var(--green-wash);
-  color: var(--green-bright);
-}
-
-/* ---------------------------------------------------------------- summary */
-.wiz-summary {
+.bld-avail {
   margin: 0;
-  border: 1px solid var(--line);
-  border-radius: var(--r-md);
-  background: var(--surface);
-  overflow: hidden;
-}
-
-.wiz-summary-row {
-  display: grid;
-  grid-template-columns: 64px 1fr auto;
-  align-items: baseline;
-  gap: 12px;
-  padding: 13px 16px;
-}
-
-.wiz-summary-row + .wiz-summary-row { border-block-start: 1px solid var(--line); }
-
-.wiz-summary-row dt {
+  text-align: center;
   font-size: 0.76rem;
   color: var(--text-3);
 }
 
-.wiz-summary-row dd {
-  margin: 0;
+.bld-error {
+  margin: 0 0 2px;
+  font-size: 0.8rem;
+  color: var(--red, #e5534b);
+  text-align: center;
+}
+
+/* ------------------------------------------------- the optional league picker */
+.bld-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(4, 8, 15, 0.62);
+  animation: fade-in 140ms var(--ease) both;
+}
+
+.bld-sheet {
+  width: 100%;
+  max-width: var(--page);
+  display: flex;
+  flex-direction: column;
+  /* Tall enough to be worth opening, short enough that it still reads as a
+     sheet over the builder rather than a new page. */
+  max-height: min(72dvh, 560px);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  border: 1px solid var(--line);
+  border-block-end: none;
+  background: var(--surface);
+  padding-block-end: env(safe-area-inset-bottom, 0px);
+  animation: sheet-up 220ms var(--ease) both;
+}
+
+@keyframes sheet-up {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+.bld-sheet-head {
+  display: grid;
+  grid-template-columns: 32px 1fr 32px;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-block-end: 1px solid var(--line);
+  flex: none;
+}
+
+.bld-sheet-title {
   font-family: var(--font-head);
   font-weight: 700;
-  font-size: 0.95rem;
-  color: var(--text);
-}
-
-.wiz-edit {
-  border: 0;
-  background: none;
-  padding: 2px 0;
-  color: var(--green);
-  font-family: var(--font-head);
-  font-weight: 600;
-  font-size: 0.78rem;
-  cursor: pointer;
-}
-
-.wiz-edit:hover { color: var(--green-bright); text-decoration: underline; }
-
-/* ----------------------------------------------------------- availability */
-.wiz-avail {
+  font-size: 1rem;
   margin: 0;
+  text-align: center;
+}
+
+.bld-sheet-back,
+.bld-sheet-close {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* The page is RTL, so "back" points the other way from "forward". */
+.bld-sheet-back svg { transform: scaleX(-1); }
+
+.bld-sheet-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+}
+
+.bld-sheet-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.95rem;
+  text-align: start;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color var(--t-2) var(--ease), background-color var(--t-2) var(--ease);
+}
+
+.bld-sheet-row:hover { border-color: var(--text-3); }
+.bld-sheet-row svg { color: var(--text-3); transform: scaleX(-1); }
+
+.bld-sheet-row-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bld-sheet-count {
+  font-size: 0.78rem;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.bld-sheet-empty {
+  margin: 10px 8px;
   font-size: 0.85rem;
-  line-height: 1.4;
-  text-align: center;
-  padding-block: 4px;
-}
-
-.wiz-avail b { font-size: 1.05rem; font-weight: 800; }
-
-/* ------------------------------------------------------------------- dock */
-.wiz-dock {
-  position: fixed;
-  inset-inline: 0;
-  inset-block-end: var(--dock-offset, 0px);
-  z-index: 60;
-  background: color-mix(in srgb, var(--bg) 94%, transparent);
-  backdrop-filter: blur(8px);
-  border-block-start: 1px solid var(--line-strong);
-  /* iPhone home-indicator clearance. */
-  padding-block-end: env(safe-area-inset-bottom, 0px);
-  transition: inset-block-end var(--t-3) var(--ease);
-}
-
-.wiz-dock-inner { padding-block: 12px; }
-
-.wiz-error {
-  margin: 0 0 8px;
-  color: var(--red);
-  font-size: 0.82rem;
-  font-weight: 600;
+  color: var(--text-3);
+  line-height: 1.5;
   text-align: center;
 }
 
-/* ---------------------------------------------------------------- phones */
-/*
-  390×844 and 393×852.
-
-  MEASURED, which is the only way to tune this. After the min-height fix every
-  step fitted on a 430×932 phone and four of five fitted on a 390×844 one —
-  the scope step came out 691px in a 664px viewport, 27px over, because it
-  carries two scope cards plus eleven quick-pick chips in two labelled groups.
-  Nothing there is removable: the chips are the shortcut that makes the wizard
-  worth using, and splitting competitions from question shapes is the thing the
-  old builder got wrong.
-
-  So the step is tightened rather than trimmed: smaller card padding, smaller
-  chips, tighter gaps between the groups and under the header. The numbers below
-  come to about 45px, which clears the 27px with room for a longer label.
-*/
+/* ------------------------------------------------------------------- phones */
 @media (max-width: 420px) {
-  .wiz-head { margin-bottom: 12px; }
-  .wiz-body { gap: 14px; }
-  .wiz-card { padding: 22px 10px; }
-  .wiz-card-row { padding: 13px 14px; }
-  .wiz-group { gap: 8px; }
-  .wiz-pill,
-  .wiz-chip { padding: 7px 11px; font-size: 0.83rem; }
-  .wiz-chips, .wiz-pills { gap: 5px; }
-  .wiz-quick-label { margin-block: 8px 5px; }
-  .wiz-field-label { margin-bottom: 6px; }
+  .bld { gap: 8px; padding-block: 10px 0; }
+  .bld-title { font-size: 1.15rem; }
+  .bld-row { gap: 4px; }
+  .bld-row-label { font-size: 0.72rem; }
+  .bld-pill { padding: 6px 10px; font-size: 0.83rem; }
+  .bld-pill.is-narrow { min-width: 44px; }
+  .bld-pills { gap: 4px; }
 }
 
-/* --------------------------------------------------------------- desktop */
+/* ------------------------------------------------------------------ desktop */
+/* The same screen, centred, with room to breathe — not a wide panel. The dock
+   becomes static because there is nothing to scroll away from. */
 @media (min-width: 1024px) {
-  /*
-    A centred, focused column — NOT a narrow strip beside an empty half-screen,
-    and not a full-width settings sheet. The wizard is the same wizard; it just
-    has room to breathe, and the action moves out of the fixed dock because there
-    is nothing to scroll away from.
-  */
-  .wiz {
-    /* 680px rather than 560: the grids are three columns wide now, and three
-       columns of 186px is a cramped card with a count under it. Still a focused
-       column — the cards get room, not the page. */
-    max-width: 680px;
+  .bld {
+    max-width: 620px;
     margin-inline: auto;
-    padding-block: 32px 40px;
-    padding-block-end: 40px;
+    padding-block: 30px 36px;
+    padding-block-end: 36px;
+    gap: 18px;
   }
 
-  .wiz-body { gap: 24px; }
-  .wiz-card { padding: 32px 20px; }
-  .wiz-count { padding: 16px 0; font-size: 1.2rem; }
+  .bld-pill { padding: 10px 15px; font-size: 0.92rem; }
 
-  .wiz-dock {
+  .bld-dock {
     position: static;
     background: none;
     backdrop-filter: none;
     border-block-start: 0;
     padding-block-end: 0;
-    margin-block-start: 8px;
+    margin-block-start: 6px;
   }
 
-  .wiz-dock-inner { padding: 0; max-width: none; }
+  .bld-dock-inner { padding: 0; max-width: none; }
+
+  .bld-sheet-backdrop { align-items: center; }
+  .bld-sheet {
+    max-width: 480px;
+    border-radius: var(--r-lg);
+    border-block-end: 1px solid var(--line);
+  }
 }
-
-/* ==================================================================== */
-/*  SECOND PASS: DENSITY                                                */
-/*                                                                      */
-/*  The first wizard solved the wall of filters and created the          */
-/*  opposite problem — a step with a title, two cards and seventy per    */
-/*  cent empty screen. These rules put the choices back without putting  */
-/*  the scrolling page back, and the distinction between those two is    */
-/*  the whole design: overflow moves INSIDE a step, so the step header   */
-/*  and the primary action never move.                                  */
-/* ==================================================================== */
-
-/* A compact two-column grid. Two columns is the most a 390px screen can
-   carry while keeping a 44px touch target and a readable label. */
-.wiz-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  border: 0;
-  padding: 0;
-  margin: 0;
-  min-width: 0;
-  align-content: start;
-}
-
-/*
-  The answer-mode step: two cards that FILL the screen.
-
-  This step has exactly two choices and no third one exists, so it cannot be
-  made dense the way the others were — and it was measured at 29% of its own
-  area, which is the empty-screen failure in its purest form. A step that cannot
-  have more options has to give the ones it has real weight instead, so the two
-  cards stack full width and take the height between them. It reads as a
-  deliberate fork rather than as a page someone forgot to finish.
-*/
-.wiz-grid-tall {
-  grid-template-columns: 1fr;
-  grid-auto-rows: 1fr;
-  align-content: stretch;
-  min-height: min(430px, calc(100dvh - var(--wiz-chrome)));
-}
-.wiz-grid-tall .wiz-card { padding: 24px 16px; gap: 10px; }
-.wiz-grid-tall .wiz-card svg { width: 30px; height: 30px; }
-.wiz-grid-tall .wiz-card-label { font-size: 1.15rem; }
-.wiz-grid-tall .wiz-card-note { font-size: 0.85rem; }
-
-/*
-  The country step keeps its search box outside the scroll area, so the area has
-  that much less room.
-
-  The compound selector is load-bearing. Written as `.wiz-scroll-search` alone
-  it has the same specificity as `.wiz-scroll`, which is declared further down
-  this file and therefore won — the rule was present, applied to the element,
-  and silently overridden, so the step kept overflowing by exactly the footer
-  height and looked like the allowance was wrong rather than ignored.
-*/
-.wiz-scroll.wiz-scroll-search { max-height: calc(100dvh - var(--wiz-chrome) - 84px); }
-
-/*
-  Steps whose grid does not scroll, stretched to fill the screen.
-
-  The continent step is six cards and the league step five — enough to be worth
-  a screen, not enough to fill a 430x932 one, where they measured 55% and 51%.
-  Rows stretch instead of the cards being redrawn bigger: the grid claims the
-  height and the cards divide it, so the same markup fills a large phone without
-  looking inflated on a small one. Capped, because two rows sharing 700px is the
-  other way to waste a screen.
-*/
-.wiz-grid-fill {
-  /*
-    340px, and the second term is a floor-safety rather than the real limit.
-
-    `100dvh` is NOT window.innerHeight on a phone — on the emulated iPhone 14
-    it resolves to the 844px device height while the usable viewport is 664 —
-    so a min-height derived from dvh alone forced 430px into a space that had
-    370px and overflowed by 31px at both of the smaller sizes. A min-height is
-    a floor: getting it wrong does not degrade, it overflows. So the cap is a
-    flat number small enough to be safe at the tightest supported size, checked
-    by measurement at all three.
-  */
-  min-height: min(340px, calc(100dvh - var(--wiz-chrome) - 60px));
-  align-content: stretch;
-  grid-auto-rows: 1fr;
-}
-
-/*
-  These grids are <div role="group">, not <fieldset>, and that is not cosmetic.
-
-  A fieldset is laid out through an anonymous content box, and inside one
-  `grid-auto-rows: 1fr` resolves against the content height instead of the
-  container: the grid dutifully reported min-height 430px with 1fr rows, and the
-  cards stayed 124px, leaving the empty screen the rule was added to fill. The
-  density metric passed too, because the GRID was the right height — only the
-  cards inside it were not. Visible in a screenshot, invisible in the number.
-*/
-
-/* Long lists — question types, countries, competitions. Shorter cards so more
-   of the list is visible at once, which is what makes the step feel full
-   rather than merely long: five rows of real options beats three rows of
-   generous padding. */
-.wiz-grid-tight { gap: 8px; }
-.wiz-grid-tight .wiz-card { padding: 10px 8px; gap: 2px; }
-.wiz-grid-tight .wiz-card-label { font-size: 0.92rem; line-height: 1.25; }
-.wiz-grid-tight .wiz-card-note {
-  font-size: 0.7rem;
-  line-height: 1.25;
-  /* One line. A two-line note on one card and a one-line note on the next
-     makes a grid of ragged cards, and the note is a hint rather than the
-     information the card is for. */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-}
-.wiz-grid-tight .wiz-card-count { font-size: 0.68rem; }
-.wiz-grid-tight .wiz-card svg { width: 19px; height: 19px; }
-
-/* Presets: one per row, because the subtitle naming what is inside it is the
-   reason to pick one and it needs the width to stay on one line. */
-.wiz-grid-wide {
-  grid-template-columns: 1fr;
-  gap: 8px;
-}
-.wiz-grid-wide .wiz-card {
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 12px;
-  padding: 12px 14px;
-  text-align: start;
-  flex-wrap: wrap;
-}
-.wiz-grid-wide .wiz-card-label { flex: 0 0 auto; }
-.wiz-grid-wide .wiz-card-note { flex: 1 1 100%; margin-inline-start: 34px; }
-.wiz-grid-wide .wiz-card-count { position: static; margin-inline-start: auto; }
-
-/*
-  THE SCROLL AREA, and why it is here rather than on the document.
-
-  `min-height: 0` is the load-bearing line. A flex child's default minimum is
-  its content, so without it this element refuses to shrink, grows past the
-  viewport and pushes the dock off screen — reintroducing the exact bug the
-  wizard exists to prevent, with an overflow rule that looks correct.
-
-  `overscroll-behavior: contain` stops a flick at the end of the list from
-  scrolling the page behind it, which on iOS is how an internal scroll area
-  still ends up moving the document.
-*/
-.wiz-scroll {
-  max-height: calc(100dvh - var(--wiz-chrome));
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
-  /* Breathing room so the last row is not flush against the dock. */
-  padding-block-end: 4px;
-}
-
-/*
-  THE CHROME ALLOWANCE, and why it is a measured constant rather than `flex: 1`.
-
-  `flex: 1 1 auto; min-height: 0` is the usual way to make a flex child scroll,
-  and it does nothing here: it makes the child fill its PARENT, and the parent
-  deliberately has no height. `.wiz` carries no min-height because claiming one
-  is what put 743px of content in a 664px viewport last time — the app shell
-  renders a footer below this page, and `100dvh - header` forgot it.
-
-  So the ceiling is stated against the viewport directly, and it has to account
-  for everything outside the scroll area that still occupies vertical space:
-
-    121px   the app header, the page's top padding and the step header
-     76px   the dock's reserved height (--dock-h plus the safe area)
-     78px   THE FOOTER, which is the one the previous fix was about
-     25px   the orientation line, present from the third step on
-
-  320px on a phone, verified by measurement at 390x844, 393x852 and 430x932
-  rather than asserted — which is how the 743px bug was found in the first
-  place. Over-reserving is the safe direction: it costs a little list and
-  guarantees the document never scrolls.
-*/
-.wiz { --wiz-chrome: 320px; }
-
-/* ------------------------------------------------------------ card extras */
-
-/* The availability count. This is what makes a dense grid informative rather
-   than merely full: a real number, read from the bank, under every option. */
-.wiz-card-count {
-  font-size: 0.72rem;
-  color: var(--text-3);
-  font-variant-numeric: tabular-nums;
-  line-height: 1.2;
-}
-
-.wiz-card.is-on .wiz-card-count { color: color-mix(in srgb, var(--green-bright) 65%, var(--text-2)); }
-.wiz-card-count.is-off { color: var(--amber, #c89a3c); }
-
-.wiz-card-flag {
-  font-size: 1.45rem;
-  line-height: 1;
-}
-
-/* Disabled, not hidden. "Scotland has eight questions" and "Scotland is
-   missing" are different facts, and only one of them is true. */
-.wiz-card.is-off {
-  cursor: not-allowed;
-  opacity: 0.55;
-  border-style: dashed;
-  border-color: var(--line);
-}
-.wiz-card.is-off:hover { color: var(--text-2); border-color: var(--line); }
-.wiz-card.is-off:active { transform: none; }
-
-/* The recommendation marker. A small badge rather than a bigger card, so
-   "recommended" reads as guidance instead of as the only real option. */
-.wiz-card.is-rec { border-color: color-mix(in srgb, var(--green) 55%, var(--line-strong)); }
-
-.wiz-card-rec {
-  font-family: var(--font-head);
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: var(--green);
-  background: var(--green-wash);
-  border-radius: 999px;
-  padding: 1px 7px;
-}
-
-/* ------------------------------------------------------- orientation + hints */
-
-/* What has been chosen already, in one line, from the third step on. */
-.wiz-orient {
-  margin: 0 0 10px;
-  font-size: 0.74rem;
-  color: var(--text-3);
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.wiz-hint {
-  margin: 8px 0 0;
-  font-size: 0.75rem;
-  color: var(--text-3);
-  line-height: 1.4;
-}
-
-/* ------------------------------------------------------------------ search */
-.wiz-search {
-  width: 100%;
-  padding: 11px 13px;
-  margin-bottom: 10px;
-  border: 2px solid var(--line-strong);
-  border-radius: var(--r-md);
-  background: var(--surface);
-  color: var(--text);
-  font: inherit;
-  font-size: 0.95rem;
-}
-.wiz-search::placeholder { color: var(--text-3); }
-.wiz-search:focus-visible { outline: none; border-color: var(--green); }
-
-/* -------------------------------------------------- recommended question count */
-.wiz-count { position: relative; }
-
-.wiz-count-rec {
-  position: absolute;
-  inset-block-start: 3px;
-  inset-inline-end: 0;
-  inset-inline-start: 0;
-  font-family: var(--font-head);
-  font-size: 0.55rem;
-  font-weight: 700;
-  color: var(--green);
-  letter-spacing: 0.03em;
-}
-.wiz-count.is-rec { border-color: color-mix(in srgb, var(--green) 45%, var(--line-strong)); }
-.wiz-count.is-rec.is-on { border-color: var(--green); }
-
-.wiz-pill.is-rec { border-color: color-mix(in srgb, var(--green) 45%, var(--line-strong)); }
-.wiz-pill.is-rec.is-on { border-color: var(--green); }
-
-/* ------------------------------------------------------------------- phones */
-@media (max-width: 420px) {
-  .wiz-grid { gap: 8px; }
-  .wiz-grid-tight { gap: 6px; }
-  .wiz-grid-tight .wiz-card { padding: 11px 8px; }
-  .wiz-grid-tall .wiz-card { padding: 26px 12px; }
-  .wiz-grid-wide .wiz-card { padding: 11px 12px; }
-  .wiz-card-count { font-size: 0.68rem; }
-  .wiz-orient { font-size: 0.7rem; }
-}
-
-/* ------------------------------------------------------------------ desktop */
-/* Wider screens get more columns rather than wider cards: a 1920px display
-   showing two cards a third of a metre across is the other way to waste a
-   screen. The column count is capped so the grid stays a focused block. */
-@media (min-width: 1024px) {
-  .wiz-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
-  .wiz-grid-tall { grid-template-columns: 1fr 1fr; }
-  .wiz-grid-wide { grid-template-columns: 1fr 1fr; }
-  .wiz-grid-tight .wiz-card { padding: 15px 12px; }
-  /* The dock is static on desktop and the viewport is short and wide, so the
-     allowance is smaller and the cap is what keeps the grid a focused block. */
-  .wiz { --wiz-chrome: 330px; }
-  .wiz-scroll { max-height: max(360px, calc(100dvh - var(--wiz-chrome))); }
-}
-
-/*
-  Three columns is the most this column should carry, at any width.
-
-  A four-column rule was here and it was the wrong kind of "use the space": at
-  680px it gives 160px cards, which is narrower than the phone shows them. The
-  spec allows three to four; three is the one that stays readable.
-*/

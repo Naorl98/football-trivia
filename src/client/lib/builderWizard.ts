@@ -1,36 +1,30 @@
-// The wizard's state machine.
+// The builder's model: one screen, five rows, and a rule about what may appear.
 //
-// WHY THIS IS NOT IN THE COMPONENT
+// THE THIRD SHAPE THIS HAS TAKEN, and the reason is worth stating once.
 //
-// The builder's job is to turn a handful of choices into a QuizConfiguration,
-// and the thing that went wrong with the original builder was not its CSS — it
-// was that every control was visible at once, so nothing told the player what
-// they were deciding. Fixing that makes the SEQUENCE of questions the design,
-// and a sequence with conditional steps is a state machine whether or not you
-// write it as one.
+//   1. everything on one scrolling page — sixty tap targets, no idea what you
+//      were deciding
+//   2. an eight-step wizard — one decision per screen, which fixed the wall and
+//      replaced it with a form you had to fill in before you could play
+//   3. this: one compact screen, every default already valid, Start reachable
+//      without touching anything
 //
-// Written as one here, outside React, for three reasons: the smart-skip rules
-// are testable without a DOM; "going back must preserve selections" falls out of
-// keeping one state object rather than unmounting steps; and the mapping from
-// choices to the quiz query is in one function that a test can assert over.
+// Step 2 was not wrong about density; it was wrong about CEREMONY. A quiz
+// builder is not a settings page, and a player who wants a game should not have
+// to answer four questions to get one. So the steps collapse into rows of
+// segmented controls, the defaults are a real game, and everything beyond that
+// is optional.
 //
-// WHAT CHANGED IN THE SECOND PASS. The first wizard fixed the wall of filters
-// and overshot: four steps, two of which offered two cards each. It was simple
-// and it was empty, and an empty step is not a low-cognitive-load step — it is a
-// step that makes you wonder whether the product has anything in it. So the
-// choices came back, with three rules that were not there the first time:
-//
-//   * every list is as long as the DATA justifies, not as long as looks tidy —
-//     thirty countries, twelve question types, every competition that has
-//     questions behind it;
-//   * "מעורב" exists wherever mixing is meaningful, and it is a real draw rather
-//     than an absent filter (see engine/mixedSelection.ts);
-//   * an option that cannot fill the quiz is DISABLED with its real count, not
-//     hidden, because "Scotland has eight questions" and "Scotland is missing"
-//     are different facts.
+// THE OTHER HALF IS WHAT IS NOT SHOWN. An option that cannot fill the quiz the
+// player asked for is not offered at all — not greyed out, not annotated,
+// absent. The previous build disabled such options and explained why, which is
+// honest and still wrong: it turns the screen into a list of things you cannot
+// have. Hiding them means every visible choice leads to a game, which is what
+// makes a dead end impossible rather than merely unlikely.
 
 import { COMPETITIONS, COUNTRIES, LEAGUE_BY_COUNTRY } from "../../shared/constants.ts";
-import { MIXED_TYPE_KEY, QUESTION_TYPE_BY_KEY } from "../../shared/questionTypes.ts";
+import { MIXED_TYPE_KEY, QUESTION_TYPES, QUESTION_TYPE_BY_KEY } from "../../shared/questionTypes.ts";
+import { PRESET_BY_KEY } from "../../shared/builderPresets.ts";
 import type {
   AnswerMode,
   Category,
@@ -40,84 +34,95 @@ import type {
   Region,
 } from "../../shared/types.ts";
 
-export type StepId =
-  | "type"
-  | "mode"
-  | "settings"
-  | "scope"
-  | "continent"
-  | "country"
-  | "league"
-  | "competition"
-  | "preset"
-  | "summary";
-
-/** Where the questions come from. The branches of the scope step. */
-export type ScopeKind = "WORLD" | "REGION" | "COMPETITION" | "PRESET";
-
-// Scope presets live in shared/builderPresets.ts — the worker needs them to
-// report a real count for every preset card. Re-exported so the page and the
-// tests keep importing them from the wizard.
 export { PRESETS, PRESET_BY_KEY, type Preset } from "../../shared/builderPresets.ts";
-import { PRESET_BY_KEY } from "../../shared/builderPresets.ts";
 
-/**
- * Competitions offered as a scope in their own right.
- *
- * Drawn from COMPETITIONS rather than retyped, minus the virtual group codes —
- * a group is a preset, not a competition — so this list cannot drift from the
- * one the query validator accepts. The wizard shows every entry with its real
- * count and disables the ones that cannot fill the quiz, which is how the
- * Conference League and Copa América are handled: both are real competitions
- * the bank has no questions for yet, and saying so is better than pretending
- * they do not exist.
- */
-export const SCOPE_COMPETITIONS = COMPETITIONS.filter((c) => c.type !== "GROUP");
+/** The scope row. `ALL` plus the presets that answer most of what people want. */
+export const SCOPE_ALL = "ALL";
 
-/**
- * The competitions offered once a country has been chosen.
- *
- * WHY THIS IS MORE THAN THE DOMESTIC LEAGUE. The bank defines exactly one league
- * per country, so a league step built from LEAGUE_BY_COUNTRY alone offers two
- * things — "all of it" and that one league — and measured at 40% of its own
- * screen. The honest way to fill it is not bigger cards, it is the other
- * competitions the country's clubs actually appear in.
- *
- * And they do appear: scope matching is now AND across dimensions, so "Spain"
- * plus "Champions League" means Spanish clubs in the Champions League, which is
- * a real and interesting filter rather than a union of the two. Continental
- * competitions are the ones that make sense here — a domestic league belongs to
- * one country, a World Cup to none.
- *
- * Nothing is assumed to have questions behind it. Each card carries its real
- * count, measured within the chosen country, and is disabled when it cannot
- * fill the quiz — which is how a country with no European pedigree shows an
- * empty Champions League card instead of a lie.
- */
-export const CONTINENTAL_COMPETITIONS = COMPETITIONS.filter((c) => c.type === "CONTINENTAL");
-
-export function competitionsForCountry(countryCode: string): string[] {
-  const domestic = LEAGUE_BY_COUNTRY[countryCode];
-  return [...(domestic ? [domestic] : []), ...CONTINENTAL_COMPETITIONS.map((c) => c.code)];
+export interface ScopeChoice {
+  /** `ALL`, or a preset key from shared/builderPresets. */
+  key: string;
+  /** Short enough for a pill. The preset's own label is the long form. */
+  labelHe: string;
 }
 
+/*
+  Eight pills, in the order a Hebrew-speaking football audience would reach for
+  them. "הכל" first because it is the default and the fastest route to a game;
+  Israel high because this is a Hebrew-first product and its league is a core
+  domain here rather than a long-tail one.
+
+  Labels are deliberately shorter than the presets' own: "אלופות" rather than
+  "ליגת האלופות", because this is a pill in a wrapped row and not a card.
+*/
+export const SCOPE_CHOICES: ScopeChoice[] = [
+  { key: SCOPE_ALL, labelHe: "הכל" },
+  { key: "top6", labelHe: "טופ 6" },
+  { key: "ucl", labelHe: "אלופות" },
+  { key: "wc", labelHe: "מונדיאל" },
+  { key: "nations", labelHe: "נבחרות" },
+  { key: "israel", labelHe: "ישראל" },
+  { key: "europe", labelHe: "אירופה" },
+  { key: "southamerica", labelHe: "דרום אמריקה" },
+];
+
 /**
- * Every continent, including the two with nothing in them.
+ * Question types, split into the ones worth showing and the rest.
  *
- * THIS USED TO BE FILTERED, and filtering it was wrong twice over.
- *
- * Africa and Oceania have no countries in the bank, so they were dropped — and
- * the step was left with four cards on a 932px phone, 200px of empty screen
- * below them, and no way to make it fuller except by inflating the cards. The
- * spec's own rule resolves it: disable, do not disappear. A card reading
- * "אפריקה — לא מספיק שאלות כרגע" is a true statement about the product, it
- * tells a player the continent is known rather than forgotten, and it fills the
- * grid with content instead of padding.
- *
- * The availability query reports every continent listed here, including a zero
- * for the ones with no countries, so "offered" never means "selectable". The
- * day African questions are harvested the card lights up on its own.
+ * Five on the main row, which is as many as fits without wrapping into a block.
+ * The others are real and stay reachable behind "עוד" — a player who wants a
+ * quiz of nothing but transfers can have one, but nobody has to read past
+ * thirteen options to start a mixed game.
  */
+export const MAIN_TYPE_KEYS = [MIXED_TYPE_KEY, "CLASSIC", "WHO_AM_I", "CAREER_PATH", "GUESS_THE_CLUB"];
+
+export const MORE_TYPE_KEYS = QUESTION_TYPES.map((t) => t.key).filter(
+  (key) => !MAIN_TYPE_KEYS.includes(key)
+);
+
+/** Short pill labels. The catalogue's own labels are the long form. */
+const TYPE_SHORT_HE: Record<string, string> = {
+  [MIXED_TYPE_KEY]: "מעורב",
+  CLASSIC: "קלאסי",
+  WHO_AM_I: "מי אני?",
+  CAREER_PATH: "קריירה",
+  GUESS_THE_CLUB: "נחש קבוצה",
+  CLUB_CONNECTION: "חיבור",
+  TRANSFERS: "העברות",
+  PLAYERS: "שחקנים",
+  COACHES: "מאמנים",
+  TITLES: "תארים",
+  UCL: "אלופות",
+  NATIONAL: "נבחרות",
+  CLUBS: "מועדונים",
+};
+
+export const typeLabel = (key: string): string =>
+  TYPE_SHORT_HE[key] ?? QUESTION_TYPE_BY_KEY.get(key)?.labelHe ?? key;
+
+/** Difficulties, in order, with the three most people want marked. */
+export const DIFFICULTY_CHOICES: (Difficulty | "MIXED")[] = [
+  "MIXED",
+  "EASY",
+  "NORMAL",
+  "HARD",
+  "EXPERT",
+  "IMPOSSIBLE",
+];
+
+/**
+ * The ones to emphasise visually.
+ *
+ * Expert and Impossible stay on the row — the full builder is where somebody
+ * who wants them goes — but they are not where the eye lands first.
+ */
+export const DIFFICULTY_COMMON: (Difficulty | "MIXED")[] = ["MIXED", "NORMAL", "HARD"];
+
+export const COUNT_CHOICES = [5, 10, 15, 20];
+
+// --------------------------------------------------------------- the advanced
+// picker, which exists so that geography is optional rather than compulsory.
+
 export const SUPPORTED_CONTINENTS: { code: Region; labelHe: string }[] = [
   { code: "EUROPE", labelHe: "אירופה" },
   { code: "SOUTH_AMERICA", labelHe: "דרום אמריקה" },
@@ -133,171 +138,180 @@ export const countriesIn = (continent: Region) =>
 export const leagueOf = (countryCode: string): string | null =>
   LEAGUE_BY_COUNTRY[countryCode] ?? null;
 
-export interface WizardState {
-  /** A key from shared/questionTypes, or MIXED. */
+/** Competitions offerable as a scope. Groups are presets, not competitions. */
+export const SCOPE_COMPETITIONS = COMPETITIONS.filter((c) => c.type !== "GROUP");
+
+export const CONTINENTAL_COMPETITIONS = COMPETITIONS.filter((c) => c.type === "CONTINENTAL");
+
+/**
+ * The competitions worth offering once a country is chosen.
+ *
+ * The domestic league plus the continental ones, because scope matching is AND
+ * across dimensions: "Spain" + "Champions League" means Spanish clubs in
+ * Europe, which is a real filter rather than a union of the two.
+ */
+export function competitionsForCountry(countryCode: string): string[] {
+  const domestic = LEAGUE_BY_COUNTRY[countryCode];
+  return [...(domestic ? [domestic] : []), ...CONTINENTAL_COMPETITIONS.map((c) => c.code)];
+}
+
+// ------------------------------------------------------------------- the state
+
+export interface BuilderState {
   questionType: string;
   answerMode: AnswerMode;
   difficulty: Difficulty | "MIXED";
   questionCount: number;
-  scope: ScopeKind;
-  /** Only meaningful when scope is PRESET. */
-  preset: string | null;
-  /** Only meaningful when scope is COMPETITION. */
-  competition: string | null;
-  /** Only meaningful when scope is REGION. */
-  continent: Region | null;
-  country: string | null;
-  /** null means "every league in the country". */
-  league: string | null;
+  /** `ALL`, a preset key, or a competition code chosen in the advanced picker. */
+  scope: string;
+  /** Set only by the advanced picker, and only to label the pill. */
+  scopeCountry: string | null;
 }
 
-export const INITIAL_STATE: WizardState = {
-  // Mixed leads on both of the axes that can be mixed: it is the recommended
-  // choice, and the one that shows off the breadth of the bank.
+/**
+ * Defaults that are a real game.
+ *
+ * This is the one-tap requirement, as data: free text because that is the mode
+ * the product is about, mixed on both axes because that is the broadest pool and
+ * the most varied quiz, ten questions, everywhere. 14,194 questions match, so
+ * Start works the moment the screen opens and nothing has to be touched.
+ */
+export const INITIAL_STATE: BuilderState = {
   questionType: MIXED_TYPE_KEY,
-  // Free text is the mode the product is actually about, so it leads.
   answerMode: "FREE_TEXT",
   difficulty: "MIXED",
   questionCount: 10,
-  scope: "WORLD",
-  preset: null,
-  competition: null,
-  continent: null,
-  country: null,
-  league: null,
+  scope: SCOPE_ALL,
+  scopeCountry: null,
 };
 
-/**
- * Which steps this state actually needs.
- *
- * THE SMART SKIPS, all of them, in one place:
- *
- *   כל העולם          → no geography to ask about at all
- *   a preset          → the preset already said where; no drill-down
- *   תחרות             → one competition step, no country or league
- *   אזור מסוים        → continent, then country, then league
- *   a country with no
- *   league in the bank → the league step does not appear
- *   כל היבשת          → neither does it, because no country was chosen
- *
- * Returning the list rather than a "next step" function is what makes the
- * progress indicator honest: "3 / 6" is computed from the steps this player will
- * actually see, not from a fixed total that sometimes lies.
- */
-export function stepsFor(state: WizardState): StepId[] {
-  const steps: StepId[] = ["type", "mode", "settings", "scope"];
-  if (state.scope === "REGION") {
-    steps.push("continent");
-    if (state.continent) steps.push("country");
-    if (state.country && leagueOf(state.country)) steps.push("league");
-  }
-  if (state.scope === "COMPETITION") steps.push("competition");
-  if (state.scope === "PRESET") steps.push("preset");
-  steps.push("summary");
-  return steps;
-}
-
-/** Whether the current step has enough to move on. */
-export function canAdvance(state: WizardState, step: StepId): boolean {
-  switch (step) {
-    case "type":
-    case "mode":
-    case "settings":
-    case "scope":
-    case "league":
-    case "summary":
-      return true;
-    case "continent":
-      // A continent alone is a usable filter: "anywhere in Europe" is a real
-      // choice and should not be blocked on picking a country.
-      return state.continent !== null;
-    case "country":
-      // "כל היבשת" is represented by a null country, so this step is always
-      // satisfied once it is reachable.
-      return true;
-    case "competition":
-      return state.competition !== null;
-    case "preset":
-      return state.preset !== null;
-  }
-}
-
-/** Which availability dimension a step needs counts for, if any. */
-export function dimensionFor(step: StepId): string[] {
-  switch (step) {
-    case "type":
-      return ["types"];
-    case "continent":
-      return ["continents"];
-    case "country":
-      return ["countries"];
-    case "league":
-      // Two dimensions, because this step compares a whole country against one
-      // of its leagues: "מעורב" is the country's count and the other card is the
-      // league's. Asking only for competitions would leave the mixed card — the
-      // recommended one — as the only option on the step with no number on it.
-      return ["countries", "competitions"];
-    case "competition":
-      return ["competitions"];
-    case "preset":
-      return ["presets"];
-    default:
-      return [];
-  }
+/** Counts per option key, as the availability endpoint returns them. */
+export interface Availability {
+  total: number;
+  types?: Record<string, number>;
+  presets?: Record<string, number>;
+  competitions?: Record<string, number>;
+  countries?: Record<string, number>;
+  continents?: Record<string, number>;
 }
 
 /**
- * Turns the wizard's state into the quiz query.
+ * Whether an option may be shown.
  *
- * This function is the contract between the UI and the engine, and it is the one
- * the Playwright flows assert against — "verify the query, not just the UI" is
- * only possible because the mapping lives in one place with no React around it.
+ * THE RULE THAT PREVENTS A DEAD END. An option is offered when it can fill the
+ * quiz that is currently being asked for — not when it has any questions at
+ * all. Eight questions is a real pool and a useless one if ten were requested,
+ * so it is absent rather than disabled.
  *
- * THE REGION FIELD IS DELIBERATELY LEFT AT WORLD when a continent is chosen, and
- * the continent is expressed as its countries instead. There are only three
- * REGION scope values in the bank — WORLD, EUROPE and SOUTH_AMERICA — so
- * `region: "ASIA"` matched nothing and Israel, a core domain for this audience,
- * was unreachable through the geography branch. The COUNTRY dimension is
- * populated for all thirty countries, so a continent is the set of its
- * countries. Measured: the seven big European countries give 1,111 questions
- * against REGION=EUROPE's 1,106, so the continent that did have a tag loses
- * nothing by being expressed this way.
- *
- * Note what is NOT set: `preset`. A player who walked through the wizard and
- * chose "מומחה" has asked for Expert questions and gets them. Only the home
- * page's one-tap presets carry QUICK_START, and only those get the accessible
- * difficulty mix.
+ * An UNKNOWN count is permitted, deliberately. Availability arrives a moment
+ * after the screen does and can fail outright; hiding everything we have not
+ * measured yet would make the builder flicker on open and empty itself if the
+ * endpoint were down. Unknown means "shown", and the Start button's own count
+ * is the backstop.
  */
-export function toConfiguration(state: WizardState): QuizConfiguration {
+export function isOfferable(count: number | undefined, wanted: number): boolean {
+  return count === undefined || count >= wanted;
+}
+
+/** Question types to render, in row order, given what the pool can serve. */
+export function offerableTypes(
+  availability: Availability | null,
+  wanted: number,
+  showMore: boolean
+): string[] {
+  const keys = showMore ? [...MAIN_TYPE_KEYS, ...MORE_TYPE_KEYS] : MAIN_TYPE_KEYS;
+  return keys.filter((key) => isOfferable(availability?.types?.[key], wanted));
+}
+
+/** Scope pills to render, given what the pool can serve. */
+export function offerableScopes(availability: Availability | null, wanted: number): ScopeChoice[] {
+  return SCOPE_CHOICES.filter((choice) =>
+    choice.key === SCOPE_ALL
+      ? isOfferable(availability?.total, wanted)
+      : isOfferable(availability?.presets?.[choice.key], wanted)
+  );
+}
+
+/**
+ * Repairs a selection that the latest counts have made unservable.
+ *
+ * Choices interact: asking for twenty questions can empty a type that was fine
+ * at five, and picking Israel can empty a type that was fine worldwide. Without
+ * this the screen would keep a selection it no longer offers — the state would
+ * disagree with the UI, and Start would produce the "no questions" dead end
+ * this whole pass exists to remove.
+ *
+ * Falls back to the mixed option on each axis, which is the widest pool there
+ * is and therefore the one most likely to be servable.
+ */
+export function repair(state: BuilderState, availability: Availability | null): BuilderState {
+  if (!availability) return state;
+  let next = state;
+
+  const typeCount = availability.types?.[state.questionType];
+  if (!isOfferable(typeCount, state.questionCount) && state.questionType !== MIXED_TYPE_KEY) {
+    next = { ...next, questionType: MIXED_TYPE_KEY };
+  }
+
+  if (state.scope !== SCOPE_ALL) {
+    const scopeCount = PRESET_BY_KEY.has(state.scope)
+      ? availability.presets?.[state.scope]
+      : availability.competitions?.[state.scope];
+    if (!isOfferable(scopeCount, state.questionCount)) {
+      next = { ...next, scope: SCOPE_ALL, scopeCountry: null };
+    }
+  }
+
+  return next;
+}
+
+/** What the scope pill reads once the advanced picker has been used. */
+export function scopeLabel(state: BuilderState): string {
+  if (state.scope === SCOPE_ALL) return "הכל";
+  const preset = PRESET_BY_KEY.get(state.scope);
+  if (preset) return SCOPE_CHOICES.find((c) => c.key === state.scope)?.labelHe ?? preset.labelHe;
+  const competition = COMPETITIONS.find((c) => c.code === state.scope);
+  return competition?.nameHe ?? state.scope;
+}
+
+/**
+ * Turns the builder's state into the quiz query.
+ *
+ * The contract between the UI and the engine, and the function the Playwright
+ * flows assert against — "verify the query, not just the screen" is only
+ * possible because the mapping lives in one place with no React around it.
+ *
+ * `region` stays WORLD even for a continent, and the continent travels as its
+ * COUNTRIES instead: there are only three REGION scope values in the bank, so
+ * `region: "ASIA"` matched nothing and Israel was unreachable that way.
+ *
+ * Note what is NOT set: `preset`. A player who chose "מומחה" here asked for
+ * Expert and gets it. Only the home page's one-tap games carry QUICK_START, and
+ * only those get the accessible difficulty bands.
+ */
+export function toConfiguration(state: BuilderState): QuizConfiguration {
   const spec = state.questionType === MIXED_TYPE_KEY ? null : QUESTION_TYPE_BY_KEY.get(state.questionType);
 
   const base = {
     region: "WORLD" as Region,
     countries: [] as string[],
     competitions: ["ALL"] as string[],
-    // A question type's categories and a preset's categories are both real
-    // filters, and only one of them can be in force: the type is chosen first
-    // and a preset that carries categories replaces them, because a player who
-    // picked "נבחרות" after "העברות" means national-team questions.
     categories: (spec?.categories ?? []) as Category[],
     gameMode: (spec?.mode ?? "CLASSIC") as GameMode,
   };
 
-  if (state.scope === "PRESET" && state.preset) {
-    const preset = PRESET_BY_KEY.get(state.preset);
-    if (preset) {
-      if (preset.region) base.region = preset.region;
-      if (preset.countries) base.countries = preset.countries;
-      if (preset.competitions) base.competitions = preset.competitions;
-      if (preset.categories) base.categories = preset.categories;
-    }
-  } else if (state.scope === "COMPETITION" && state.competition) {
-    base.competitions = [state.competition];
-  } else if (state.scope === "REGION" && state.continent) {
-    base.countries = state.country ? [state.country] : countriesIn(state.continent).map((c) => c.code);
-    // A league chosen inside a country narrows further; "every league" leaves
-    // the country filter to do the work on its own.
-    if (state.league) base.competitions = [state.league];
+  const preset = PRESET_BY_KEY.get(state.scope);
+  if (preset) {
+    if (preset.region) base.region = preset.region;
+    if (preset.countries) base.countries = preset.countries;
+    if (preset.competitions) base.competitions = preset.competitions;
+    // A preset's categories replace the type's: somebody who picked "נבחרות"
+    // after "העברות" meant national-team questions.
+    if (preset.categories) base.categories = preset.categories;
+  } else if (state.scope !== SCOPE_ALL) {
+    // A competition from the advanced picker, optionally inside a country.
+    base.competitions = [state.scope];
+    if (state.scopeCountry) base.countries = [state.scopeCountry];
   }
 
   return {
@@ -313,81 +327,7 @@ export function toConfiguration(state: WizardState): QuizConfiguration {
   };
 }
 
-/** The compact final summary, as label/value pairs in reading order. */
-export function summaryOf(
-  state: WizardState,
-  labels: {
-    answerMode: Record<AnswerMode, string>;
-    difficulty: Record<string, string>;
-    competition: (code: string) => string;
-    country: (code: string) => string;
-  }
-): { step: StepId; label: string; value: string }[] {
-  const scopeValue = (() => {
-    if (state.scope === "WORLD") return "כל העולם";
-    if (state.scope === "PRESET") {
-      return PRESET_BY_KEY.get(state.preset ?? "")?.labelHe ?? "בחירה מהירה";
-    }
-    if (state.scope === "COMPETITION") {
-      return state.competition ? labels.competition(state.competition) : "תחרות";
-    }
-    const parts: string[] = [];
-    if (state.continent) {
-      parts.push(SUPPORTED_CONTINENTS.find((c) => c.code === state.continent)?.labelHe ?? "");
-    }
-    parts.push(state.country ? labels.country(state.country) : "כל היבשת");
-    if (state.league) parts.push(labels.competition(state.league));
-    return parts.filter(Boolean).join(" → ");
-  })();
-
-  const scopeStep: StepId =
-    state.scope === "REGION"
-      ? state.league
-        ? "league"
-        : state.country
-          ? "country"
-          : "continent"
-      : state.scope === "COMPETITION"
-        ? "competition"
-        : state.scope === "PRESET"
-          ? "preset"
-          : "scope";
-
-  return [
-    {
-      step: "type",
-      label: "סוג שאלות",
-      value:
-        state.questionType === MIXED_TYPE_KEY
-          ? "מעורב"
-          : (QUESTION_TYPE_BY_KEY.get(state.questionType)?.labelHe ?? state.questionType),
-    },
-    { step: "mode", label: "איך משחקים", value: labels.answerMode[state.answerMode] },
-    {
-      step: "settings",
-      label: "קושי",
-      value: state.difficulty === "MIXED" ? "מעורב" : labels.difficulty[state.difficulty],
-    },
-    { step: "settings", label: "כמות", value: `${state.questionCount} שאלות` },
-    { step: scopeStep, label: "מקור", value: scopeValue },
-  ];
-}
-
-/**
- * The one-line orientation chip shown at the top of later steps.
- *
- * Deliberately short and deliberately not the full summary: it exists so a
- * player four steps in can see what they already chose without the step turning
- * into a receipt. Three values, the ones that change how the quiz plays.
- */
-export function orientationOf(
-  state: WizardState,
-  labels: { answerMode: Record<AnswerMode, string>; difficulty: Record<string, string> }
-): string {
-  const type =
-    state.questionType === MIXED_TYPE_KEY
-      ? "מעורב"
-      : (QUESTION_TYPE_BY_KEY.get(state.questionType)?.labelHe ?? state.questionType);
-  const difficulty = state.difficulty === "MIXED" ? "מעורב" : labels.difficulty[state.difficulty];
-  return `${type} · ${labels.answerMode[state.answerMode]} · ${difficulty} · ${state.questionCount}`;
+/** The configuration the advanced picker's counts should be measured against. */
+export function pickerConfiguration(state: BuilderState, country: string | null): QuizConfiguration {
+  return toConfiguration({ ...state, scope: SCOPE_ALL, scopeCountry: country });
 }
