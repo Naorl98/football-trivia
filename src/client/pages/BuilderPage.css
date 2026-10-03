@@ -397,7 +397,10 @@
     is nothing to scroll away from.
   */
   .wiz {
-    max-width: 560px;
+    /* 680px rather than 560: the grids are three columns wide now, and three
+       columns of 186px is a cramped card with a count under it. Still a focused
+       column — the cards get room, not the page. */
+    max-width: 680px;
     margin-inline: auto;
     padding-block: 32px 40px;
     padding-block-end: 40px;
@@ -418,3 +421,318 @@
 
   .wiz-dock-inner { padding: 0; max-width: none; }
 }
+
+/* ==================================================================== */
+/*  SECOND PASS: DENSITY                                                */
+/*                                                                      */
+/*  The first wizard solved the wall of filters and created the          */
+/*  opposite problem — a step with a title, two cards and seventy per    */
+/*  cent empty screen. These rules put the choices back without putting  */
+/*  the scrolling page back, and the distinction between those two is    */
+/*  the whole design: overflow moves INSIDE a step, so the step header   */
+/*  and the primary action never move.                                  */
+/* ==================================================================== */
+
+/* A compact two-column grid. Two columns is the most a 390px screen can
+   carry while keeping a 44px touch target and a readable label. */
+.wiz-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+  align-content: start;
+}
+
+/*
+  The answer-mode step: two cards that FILL the screen.
+
+  This step has exactly two choices and no third one exists, so it cannot be
+  made dense the way the others were — and it was measured at 29% of its own
+  area, which is the empty-screen failure in its purest form. A step that cannot
+  have more options has to give the ones it has real weight instead, so the two
+  cards stack full width and take the height between them. It reads as a
+  deliberate fork rather than as a page someone forgot to finish.
+*/
+.wiz-grid-tall {
+  grid-template-columns: 1fr;
+  grid-auto-rows: 1fr;
+  align-content: stretch;
+  min-height: min(430px, calc(100dvh - var(--wiz-chrome)));
+}
+.wiz-grid-tall .wiz-card { padding: 24px 16px; gap: 10px; }
+.wiz-grid-tall .wiz-card svg { width: 30px; height: 30px; }
+.wiz-grid-tall .wiz-card-label { font-size: 1.15rem; }
+.wiz-grid-tall .wiz-card-note { font-size: 0.85rem; }
+
+/*
+  The country step keeps its search box outside the scroll area, so the area has
+  that much less room.
+
+  The compound selector is load-bearing. Written as `.wiz-scroll-search` alone
+  it has the same specificity as `.wiz-scroll`, which is declared further down
+  this file and therefore won — the rule was present, applied to the element,
+  and silently overridden, so the step kept overflowing by exactly the footer
+  height and looked like the allowance was wrong rather than ignored.
+*/
+.wiz-scroll.wiz-scroll-search { max-height: calc(100dvh - var(--wiz-chrome) - 84px); }
+
+/*
+  Steps whose grid does not scroll, stretched to fill the screen.
+
+  The continent step is six cards and the league step five — enough to be worth
+  a screen, not enough to fill a 430x932 one, where they measured 55% and 51%.
+  Rows stretch instead of the cards being redrawn bigger: the grid claims the
+  height and the cards divide it, so the same markup fills a large phone without
+  looking inflated on a small one. Capped, because two rows sharing 700px is the
+  other way to waste a screen.
+*/
+.wiz-grid-fill {
+  /*
+    340px, and the second term is a floor-safety rather than the real limit.
+
+    `100dvh` is NOT window.innerHeight on a phone — on the emulated iPhone 14
+    it resolves to the 844px device height while the usable viewport is 664 —
+    so a min-height derived from dvh alone forced 430px into a space that had
+    370px and overflowed by 31px at both of the smaller sizes. A min-height is
+    a floor: getting it wrong does not degrade, it overflows. So the cap is a
+    flat number small enough to be safe at the tightest supported size, checked
+    by measurement at all three.
+  */
+  min-height: min(340px, calc(100dvh - var(--wiz-chrome) - 60px));
+  align-content: stretch;
+  grid-auto-rows: 1fr;
+}
+
+/*
+  These grids are <div role="group">, not <fieldset>, and that is not cosmetic.
+
+  A fieldset is laid out through an anonymous content box, and inside one
+  `grid-auto-rows: 1fr` resolves against the content height instead of the
+  container: the grid dutifully reported min-height 430px with 1fr rows, and the
+  cards stayed 124px, leaving the empty screen the rule was added to fill. The
+  density metric passed too, because the GRID was the right height — only the
+  cards inside it were not. Visible in a screenshot, invisible in the number.
+*/
+
+/* Long lists — question types, countries, competitions. Shorter cards so more
+   of the list is visible at once, which is what makes the step feel full
+   rather than merely long: five rows of real options beats three rows of
+   generous padding. */
+.wiz-grid-tight { gap: 8px; }
+.wiz-grid-tight .wiz-card { padding: 10px 8px; gap: 2px; }
+.wiz-grid-tight .wiz-card-label { font-size: 0.92rem; line-height: 1.25; }
+.wiz-grid-tight .wiz-card-note {
+  font-size: 0.7rem;
+  line-height: 1.25;
+  /* One line. A two-line note on one card and a one-line note on the next
+     makes a grid of ragged cards, and the note is a hint rather than the
+     information the card is for. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.wiz-grid-tight .wiz-card-count { font-size: 0.68rem; }
+.wiz-grid-tight .wiz-card svg { width: 19px; height: 19px; }
+
+/* Presets: one per row, because the subtitle naming what is inside it is the
+   reason to pick one and it needs the width to stay on one line. */
+.wiz-grid-wide {
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+.wiz-grid-wide .wiz-card {
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  text-align: start;
+  flex-wrap: wrap;
+}
+.wiz-grid-wide .wiz-card-label { flex: 0 0 auto; }
+.wiz-grid-wide .wiz-card-note { flex: 1 1 100%; margin-inline-start: 34px; }
+.wiz-grid-wide .wiz-card-count { position: static; margin-inline-start: auto; }
+
+/*
+  THE SCROLL AREA, and why it is here rather than on the document.
+
+  `min-height: 0` is the load-bearing line. A flex child's default minimum is
+  its content, so without it this element refuses to shrink, grows past the
+  viewport and pushes the dock off screen — reintroducing the exact bug the
+  wizard exists to prevent, with an overflow rule that looks correct.
+
+  `overscroll-behavior: contain` stops a flick at the end of the list from
+  scrolling the page behind it, which on iOS is how an internal scroll area
+  still ends up moving the document.
+*/
+.wiz-scroll {
+  max-height: calc(100dvh - var(--wiz-chrome));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  /* Breathing room so the last row is not flush against the dock. */
+  padding-block-end: 4px;
+}
+
+/*
+  THE CHROME ALLOWANCE, and why it is a measured constant rather than `flex: 1`.
+
+  `flex: 1 1 auto; min-height: 0` is the usual way to make a flex child scroll,
+  and it does nothing here: it makes the child fill its PARENT, and the parent
+  deliberately has no height. `.wiz` carries no min-height because claiming one
+  is what put 743px of content in a 664px viewport last time — the app shell
+  renders a footer below this page, and `100dvh - header` forgot it.
+
+  So the ceiling is stated against the viewport directly, and it has to account
+  for everything outside the scroll area that still occupies vertical space:
+
+    121px   the app header, the page's top padding and the step header
+     76px   the dock's reserved height (--dock-h plus the safe area)
+     78px   THE FOOTER, which is the one the previous fix was about
+     25px   the orientation line, present from the third step on
+
+  320px on a phone, verified by measurement at 390x844, 393x852 and 430x932
+  rather than asserted — which is how the 743px bug was found in the first
+  place. Over-reserving is the safe direction: it costs a little list and
+  guarantees the document never scrolls.
+*/
+.wiz { --wiz-chrome: 320px; }
+
+/* ------------------------------------------------------------ card extras */
+
+/* The availability count. This is what makes a dense grid informative rather
+   than merely full: a real number, read from the bank, under every option. */
+.wiz-card-count {
+  font-size: 0.72rem;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.wiz-card.is-on .wiz-card-count { color: color-mix(in srgb, var(--green-bright) 65%, var(--text-2)); }
+.wiz-card-count.is-off { color: var(--amber, #c89a3c); }
+
+.wiz-card-flag {
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+/* Disabled, not hidden. "Scotland has eight questions" and "Scotland is
+   missing" are different facts, and only one of them is true. */
+.wiz-card.is-off {
+  cursor: not-allowed;
+  opacity: 0.55;
+  border-style: dashed;
+  border-color: var(--line);
+}
+.wiz-card.is-off:hover { color: var(--text-2); border-color: var(--line); }
+.wiz-card.is-off:active { transform: none; }
+
+/* The recommendation marker. A small badge rather than a bigger card, so
+   "recommended" reads as guidance instead of as the only real option. */
+.wiz-card.is-rec { border-color: color-mix(in srgb, var(--green) 55%, var(--line-strong)); }
+
+.wiz-card-rec {
+  font-family: var(--font-head);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--green);
+  background: var(--green-wash);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+
+/* ------------------------------------------------------- orientation + hints */
+
+/* What has been chosen already, in one line, from the third step on. */
+.wiz-orient {
+  margin: 0 0 10px;
+  font-size: 0.74rem;
+  color: var(--text-3);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wiz-hint {
+  margin: 8px 0 0;
+  font-size: 0.75rem;
+  color: var(--text-3);
+  line-height: 1.4;
+}
+
+/* ------------------------------------------------------------------ search */
+.wiz-search {
+  width: 100%;
+  padding: 11px 13px;
+  margin-bottom: 10px;
+  border: 2px solid var(--line-strong);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.95rem;
+}
+.wiz-search::placeholder { color: var(--text-3); }
+.wiz-search:focus-visible { outline: none; border-color: var(--green); }
+
+/* -------------------------------------------------- recommended question count */
+.wiz-count { position: relative; }
+
+.wiz-count-rec {
+  position: absolute;
+  inset-block-start: 3px;
+  inset-inline-end: 0;
+  inset-inline-start: 0;
+  font-family: var(--font-head);
+  font-size: 0.55rem;
+  font-weight: 700;
+  color: var(--green);
+  letter-spacing: 0.03em;
+}
+.wiz-count.is-rec { border-color: color-mix(in srgb, var(--green) 45%, var(--line-strong)); }
+.wiz-count.is-rec.is-on { border-color: var(--green); }
+
+.wiz-pill.is-rec { border-color: color-mix(in srgb, var(--green) 45%, var(--line-strong)); }
+.wiz-pill.is-rec.is-on { border-color: var(--green); }
+
+/* ------------------------------------------------------------------- phones */
+@media (max-width: 420px) {
+  .wiz-grid { gap: 8px; }
+  .wiz-grid-tight { gap: 6px; }
+  .wiz-grid-tight .wiz-card { padding: 11px 8px; }
+  .wiz-grid-tall .wiz-card { padding: 26px 12px; }
+  .wiz-grid-wide .wiz-card { padding: 11px 12px; }
+  .wiz-card-count { font-size: 0.68rem; }
+  .wiz-orient { font-size: 0.7rem; }
+}
+
+/* ------------------------------------------------------------------ desktop */
+/* Wider screens get more columns rather than wider cards: a 1920px display
+   showing two cards a third of a metre across is the other way to waste a
+   screen. The column count is capped so the grid stays a focused block. */
+@media (min-width: 1024px) {
+  .wiz-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .wiz-grid-tall { grid-template-columns: 1fr 1fr; }
+  .wiz-grid-wide { grid-template-columns: 1fr 1fr; }
+  .wiz-grid-tight .wiz-card { padding: 15px 12px; }
+  /* The dock is static on desktop and the viewport is short and wide, so the
+     allowance is smaller and the cap is what keeps the grid a focused block. */
+  .wiz { --wiz-chrome: 330px; }
+  .wiz-scroll { max-height: max(360px, calc(100dvh - var(--wiz-chrome))); }
+}
+
+/*
+  Three columns is the most this column should carry, at any width.
+
+  A four-column rule was here and it was the wrong kind of "use the space": at
+  680px it gives 160px cards, which is narrower than the phone shows them. The
+  spec allows three to four; three is the one that stays readable.
+*/

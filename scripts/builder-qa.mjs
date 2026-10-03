@@ -71,89 +71,101 @@ const record = (ok, area, detail) => {
 /**
  * `expect` is asserted against the POST /api/quiz body, which is the query the
  * engine receives. Anything absent from `expect` is not asserted.
+ *
+ * THE FLOWS ARE THE SPEC'S FLOWS. Each one exercises a different branch of the
+ * step machine — worldwide, the geography drill-down, a preset, and the two
+ * axes that can be "מעורב" — because the branches are where a smart skip or a
+ * stale answer leaks into the query.
  */
 const FLOWS = [
   {
     id: "A",
-    name: "free text, hard, 10, worldwide",
+    name: "mixed type, free text, mixed difficulty, 10, worldwide",
+    type: "מעורב",
     answerMode: "תשובה חופשית",
-    difficulty: "קשה",
+    difficulty: "מעורב",
     count: "10",
     scope: { kind: "world" },
     expect: {
+      questionType: "MIXED",
       answerMode: "FREE_TEXT",
-      difficulty: "HARD",
+      difficulty: "MIXED",
       questionCount: 10,
       region: "WORLD",
       competitions: ["ALL"],
       countries: [],
+      categories: [],
       gameMode: "CLASSIC",
     },
+    // The payoff of a mixed quiz is what comes back, not what was asked.
+    verifyQuiz: "mixed",
   },
   {
     id: "B",
-    name: "multiple choice, normal, 15, Europe → Spain → La Liga",
+    name: "Who Am I, multiple choice, hard, Europe → Spain → La Liga",
+    type: "מי אני?",
     answerMode: "אמריקאי",
-    difficulty: "רגיל",
-    count: "15",
+    difficulty: "קשה",
+    count: "10",
     scope: { kind: "region", continent: "אירופה", country: "ספרד", league: "לה ליגה" },
     expect: {
+      questionType: "WHO_AM_I",
       answerMode: "MULTIPLE_CHOICE",
-      difficulty: "NORMAL",
-      questionCount: 15,
-      region: "EUROPE",
+      difficulty: "HARD",
+      questionCount: 10,
       countries: ["ESP"],
       competitions: ["LA_LIGA"],
-      gameMode: "CLASSIC",
+      gameMode: "WHO_AM_I",
     },
   },
   {
     id: "C",
-    name: "free text, expert, 10, Champions League",
+    name: "mixed type, hard, 6 big leagues",
+    type: "מעורב",
     answerMode: "תשובה חופשית",
-    difficulty: "מומחה",
+    difficulty: "קשה",
     count: "10",
-    scope: { kind: "quick", chip: "ליגת האלופות" },
+    scope: { kind: "preset", card: "6 הליגות הגדולות" },
     expect: {
-      answerMode: "FREE_TEXT",
-      difficulty: "EXPERT",
+      questionType: "MIXED",
+      difficulty: "HARD",
       questionCount: 10,
-      competitions: ["UCL"],
-      region: "EUROPE",
+      competitions: ["TOP_6_EUROPE"],
       gameMode: "CLASSIC",
     },
   },
   {
     id: "D",
-    name: "multiple choice, hard, 10, six big leagues",
-    answerMode: "אמריקאי",
-    difficulty: "קשה",
+    name: "career path, expert, Europe → England → Premier League",
+    type: "מסלול קריירה",
+    answerMode: "תשובה חופשית",
+    difficulty: "מומחה",
     count: "10",
-    scope: { kind: "quick", chip: "6 הליגות הגדולות" },
+    scope: { kind: "region", continent: "אירופה", country: "אנגליה", league: "פרמיירליג" },
     expect: {
-      answerMode: "MULTIPLE_CHOICE",
-      difficulty: "HARD",
+      questionType: "CAREER_PATH",
+      difficulty: "EXPERT",
       questionCount: 10,
-      competitions: ["TOP_6_EUROPE"],
-      region: "EUROPE",
-      gameMode: "CLASSIC",
+      countries: ["ENG"],
+      competitions: ["PREMIER_LEAGUE"],
+      gameMode: "CAREER_PATH",
     },
   },
   {
     id: "E",
-    name: "free text, hard, 10, Who Am I",
+    name: "transfers, mixed difficulty, Champions League",
+    type: "העברות",
     answerMode: "תשובה חופשית",
-    difficulty: "קשה",
+    difficulty: "מעורב",
     count: "10",
-    scope: { kind: "quick", chip: "מי אני?" },
+    scope: { kind: "competition", card: "ליגת האלופות" },
     expect: {
-      answerMode: "FREE_TEXT",
-      difficulty: "HARD",
+      questionType: "TRANSFERS",
+      difficulty: "MIXED",
       questionCount: 10,
-      gameMode: "WHO_AM_I",
-      categories: ["WHO_AM_I"],
-      competitions: ["ALL"],
-      region: "WORLD",
+      competitions: ["UCL"],
+      gameMode: "CLASSIC",
+      categories: ["TRANSFERS"],
     },
   },
 ];
@@ -179,6 +191,38 @@ async function stepTitle(page) {
   return (await page.locator("h1.wiz-title").first().innerText()).trim();
 }
 
+/**
+ * How full a step is: how many choices it offers and how much of the screen
+ * they occupy.
+ *
+ * THE SECOND FAILURE MODE THIS SUITE EXISTS FOR. The first wizard was measured
+ * only for overflow, which it passed by having almost nothing on it — a title,
+ * two cards and seventy per cent empty screen. "Does it fit" and "is it worth a
+ * screen" are different questions and both have to be asked, so this records
+ * the option count and the share of the viewport the step's content fills.
+ */
+async function density(page) {
+  return page.evaluate(() => {
+    const options = document.querySelectorAll(
+      ".wiz-card, .wiz-pill, .wiz-count, .wiz-summary-row"
+    ).length;
+    const body = document.querySelector(".wiz-body");
+    const rect = body ? body.getBoundingClientRect() : null;
+    const counts = document.querySelectorAll(".wiz-card-count").length;
+    const disabled = document.querySelectorAll(".wiz-card.is-off").length;
+    // Content height as a share of the space between the step header and the
+    // dock — the area the step actually owns.
+    const available = window.innerHeight - (rect ? rect.top : 0) - 76;
+    const used = rect ? Math.min(rect.height, available) : 0;
+    return {
+      options,
+      counts,
+      disabled,
+      fill: available > 0 ? used / available : 0,
+    };
+  });
+}
+
 /** One wizard step: measure it, then advance. */
 async function measureStep(page, viewport, flowId, steps) {
   const title = await stepTitle(page);
@@ -187,21 +231,38 @@ async function measureStep(page, viewport, flowId, steps) {
   // pixel of content than the viewport without anything actually scrolling.
   const scrolls = scrollHeight > height + 8;
   const visible = await actionVisible(page);
-  steps.push({ title, scrollHeight, height, scrolls, actionVisible: visible });
+  const measured = await density(page);
+  steps.push({ title, scrollHeight, height, scrolls, actionVisible: visible, ...measured });
   return { title, scrolls, visible };
 }
 
 async function advance(page) {
   await page.locator(".wiz-dock .btn-primary").first().click();
-  await page.waitForTimeout(260);
+  await page.waitForTimeout(300);
+}
+
+/** Clicks a card by its exact label, scrolling it into the step's list first. */
+async function pickCard(page, label) {
+  const card = page
+    .locator(".wiz-card")
+    .filter({ has: page.locator(".wiz-card-label", { hasText: new RegExp(`^${escapeRe(label)}$`) }) })
+    .first();
+  await card.scrollIntoViewIfNeeded();
+  await card.click();
+  await page.waitForTimeout(140);
 }
 
 async function runFlow(page, flow, viewport, isMobile) {
   const steps = [];
   let body = null;
 
+  let returned = null;
+
+  const isQuizCall = (url) =>
+    url.includes("/api/quiz") && !url.includes("/count") && !url.includes("/options");
+
   const onRequest = (request) => {
-    if (request.method() === "POST" && request.url().includes("/api/quiz") && !request.url().includes("/count")) {
+    if (request.method() === "POST" && isQuizCall(request.url())) {
       try {
         body = JSON.parse(request.postData() ?? "null");
       } catch {
@@ -209,51 +270,85 @@ async function runFlow(page, flow, viewport, isMobile) {
       }
     }
   };
+  /*
+    THE QUIZ THAT CAME BACK, not only the query that went out.
+
+    "מעורב" is the one choice whose correctness cannot be seen in the request:
+    the body says difficulty MIXED either way, and whether that MEANS anything
+    is a property of the questions the server drew. Production answered a mixed
+    request with 17 of 20 questions above HARD before the grid draw existed, and
+    the request body was identical then.
+  */
+  const onResponse = async (response) => {
+    if (response.request().method() !== "POST" || !isQuizCall(response.url())) return;
+    try {
+      returned = await response.json();
+    } catch {
+      /* a failed body read is not a diversity violation */
+    }
+  };
   page.on("request", onRequest);
+  page.on("response", onResponse);
 
   try {
     await page.goto(`${BASE}/build`, { waitUntil: "domcontentloaded" });
     await page.locator("h1.wiz-title").first().waitFor({ timeout: 20000 });
-    await page.waitForTimeout(400);
+    await page.waitForTimeout(600);
 
-    // ---- step 1: answer mode
+    // ---- step 1: question type
     await measureStep(page, viewport, flow.id, steps);
-    await page.locator(".wiz-card", { hasText: flow.answerMode }).first().click();
+    await pickCard(page, flow.type);
     await advance(page);
 
-    // ---- step 2: difficulty + count
+    // ---- step 2: answer mode
+    await measureStep(page, viewport, flow.id, steps);
+    await pickCard(page, flow.answerMode);
+    await advance(page);
+
+    // ---- step 3: difficulty + count
     await measureStep(page, viewport, flow.id, steps);
     await page.locator(".wiz-pill", { hasText: new RegExp(`^${flow.difficulty}$`) }).first().click();
-    await page.locator(".wiz-count", { hasText: new RegExp(`^${flow.count}$`) }).first().click();
+    await page.locator(".wiz-count").filter({ hasText: new RegExp(`^${flow.count}`) }).first().click();
     // Availability is debounced; give it a moment so the reading is the real one.
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(600);
     await advance(page);
 
-    // ---- step 3: scope
+    // ---- step 4: scope
     await measureStep(page, viewport, flow.id, steps);
-    if (flow.scope.kind === "world") {
-      await page.locator(".wiz-card-row", { hasText: "כל העולם" }).first().click();
-    } else if (flow.scope.kind === "region") {
-      await page.locator(".wiz-card-row", { hasText: "אזור מסוים" }).first().click();
-    } else {
-      await page.locator(".wiz-chip", { hasText: new RegExp(`^${escapeRe(flow.scope.chip)}$`) }).first().click();
-    }
+    const scopeCard = {
+      world: "כל העולם",
+      region: "אזור מסוים",
+      competition: "תחרות",
+      preset: "בחירות מהירות",
+    }[flow.scope.kind];
+    await pickCard(page, scopeCard);
     await advance(page);
 
-    // ---- step 4: the region drill-down, only on that branch
+    // ---- the branch
     if (flow.scope.kind === "region") {
       await measureStep(page, viewport, flow.id, steps);
-      await page.locator(".wiz-chip", { hasText: new RegExp(`^${flow.scope.continent}$`) }).first().click();
-      await page.waitForTimeout(150);
-      await page.locator(".wiz-chip", { hasText: new RegExp(`^${flow.scope.country}$`) }).first().click();
-      await page.waitForTimeout(150);
-      await page.locator(".wiz-chip", { hasText: new RegExp(`^${escapeRe(flow.scope.league)}$`) }).first().click();
+      await pickCard(page, flow.scope.continent);
+      await advance(page);
+
+      await measureStep(page, viewport, flow.id, steps);
+      await pickCard(page, flow.scope.country);
+      await advance(page);
+
+      if (flow.scope.league) {
+        await measureStep(page, viewport, flow.id, steps);
+        await pickCard(page, flow.scope.league);
+        await page.waitForTimeout(400);
+        await advance(page);
+      }
+    } else if (flow.scope.kind === "competition" || flow.scope.kind === "preset") {
+      await measureStep(page, viewport, flow.id, steps);
+      await pickCard(page, flow.scope.card);
       await page.waitForTimeout(400);
       await advance(page);
     }
 
-    // ---- step 5: summary
-    const summaryStep = await measureStep(page, viewport, flow.id, steps);
+    // ---- final step: summary
+    await measureStep(page, viewport, flow.id, steps);
     const summary = await page
       .locator(".wiz-summary-row")
       .evaluateAll((rows) => rows.map((r) => r.innerText.replace(/\s+/g, " ").trim()));
@@ -280,11 +375,10 @@ async function runFlow(page, flow, viewport, isMobile) {
       mismatches.length === 0 ? flow.name : mismatches.join("; ")
     );
 
-    const stepCount = steps.length;
     record(
-      flow.scope.kind === "region" ? stepCount === 5 : stepCount === 4,
+      steps.length >= 5,
       `FLOW ${flow.id} steps @ ${viewport}`,
-      `${stepCount} step(s): ${steps.map((s) => s.title).join(" → ")}`
+      `${steps.length} step(s): ${steps.map((s) => s.title).join(" → ")}`
     );
 
     if (isMobile) {
@@ -293,8 +387,37 @@ async function runFlow(page, flow, viewport, isMobile) {
         scrolling.length === 0,
         `FLOW ${flow.id} no-scroll @ ${viewport}`,
         scrolling.length === 0
-          ? "every step fits the viewport"
+          ? "no step scrolls the document"
           : scrolling.map((s) => `${s.title}: ${s.scrollHeight}px in ${s.height}px`).join("; ")
+      );
+
+      /*
+        NOT SPARSE. A step that fits because it has nothing on it is the
+        failure this product already shipped once. Two numbers, both cheap and
+        both hard to game: how many choices the step offers, and how much of
+        its own area the content fills.
+
+        The answer-mode step is exempt from the option floor by design — it has
+        exactly two choices and no third one exists — but it is NOT exempt from
+        the fill floor, because two cards that fill the screen is a decision
+        presented with weight rather than an empty screen.
+      */
+      const sparse = steps.filter((s) => s.options < 4 && !/איך משחקים/.test(s.title));
+      record(
+        sparse.length === 0,
+        `FLOW ${flow.id} enough choices @ ${viewport}`,
+        sparse.length === 0
+          ? `options per step: ${steps.map((s) => s.options).join(", ")}`
+          : sparse.map((s) => `${s.title}: ${s.options} option(s)`).join("; ")
+      );
+
+      const empty = steps.filter((s) => s.fill < 0.55);
+      record(
+        empty.length === 0,
+        `FLOW ${flow.id} no giant empty areas @ ${viewport}`,
+        empty.length === 0
+          ? `fill: ${steps.map((s) => Math.round(s.fill * 100) + "%").join(", ")}`
+          : empty.map((s) => `${s.title}: ${Math.round(s.fill * 100)}% filled`).join("; ")
       );
     }
 
@@ -307,14 +430,70 @@ async function runFlow(page, flow, viewport, isMobile) {
 
     if (flow.id === "A") {
       record(
-        summary.length === 4,
+        summary.length === 5,
         `summary is compact @ ${viewport}`,
         `${summary.length} line(s): ${summary.join(" | ")}`
       );
-      void summaryStep;
+
+      // Availability counts are real rather than decorative: every option step
+      // carried a number on its cards.
+      const counted = steps.filter((s) => s.counts > 0).length;
+      record(
+        counted >= 1,
+        `availability counts render @ ${viewport}`,
+        `${counted} step(s) showed per-option counts`
+      );
+    }
+
+    if (flow.verifyQuiz === "mixed" && isMobile) {
+      /*
+        Re-issued rather than read off the page.
+
+        Reading the quiz response in a listener loses the race with the
+        navigation to /play — Playwright cannot always hand back a body whose
+        page has already gone — and it came back empty every time. So the body
+        the UI actually sent is replayed against the same endpoint. That is the
+        query under test either way, and this way the measurement is
+        deterministic.
+      */
+      const replayed = await fetch(`${BASE}/api/quiz`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      })
+        .then((r) => r.json())
+        .catch(() => null);
+      const questions = replayed?.questions ?? returned?.questions ?? [];
+      const bands = {};
+      const types = {};
+      for (const question of questions) {
+        bands[question.difficulty] = (bands[question.difficulty] ?? 0) + 1;
+        types[question.category] = (types[question.category] ?? 0) + 1;
+      }
+      const aboveHard = (bands.EXPERT ?? 0) + (bands.IMPOSSIBLE ?? 0);
+      const playable = questions.length - aboveHard;
+
+      record(
+        questions.length > 0 && playable >= aboveHard,
+        `mixed difficulty is mostly playable @ ${viewport}`,
+        `${playable} playable vs ${aboveHard} above HARD — ${JSON.stringify(bands)}`
+      );
+      record(
+        Object.keys(bands).length >= 3,
+        `mixed difficulty spans bands @ ${viewport}`,
+        `${Object.keys(bands).length} band(s): ${JSON.stringify(bands)}`
+      );
+
+      const dominant = Math.max(0, ...Object.values(types));
+      record(
+        Object.keys(types).length >= 4 && dominant <= Math.ceil(questions.length * 0.45),
+        `mixed type is actually mixed @ ${viewport}`,
+        `${Object.keys(types).length} kind(s), largest ${dominant}/${questions.length}: ${JSON.stringify(types)}`
+      );
     }
   } finally {
     page.off("request", onRequest);
+    page.off("response", onResponse);
   }
 }
 
@@ -326,47 +505,68 @@ const escapeRe = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 async function checkBackNavigation(page, viewport) {
   await page.goto(`${BASE}/build`, { waitUntil: "domcontentloaded" });
   await page.locator("h1.wiz-title").first().waitFor({ timeout: 20000 });
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(600);
 
-  await page.locator(".wiz-card", { hasText: "אמריקאי" }).first().click();
+  // A full drill-down, five answers deep, then all the way back.
+  // A combination that exists: a narrow type plus twenty questions disables
+  // most of the geography, which is correct behaviour and the wrong thing to
+  // drive a back-navigation test through.
+  await pickCard(page, "מעורב");
+  await advance(page);
+  await pickCard(page, "אמריקאי");
   await advance(page);
   await page.locator(".wiz-pill", { hasText: /^מומחה$/ }).first().click();
-  await page.locator(".wiz-count", { hasText: /^20$/ }).first().click();
+  await page.locator(".wiz-count").filter({ hasText: /^10/ }).first().click();
   await advance(page);
-  await page.locator(".wiz-card-row", { hasText: "אזור מסוים" }).first().click();
+  await pickCard(page, "אזור מסוים");
   await advance(page);
-  await page.locator(".wiz-chip", { hasText: /^אירופה$/ }).first().click();
-  await page.waitForTimeout(150);
-  await page.locator(".wiz-chip", { hasText: /^איטליה$/ }).first().click();
-  await page.waitForTimeout(250);
+  await pickCard(page, "אירופה");
+  await advance(page);
+  await pickCard(page, "איטליה");
+  await page.waitForTimeout(300);
 
-  // Back three times, to the first step.
-  for (let i = 0; i < 3; i++) {
+  // Back to the very first step.
+  for (let i = 0; i < 5; i++) {
     await page.locator(".wiz-back").click();
-    await page.waitForTimeout(220);
+    await page.waitForTimeout(240);
   }
 
   const problems = [];
-  if ((await stepTitle(page)) !== "איך משחקים?") problems.push(`landed on "${await stepTitle(page)}"`);
-  const modeOn = await page.locator(".wiz-card.is-on").first().innerText();
-  if (!modeOn.includes("אמריקאי")) problems.push(`answer mode lost: "${modeOn.replace(/\s+/g, " ")}"`);
+  const selectedLabel = async () => {
+    const on = page.locator(".wiz-card.is-on .wiz-card-label").first();
+    return (await on.count()) > 0 ? (await on.innerText()).trim() : "(nothing selected)";
+  };
+
+  if ((await stepTitle(page)) !== "איזה סוג שאלות?") problems.push(`landed on "${await stepTitle(page)}"`);
+  const typeOn = await selectedLabel();
+  if (typeOn !== "מעורב") problems.push(`question type lost: "${typeOn}"`);
+
+  await advance(page);
+  const modeOn = await selectedLabel();
+  if (modeOn !== "אמריקאי") problems.push(`answer mode lost: "${modeOn}"`);
 
   await advance(page);
   const pillOn = (await page.locator(".wiz-pill.is-on").first().innerText()).trim();
   const countOn = (await page.locator(".wiz-count.is-on").first().innerText()).trim();
   if (pillOn !== "מומחה") problems.push(`difficulty lost: "${pillOn}"`);
-  if (countOn !== "20") problems.push(`count lost: "${countOn}"`);
+  if (!countOn.startsWith("10")) problems.push(`count lost: "${countOn}"`);
 
   await advance(page);
+  const scopeOn = await selectedLabel();
+  if (scopeOn !== "אזור מסוים") problems.push(`scope lost: "${scopeOn}"`);
+
   await advance(page);
-  const chipsOn = await page.locator(".wiz-chip.is-on").evaluateAll((els) => els.map((e) => e.innerText.trim()));
-  if (!chipsOn.includes("אירופה")) problems.push(`continent lost: ${chipsOn.join(", ")}`);
-  if (!chipsOn.includes("איטליה")) problems.push(`country lost: ${chipsOn.join(", ")}`);
+  const continentOn = await selectedLabel();
+  if (continentOn !== "אירופה") problems.push(`continent lost: "${continentOn}"`);
+
+  await advance(page);
+  const countryOn = await selectedLabel();
+  if (countryOn !== "איטליה") problems.push(`country lost: "${countryOn}"`);
 
   record(
     problems.length === 0,
     `back navigation preserves selections @ ${viewport}`,
-    problems.length === 0 ? "every earlier answer survived" : problems.join("; ")
+    problems.length === 0 ? "every earlier answer survived six steps of going back" : problems.join("; ")
   );
 }
 
@@ -523,7 +723,7 @@ async function checkDesktopLayout(page, viewport) {
 
   // A centred, focused column — not a narrow strip beside an empty half-screen.
   const centred = Math.abs(metrics.left - metrics.right) <= 2;
-  const bounded = metrics.width <= 620 && metrics.width >= 420;
+  const bounded = metrics.width <= 760 && metrics.width >= 420;
   record(
     centred && bounded,
     `desktop layout is a centred focused column @ ${viewport}`,

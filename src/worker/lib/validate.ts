@@ -1,5 +1,6 @@
 import { COMPETITIONS, COUNTRIES, QUESTION_COUNTS } from "../../shared/constants.ts";
 import { DIFFICULTIES, QUIZ_PRESETS } from "../../shared/types.ts";
+import { MIXED_TYPE_KEY, QUESTION_TYPE_BY_KEY } from "../../shared/questionTypes.ts";
 import type {
   AnswerMode,
   Category,
@@ -99,6 +100,25 @@ export function parseQuizConfiguration(body: unknown): QuizConfiguration {
     throw new ValidationError("Invalid preset");
   }
 
+  /*
+    THE QUESTION TYPE, rejected rather than ignored when unknown — the same
+    reasoning as the preset above.
+
+    "MIXED" changes which code path draws the quiz, so a typo that got silently
+    dropped would turn a mixed quiz into a classic one and look like it worked.
+    Absent is a legitimate value: older clients and every stored challenge
+    configuration predate the field, and they mean "use gameMode and categories
+    as given".
+  */
+  const questionTypeRaw = b.questionType ?? null;
+  if (
+    questionTypeRaw !== null &&
+    questionTypeRaw !== MIXED_TYPE_KEY &&
+    !QUESTION_TYPE_BY_KEY.has(questionTypeRaw as string)
+  ) {
+    throw new ValidationError("Invalid questionType");
+  }
+
   // These are rendered as SQL integer literals rather than bound parameters
   // (see db/questions.ts), so they no longer compete for D1's parameter budget.
   // The cap is now only about request size, and duplicates are pointless work.
@@ -116,6 +136,7 @@ export function parseQuizConfiguration(body: unknown): QuizConfiguration {
     gameMode: gameMode as GameMode,
     answerMode: answerMode as AnswerMode,
     preset: presetRaw as QuizPreset | null,
+    questionType: questionTypeRaw as string | null,
     excludeQuestionIds: excludeQuestionIds as number[],
   };
 }

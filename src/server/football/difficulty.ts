@@ -281,6 +281,42 @@ export const QUICK_START_BANDS: Band[] = ["EASY", "NORMAL", "HARD"];
 export const QUICK_START_MIX: Record<string, number> = { EASY: 2, NORMAL: 4, HARD: 4 };
 
 /**
+ * The builder's "מעורב" difficulty, as weights.
+ *
+ * WHY THIS HAS TO EXIST AT ALL. "MIXED" used to mean "add no difficulty clause",
+ * which sounds like a mix and is not one: with no clause the quiz inherits the
+ * bank's own shape, and this bank is 54% IMPOSSIBLE and 21% EXPERT because most
+ * of the football it knows about is genuinely obscure. Measured on production,
+ * three twenty-question MIXED quizzes came back:
+ *
+ *   EXPERT 5, IMPOSSIBLE 13, EASY 2
+ *   IMPOSSIBLE 14, EASY 2, EXPERT 3, HARD 1
+ *   IMPOSSIBLE 15, EXPERT 4, EASY 1
+ *
+ * 85-90% above HARD, with NORMAL absent from two of the three. A player
+ * choosing "מעורב" was asking for variety and getting a wall.
+ *
+ * So the mix is declared rather than inherited: mostly playable, with a real
+ * taste of the top bands. `apportion` drops any band the current filter has
+ * nothing in and redistributes its share, so a narrow scope degrades into
+ * "whatever it has" instead of coming back short.
+ *
+ * This is the FULL-BUILDER mix. Quick Start keeps QUICK_START_MIX and its three
+ * bands; the Daily Challenge keeps its own curve. "Mixed" means something
+ * different in each, and each says so in its own constant.
+ */
+export const BUILDER_MIXED_MIX: Record<string, number> = {
+  EASY: 15,
+  NORMAL: 30,
+  HARD: 30,
+  EXPERT: 15,
+  IMPOSSIBLE: 10,
+};
+
+/** Every band, in order, for a full-builder mixed draw. */
+export const ALL_BANDS: Band[] = ["EASY", "NORMAL", "HARD", "EXPERT", "IMPOSSIBLE"];
+
+/**
  * Whether a HARD question is familiar enough for Quick Start.
  *
  * The extra guard the spec asks for. A question can be correctly classified HARD

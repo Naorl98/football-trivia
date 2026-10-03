@@ -276,6 +276,39 @@ export function fetchAvailableCount(config: QuizConfiguration): Promise<{ availa
   return request("/api/quiz/count", { method: "POST", body: config });
 }
 
+export interface AvailabilityResponse {
+  total: number;
+  types?: Record<string, number>;
+  continents?: Record<string, number>;
+  countries?: Record<string, number>;
+  competitions?: Record<string, number>;
+  presets?: Record<string, number>;
+  presetCeiling?: number;
+}
+
+/**
+ * Per-option availability for the step on screen.
+ *
+ * `dimensions` is the step's own dimension and nothing else — the server answers
+ * a dimension with one GROUP BY, so asking for all of them on every step would
+ * pay four times over for three numbers nobody is looking at. Same short timeout
+ * and no retry as the plain count, for the same reason: a missing count greys
+ * one card and the step still works.
+ *
+ * `gameMode: null` is meaningful rather than missing. The type step counts across
+ * modes, because "מעורב" spans them.
+ */
+export function fetchAvailability(
+  config: QuizConfiguration,
+  dimensions: string[],
+  options: { anyMode?: boolean } = {}
+): Promise<AvailabilityResponse> {
+  return request("/api/quiz/options", {
+    method: "POST",
+    body: { ...config, gameMode: options.anyMode ? null : config.gameMode, dimensions },
+  });
+}
+
 export function fetchDaily(): Promise<{ date: string; quiz: Quiz }> {
   return request("/api/daily", { timeoutMs: TIMEOUT_HEAVY_MS, retryable: true });
 }

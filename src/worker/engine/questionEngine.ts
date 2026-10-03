@@ -1,6 +1,8 @@
 import type { Quiz, QuizConfiguration } from "../../shared/types";
 import { countAvailableQuestions, hydrateQuestions, pickQuestionIds, type QuestionFilter } from "../db/questions";
 import { selectDailyChallenge, selectQuickStart, type PresetSelection } from "./difficultyPolicy";
+import { selectMixed } from "./mixedSelection";
+import { MIXED_TYPE_KEY } from "../../shared/questionTypes";
 
 function toFilter(config: QuizConfiguration): QuestionFilter {
   return {
@@ -50,14 +52,35 @@ export async function buildQuiz(db: D1Database, config: QuizConfiguration): Prom
 
   const filter = toFilter(config);
 
+  /*
+    A MIXED AXIS IS A DIFFERENT DRAW, not a missing predicate.
+
+    "MIXED" used to mean "add no clause", and for difficulty that produced a
+    quiz shaped like the bank rather than like a mix — 85-90% above HARD,
+    measured. For question type it could not mean anything at all, because
+    `q.mode = ?` takes one value. Both are handled by a weighted draw over a
+    small (type, band) grid; see engine/mixedSelection.ts.
+
+    An unmixed quiz keeps the single-window scan, which is cheaper and already
+    correct: one band and one mode need one query, and paying for a grid to
+    express that would be waste.
+  */
+  const mixedType = config.questionType === MIXED_TYPE_KEY;
+  const needsGrid = mixedType || filter.difficulty === "MIXED";
+
   // The count and the selection are independent — both are derived from the
   // same filter and neither reads the other's result — so they go out together.
   // They were sequential, which made quiz generation three round trips deep
   // instead of two for no reason. Under concurrency that third trip is the one
   // that queues.
   const [availableCount, ids] = await Promise.all([
-    countAvailableQuestions(db, filter),
-    pickQuestionIds(db, filter, config.questionCount, config.excludeQuestionIds ?? []),
+    countAvailableQuestions(db, mixedType ? { ...filter, gameMode: null } : filter),
+    needsGrid
+      ? selectMixed(db, filter, config.questionCount, {
+          mixedType,
+          excludeIds: config.excludeQuestionIds ?? [],
+        }).then((selection) => selection.ids)
+      : pickQuestionIds(db, filter, config.questionCount, config.excludeQuestionIds ?? []),
   ]);
 
   const questions = await hydrateQuestions(db, ids);

@@ -316,18 +316,34 @@ async function builder(browser) {
   await page.goto(`${BASE}/build`, { waitUntil: "networkidle" });
   await page.locator(".wiz").waitFor({ timeout: 20000 });
 
-  check("step one offers both answer modes", (await page.locator(".wiz-group .wiz-card").count()) === 2);
-  check("the step is numbered", /\d/.test(await page.locator(".wiz-progress").innerText().catch(() => "")));
+  /*
+    The wizard gained a question-type step, so step one is now "which kind of
+    questions" with thirteen cards rather than the two answer modes. Checked
+    here as a count rather than by name: this suite is about the page working,
+    and scripts/builder-qa.mjs is the one that drives every flow and asserts
+    the query. Naming the cards in both places is how one of them goes stale.
+  */
+  check("step one offers a dozen question types", (await page.locator(".wiz-card").count()) >= 12);
+  check("the step is numbered", /[0-9]/.test(await page.locator(".wiz-progress").innerText().catch(() => "")));
+  check("every option carries a real availability count", (await page.locator(".wiz-card-count").count()) >= 12);
 
   const dockButton = page.locator(".wiz-dock button.btn-primary");
   check("the primary action is present", await dockButton.isVisible());
 
-  // Free text → defaults → worldwide, which is FLOW A's shape and the one
-  // selection guaranteed to have questions behind it.
-  await page.locator(".wiz-card").first().click();
+  // Defaults all the way through — מעורב type, free text, mixed difficulty, 10,
+  // worldwide — which is the one path guaranteed to have questions behind it.
   await dockButton.click();
+  await page.waitForTimeout(350);
   await dockButton.click();
-  await page.locator(".wiz-card-label", { hasText: "כל העולם" }).click();
+  await page.waitForTimeout(350);
+  await dockButton.click();
+  await page.waitForTimeout(350);
+  await page
+    .locator(".wiz-card")
+    .filter({ has: page.locator(".wiz-card-label", { hasText: /^כל העולם$/ }) })
+    .first()
+    .click();
+  await page.waitForTimeout(200);
   await dockButton.click();
 
   // Availability is the edge-cached count endpoint; it must produce a number.
@@ -338,7 +354,7 @@ async function builder(browser) {
   await page.locator(".wiz-summary").waitFor({ timeout: 20000 });
   await page.waitForTimeout(1500);
   const count = await page.locator(".wiz-avail").innerText().catch(() => "");
-  check("availability reports a number", /\d/.test(count), count);
+  check("availability reports a number", /[0-9]/.test(count), count);
 
   const start = page.locator(".wiz-dock button.btn-primary");
   check("start is enabled for the default selection", await start.isEnabled(), count);

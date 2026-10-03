@@ -15,7 +15,16 @@ export interface QuestionFilter {
   competitions: string[];
   categories: Category[];
   difficulty: Difficulty | "MIXED";
-  gameMode: GameMode;
+  /**
+   * The `mode` column, or null for "any mode".
+   *
+   * Nullable because of "מעורב" question type: a mixed quiz spans Who Am I,
+   * Career Path and the classic quiz, and its availability count has to span
+   * them too. A count that silently applied `mode = 'CLASSIC'` to a mixed
+   * selection would under-report by two thirds and the builder would disable
+   * options it can perfectly well serve.
+   */
+  gameMode: GameMode | null;
   answerMode: AnswerMode;
   /**
    * Restricts to questions cleared for the home page's one-tap path.
@@ -47,8 +56,13 @@ interface QuestionRow {
 // skipped entirely when the caller did not narrow by region/country/competition
 // (i.e. "all of football" requests never filter on question_scopes).
 export function buildWhere(filter: QuestionFilter): { where: string; params: unknown[] } {
-  const clauses = ["q.active = 1", "q.mode = ?"];
-  const params: unknown[] = [filter.gameMode];
+  const clauses = ["q.active = 1"];
+  const params: unknown[] = [];
+
+  if (filter.gameMode) {
+    clauses.push("q.mode = ?");
+    params.push(filter.gameMode);
+  }
 
   if (filter.categories.length > 0) {
     clauses.push(`q.category IN (${filter.categories.map(() => "?").join(",")})`);
@@ -76,27 +90,59 @@ export function buildWhere(filter: QuestionFilter): { where: string; params: unk
   // only and carry no COMPETITION scope tag at all.
   const competitionsRequested = filter.competitions.filter((c) => c !== "ALL");
 
-  const scopeValues: { type: string; value: string }[] = [];
+  /*
+    SCOPE: OR WITHIN A DIMENSION, AND ACROSS DIMENSIONS.
+
+    This used to be one flat OR over every requested scope tag, with a note
+    saying it "only broadens results in the rarer case where a user narrows both
+    a region AND a specific competition". That case is not rare — it is what the
+    wizard's whole geography branch produces, because toConfiguration sends the
+    continent, the country AND the league together. Measured against production:
+
+      Europe                        1,106
+      Europe + Spain                1,143
+      Europe + Spain + La Liga      1,144
+      Spain alone                     511
+      La Liga alone                   490
+
+    Every drill-down step made the pool BIGGER. A player who walked continent →
+    country → league and asked for La Liga got all of Europe and then some, which
+    is the one thing the builder must never do: silently serve questions nobody
+    asked for. The funnel was decoration.
+
+    The dimensions nest properly in the data — a La Liga question carries
+    COMPETITION=LA_LIGA, COUNTRY=ESP and REGION=EUROPE, and 1,386 of the 1,493
+    Spanish questions also carry REGION=EUROPE — so an AND across dimensions is
+    both what the UI means and something the bank can answer. One EXISTS per
+    dimension, each matching any value within it: "in Europe, AND Spanish, AND
+    in La Liga".
+
+    Two consequences worth stating. A dimension the caller did not narrow is not
+    filtered at all, so "all of football" still reads no scope rows. And a
+    competition with no scope rows of its own now correctly returns nothing
+    instead of quietly falling back to its region — the Conference League used to
+    return 1,106 Europe questions this way. The builder disables an option whose
+    real count cannot fill the quiz, which is how that dead end is kept off the
+    screen rather than papered over in the query.
+  */
+  const scopeGroups: { type: string; values: string[] }[] = [];
   if (filter.region && filter.region !== "WORLD") {
-    scopeValues.push({ type: "REGION", value: filter.region });
+    scopeGroups.push({ type: "REGION", values: [filter.region] });
   }
-  for (const c of filter.countries) scopeValues.push({ type: "COUNTRY", value: c });
+  if (filter.countries.length > 0) {
+    scopeGroups.push({ type: "COUNTRY", values: filter.countries });
+  }
   if (competitionsRequested.length > 0) {
-    const expandedCompetitions = expandCompetitionCodes(competitionsRequested);
-    for (const c of expandedCompetitions) scopeValues.push({ type: "COMPETITION", value: c });
+    scopeGroups.push({ type: "COMPETITION", values: expandCompetitionCodes(competitionsRequested) });
   }
 
-  // Note: scope matching is "question has ANY of the requested scope tags"
-  // (region OR country OR competition), not a strict AND across dimensions.
-  // In practice the builder UI leaves region at WORLD (skipped) once a
-  // country/competition is chosen, so this only broadens results in the
-  // rarer case where a user narrows both a region AND a specific competition.
-  if (scopeValues.length > 0) {
-    const scopeConditions = scopeValues.map(() => "(scope_type = ? AND scope_value = ?)").join(" OR ");
+  for (const group of scopeGroups) {
+    const placeholders = group.values.map(() => "?").join(",");
     clauses.push(
-      `EXISTS (SELECT 1 FROM question_scopes s WHERE s.question_id = q.id AND (${scopeConditions}))`
+      `EXISTS (SELECT 1 FROM question_scopes s WHERE s.question_id = q.id` +
+        ` AND s.scope_type = ? AND s.scope_value IN (${placeholders}))`
     );
-    for (const s of scopeValues) params.push(s.type, s.value);
+    params.push(group.type, ...group.values);
   }
 
   return { where: clauses.join(" AND "), params };

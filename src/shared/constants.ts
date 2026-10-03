@@ -18,17 +18,62 @@ export const REGIONS: { code: Region; labelHe: string }[] = [
   { code: "OCEANIA", labelHe: "אוקיאניה" },
 ];
 
+/*
+  Every country the question bank actually has questions about.
+
+  THIS LIST IS DERIVED FROM THE BANK, NOT FROM AMBITION. These are the thirty
+  distinct COUNTRY scope values on production, and the comment on each line is
+  its active question count at the time of writing. Ten of them were listed
+  before, which is why the builder's country step looked thin: it was offering a
+  third of the countries the bank can answer about.
+
+  The long tail is deliberately INCLUDED rather than trimmed. A country with
+  eight questions cannot fill a ten-question quiz, and the wizard says so — it
+  renders the real count and disables the card with "לא מספיק שאלות כרגע". That
+  is more useful than hiding it, because "Scotland is not here" and "Scotland
+  has eight questions" are different facts and only one of them is true.
+
+  Nothing here is aspirational: a code with no questions would show zero and
+  never be selectable, so adding one would be a lie the UI then has to tell.
+*/
 export const COUNTRIES: CountryRef[] = [
-  { code: "ENG", nameHe: "אנגליה", nameEn: "England", continent: "EUROPE" },
-  { code: "ESP", nameHe: "ספרד", nameEn: "Spain", continent: "EUROPE" },
-  { code: "ITA", nameHe: "איטליה", nameEn: "Italy", continent: "EUROPE" },
-  { code: "GER", nameHe: "גרמניה", nameEn: "Germany", continent: "EUROPE" },
-  { code: "FRA", nameHe: "צרפת", nameEn: "France", continent: "EUROPE" },
-  { code: "POR", nameHe: "פורטוגל", nameEn: "Portugal", continent: "EUROPE" },
-  { code: "NED", nameHe: "הולנד", nameEn: "Netherlands", continent: "EUROPE" },
-  { code: "ISR", nameHe: "ישראל", nameEn: "Israel", continent: "ASIA" },
-  { code: "BRA", nameHe: "ברזיל", nameEn: "Brazil", continent: "SOUTH_AMERICA" },
-  { code: "ARG", nameHe: "ארגנטינה", nameEn: "Argentina", continent: "SOUTH_AMERICA" },
+  // ---- Europe ----
+  { code: "ESP", nameHe: "ספרד", nameEn: "Spain", continent: "EUROPE", flag: "🇪🇸" }, // 1,483
+  { code: "ENG", nameHe: "אנגליה", nameEn: "England", continent: "EUROPE", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" }, // 1,337
+  { code: "ITA", nameHe: "איטליה", nameEn: "Italy", continent: "EUROPE", flag: "🇮🇹" }, // 1,134
+  { code: "FRA", nameHe: "צרפת", nameEn: "France", continent: "EUROPE", flag: "🇫🇷" }, // 698
+  { code: "GER", nameHe: "גרמניה", nameEn: "Germany", continent: "EUROPE", flag: "🇩🇪" }, // 504
+  { code: "NED", nameHe: "הולנד", nameEn: "Netherlands", continent: "EUROPE", flag: "🇳🇱" }, // 459
+  { code: "POR", nameHe: "פורטוגל", nameEn: "Portugal", continent: "EUROPE", flag: "🇵🇹" }, // 211
+  { code: "TUR", nameHe: "טורקיה", nameEn: "Turkey", continent: "EUROPE", flag: "🇹🇷" }, // 10
+  { code: "SCO", nameHe: "סקוטלנד", nameEn: "Scotland", continent: "EUROPE", flag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿" }, // 8
+  { code: "GRE", nameHe: "יוון", nameEn: "Greece", continent: "EUROPE", flag: "🇬🇷" }, // 7
+  { code: "CRO", nameHe: "קרואטיה", nameEn: "Croatia", continent: "EUROPE", flag: "🇭🇷" }, // 6
+  { code: "BEL", nameHe: "בלגיה", nameEn: "Belgium", continent: "EUROPE", flag: "🇧🇪" }, // 6
+  { code: "RUS", nameHe: "רוסיה", nameEn: "Russia", continent: "EUROPE", flag: "🇷🇺" }, // 6
+  { code: "SUI", nameHe: "שווייץ", nameEn: "Switzerland", continent: "EUROPE", flag: "🇨🇭" }, // 4
+  { code: "SRB", nameHe: "סרביה", nameEn: "Serbia", continent: "EUROPE", flag: "🇷🇸" }, // 4
+  { code: "AUT", nameHe: "אוסטריה", nameEn: "Austria", continent: "EUROPE", flag: "🇦🇹" }, // 4
+  { code: "UKR", nameHe: "אוקראינה", nameEn: "Ukraine", continent: "EUROPE", flag: "🇺🇦" }, // 3
+  { code: "SWE", nameHe: "שוודיה", nameEn: "Sweden", continent: "EUROPE", flag: "🇸🇪" }, // 3
+  { code: "ROU", nameHe: "רומניה", nameEn: "Romania", continent: "EUROPE", flag: "🇷🇴" }, // 3
+  { code: "POL", nameHe: "פולין", nameEn: "Poland", continent: "EUROPE", flag: "🇵🇱" }, // 3
+  { code: "NOR", nameHe: "נורווגיה", nameEn: "Norway", continent: "EUROPE", flag: "🇳🇴" }, // 3
+
+  // ---- South America ----
+  { code: "BRA", nameHe: "ברזיל", nameEn: "Brazil", continent: "SOUTH_AMERICA", flag: "🇧🇷" }, // 438
+  { code: "ARG", nameHe: "ארגנטינה", nameEn: "Argentina", continent: "SOUTH_AMERICA", flag: "🇦🇷" }, // 231
+  { code: "URU", nameHe: "אורוגוואי", nameEn: "Uruguay", continent: "SOUTH_AMERICA", flag: "🇺🇾" }, // 12
+
+  // ---- Asia. Israel is a core domain for this audience, not a long-tail entry. ----
+  { code: "ISR", nameHe: "ישראל", nameEn: "Israel", continent: "ASIA", flag: "🇮🇱" }, // 55
+  { code: "KSA", nameHe: "ערב הסעודית", nameEn: "Saudi Arabia", continent: "ASIA", flag: "🇸🇦" }, // 12
+  { code: "CHN", nameHe: "סין", nameEn: "China", continent: "ASIA", flag: "🇨🇳" }, // 6
+  { code: "JPN", nameHe: "יפן", nameEn: "Japan", continent: "ASIA", flag: "🇯🇵" }, // 3
+
+  // ---- North America ----
+  { code: "USA", nameHe: "ארצות הברית", nameEn: "United States", continent: "NORTH_AMERICA", flag: "🇺🇸" }, // 11
+  { code: "CAN", nameHe: "קנדה", nameEn: "Canada", continent: "NORTH_AMERICA", flag: "🇨🇦" }, // 6
 ];
 
 // Individual competitions. "GROUP" type entries (e.g. TOP_5_EUROPE) are virtual

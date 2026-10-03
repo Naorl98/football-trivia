@@ -110,6 +110,18 @@ export interface QuizConfiguration {
   answerMode: AnswerMode;
   /** When set, the preset's difficulty rules override `difficulty` entirely. */
   preset?: QuizPreset | null;
+  /**
+   * The question type the player chose, as a key from shared/questionTypes.
+   *
+   * Carried ALONGSIDE `gameMode` and `categories` rather than replacing them,
+   * because it has to express one thing those two cannot: "MIXED". A quiz
+   * spanning Who Am I, Career Path and the classic quiz is several values of
+   * `mode`, and `q.mode = ?` takes one. So "MIXED" here means "ignore gameMode
+   * and categories, draw the grid in engine/mixedSelection"; any other key is
+   * the type whose mode and categories were already applied to those two fields,
+   * and is sent only so the server can state what it drew.
+   */
+  questionType?: string | null;
   // Question ids the player has seen recently. The engine de-prioritises them
   // so repeat sessions feel fresh; it never excludes them permanently.
   excludeQuestionIds?: number[];
@@ -164,6 +176,8 @@ export interface CountryRef {
   nameHe: string;
   nameEn: string;
   continent: Region;
+  /** Emoji flag, for the builder's country cards. */
+  flag: string;
 }
 
 export interface CompetitionRef {

@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import type { Env } from "../env";
 import { buildQuiz } from "../engine/questionEngine";
 import { countAvailableQuestions, type QuestionFilter } from "../db/questions";
+import { availabilityFilter, availabilityFor, type AvailabilityResult, type Dimension } from "../db/availability";
 import { parseQuizConfiguration, ValidationError } from "../lib/validate";
 import { gate } from "../lib/ratelimit";
 import { cachedJson, putJson } from "../lib/edgeCache";
@@ -26,6 +27,60 @@ quizRoutes.post("/", async (c) => {
 });
 
 /**
+ * Per-option availability for the wizard's current step.
+ *
+ * The builder shows a real number beside every choice and disables the ones that
+ * cannot fill the requested quiz, which is the difference between a step that
+ * looks rich and a step that IS useful: "ישראל — 55 שאלות" tells a player
+ * something true that no amount of card styling can.
+ *
+ * `dimensions` is what keeps it affordable. A step asks for the one dimension it
+ * renders, each dimension is one GROUP BY rather than one COUNT per option, and
+ * the answer caches at the edge exactly like /count — the bank moves when a seed
+ * is applied, not while somebody is choosing filters. See db/availability.ts for
+ * the measurement that made the GROUP BY necessary.
+ */
+quizRoutes.post("/options", async (c) => {
+  const limited = await gate(c, "RL_QUIZ", "options");
+  if (limited) return limited;
+
+  try {
+    const body = await c.req.json();
+    const requested = Array.isArray(body?.dimensions) ? body.dimensions : [];
+    const dimensions = requested.filter((d: unknown): d is Dimension =>
+      d === "types" || d === "continents" || d === "countries" || d === "competitions" || d === "presets"
+    );
+
+    // `gameMode` is optional here in a way it is not for a quiz: the type step
+    // counts across modes, so the absence of one is a meaningful request rather
+    // than a malformed one.
+    const config = parseQuizConfiguration({ ...body, gameMode: body?.gameMode ?? "CLASSIC" });
+    const filter = availabilityFilter({
+      region: config.region,
+      countries: config.countries,
+      competitions: config.competitions,
+      categories: config.categories,
+      difficulty: config.difficulty,
+      gameMode: body?.gameMode === null ? null : config.gameMode,
+      answerMode: config.answerMode,
+    });
+
+    const key = optionsCacheKey(new URL(c.req.url).origin, filter, dimensions);
+    const hit = await cachedJson<AvailabilityResult>(key);
+    if (hit) return c.json(hit);
+
+    const payload = await availabilityFor(c.env.DB, filter, dimensions);
+    await putJson(key, payload, COUNT_TTL_SECONDS);
+    return c.json(payload);
+  } catch (err) {
+    if (err instanceof ValidationError) return c.json({ error: err.message }, 400);
+    if (err instanceof SyntaxError) return c.json({ error: "Invalid JSON body" }, 400);
+    console.error("quiz options failed", { name: (err as Error)?.name, message: (err as Error)?.message });
+    return c.json({ error: "Failed to read availability" }, 500);
+  }
+});
+
+/**
  * The cache key for an availability count.
  *
  * Built from the filter in a canonical order with the lists sorted, so the same
@@ -44,6 +99,27 @@ function countCacheKey(origin: string, filter: QuestionFilter): Request {
     [...filter.categories].sort().join("."),
   ].join("|");
   return new Request(`${origin}/__count/${encodeURIComponent(parts)}`, { method: "GET" });
+}
+
+/**
+ * The cache key for a per-option availability lookup.
+ *
+ * Same canonicalisation as countCacheKey, plus the dimensions, sorted — two
+ * steps asking for the same dimension under the same selection are one cache
+ * entry however the player got there.
+ */
+function optionsCacheKey(origin: string, filter: QuestionFilter, dimensions: string[]): Request {
+  const parts = [
+    filter.gameMode ?? "ANY",
+    filter.answerMode,
+    filter.difficulty,
+    filter.region ?? "-",
+    [...filter.countries].sort().join("."),
+    [...filter.competitions].sort().join("."),
+    [...filter.categories].sort().join("."),
+    [...dimensions].sort().join("."),
+  ].join("|");
+  return new Request(`${origin}/__options/${encodeURIComponent(parts)}`, { method: "GET" });
 }
 
 /** Five minutes. The bank changes when a seed is applied, not while someone is choosing filters. */
