@@ -2171,7 +2171,7 @@ export function generateCupFinalQuestions(
           mode: "CLASSIC",
           category,
           difficulty: built.difficulty,
-          questionHe: `מה הייתה התוצאה בגמר ${f.competition_name} ${label} בין ${f.home_team_name} ל${f.away_team_name}?`,
+          questionHe: `מה הייתה התוצאה בגמר ${f.competition_name} ${label} בין ${f.home_team_name} ${hePrefix("ל", f.away_team_name)}?`,
           explanationHe: `הגמר הסתיים ${actual}.`,
           options: built.options,
           correctIndex: 0,

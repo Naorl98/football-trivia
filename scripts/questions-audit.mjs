@@ -53,7 +53,7 @@ import { isQuickStartFriendly } from "../src/server/football/difficulty.ts";
 import { validateSemantics } from "../src/server/football/validate.ts";
 import { validateAndDedupe } from "../src/server/questions/knowledgeGenerators.ts";
 import { BROAD_HE, DETAILED_HE } from "../src/server/football/positions.ts";
-import { LOAN_WORDING_HE, MOVED_PERMANENTLY_HE } from "../src/server/football/career.ts";
+import { classifyMovement, LOAN_WORDING_HE, MOVED_PERMANENTLY_HE } from "../src/server/football/career.ts";
 import { contentHashFor } from "../seed/contentHash.ts";
 
 const args = process.argv.slice(2);
@@ -180,7 +180,19 @@ const scopesById = group(storedScopes, "question_id", (r) => ({
   value: String(r.scope_value),
 }));
 
-const active = storedQuestions.filter((q) => Number(q.active) === 1);
+/*
+  Sorted by id, because the duplicate rule depends on the order.
+
+  `SELECT ... FROM questions` has no ORDER BY, so whichever of two identical
+  questions arrives first was deciding which one is the original and which gets
+  deactivated — and that could differ between runs. Ascending id makes it the
+  older question that survives, which is the hand-written one: the curated bank
+  was seeded first, and a later generated question that reproduces it is the
+  copy.
+*/
+const active = storedQuestions
+  .filter((q) => Number(q.active) === 1)
+  .sort((a, b) => Number(a.id) - Number(b.id));
 console.log(
   `  stored: ${storedQuestions.length.toLocaleString()} question(s), ${active.length.toLocaleString()} active\n`
 );
@@ -227,9 +239,33 @@ for (const he of [
 
 const SCORELINE = /^\d+-\d+(\s*\(\d+-\d+\s.+\))?$/;
 
-function classifyOption(text) {
+/*
+  Everyone who has ever managed a club, so a coach is not mistaken for a player.
+
+  Most managers used to play, and this bank knows many of them twice — Thomas
+  Frank is in `coaches` and in `players`. classifyOption had no COACH branch at
+  all, so "מי אימן את Luton בשנת 2019?" answered with its actual manager was
+  reported as answering a COACH question with a PLAYER. The name is genuinely
+  both; the question decides which one is meant, so the caller says what it
+  expects and an ambiguous name resolves to that.
+*/
+const coachNames = new Set();
+for (const row of facts.coachSpells ?? []) {
+  if (row.coach_name) coachNames.add(String(row.coach_name).trim());
+}
+
+function classifyOption(text, prefer = null) {
   const value = (text ?? "").trim();
   if (!value) return { type: null, detail: "empty" };
+
+  // Checked before players, but only decisive when the name is not also a
+  // player's — otherwise `prefer` breaks the tie and PLAYER wins by default,
+  // since a player who later managed is still a player in a player question.
+  if (coachNames.has(value)) {
+    const alsoPlayer = context.playerByName.has(value) || curatedPlayerHe.has(value);
+    if (!alsoPlayer) return { type: "COACH", kind: "COACH" };
+    if (prefer === "COACH") return { type: "COACH", kind: "COACH", ambiguous: true };
+  }
 
   const team = context.teamByName.get(value);
   if (team) {
@@ -283,15 +319,37 @@ let unchanged = 0;
 const GLUED = /[מלבוכש](?=[A-Za-z])/;
 const VAGUE_CAREER = /באיזו קבוצה התחיל|איפה התחיל/;
 
-/** Transfers keyed the way a semantic key identifies one, for loan auditing. */
-const transferByKey = new Map();
+/*
+  Transfers keyed the way a semantic key identifies one, for loan auditing.
+
+  EVERY row that shares a key, not the last one to be written. A semantic key is
+  player + club + YEAR, and a player can join the same club twice in one year:
+  Álvaro Fernández went to Benfica on loan in January 2024 and permanently for
+  €6M that July, and both rows produce `KB_TRANSFER_TO:193:98:2024`. A map that
+  overwrites keeps whichever row the unordered query happened to return last, so
+  half of those questions get audited against the loan and reported as a loan
+  called a transfer — when "עבר" is exactly right, because the permanent move
+  also happened. That mismeasurement reported 134 findings where the generators
+  and the bank were both correct.
+
+  So the finding requires that NO row for the key is a permanent move. If the
+  player really did move permanently to that club that year, the wording stands.
+*/
+const transfersByKey = new Map();
+const addTransfer = (key, row) => {
+  const list = transfersByKey.get(key);
+  if (list) list.push(row);
+  else transfersByKey.set(key, [row]);
+};
 for (const row of facts.transfers) {
   const year = row.transfer_date ? String(row.transfer_date).slice(0, 4) : "-";
-  transferByKey.set(`KB_TRANSFER_TO:${row.player_id}:${row.to_team_id}:${year}`, row);
-  transferByKey.set(`KB_TRANSFER_FROM:${row.player_id}:${row.from_team_id}:${year}`, row);
+  addTransfer(`KB_TRANSFER_TO:${row.player_id}:${row.to_team_id}:${year}`, row);
+  addTransfer(`KB_TRANSFER_FROM:${row.player_id}:${row.from_team_id}:${year}`, row);
 }
 
 const semanticFingerprints = new Map();
+/** duplicate question id -> the id it duplicates. Deactivated after the loop. */
+const duplicateIds = new Map();
 
 for (const row of active) {
   const id = Number(row.id);
@@ -306,7 +364,11 @@ for (const row of active) {
 
   const answer = options.find((o) => o.correct) ?? options[0];
   const distractors = options.filter((o) => o !== answer);
-  const typed = options.map((o) => ({ ...o, ...classifyOption(o.text) }));
+  // The archetype's declared answer type breaks ties for names this bank knows
+  // in two roles — see coachNames. It only ever resolves an ambiguity; it
+  // cannot turn a club into a coach.
+  const wantsType = archetype && ARCHETYPES[archetype] ? ARCHETYPES[archetype].answerType : null;
+  const typed = options.map((o) => ({ ...o, ...classifyOption(o.text, wantsType) }));
   const typedAnswer = typed.find((o) => o.correct) ?? typed[0];
 
   // ---- the hard invariant: no national team in a club question ----
@@ -370,8 +432,14 @@ for (const row of active) {
 
   // ---- loan semantics ----
   if (key && (key.startsWith("KB_TRANSFER_TO:") || key.startsWith("KB_TRANSFER_FROM:"))) {
-    const transfer = transferByKey.get(key);
-    const isLoan = /loan/i.test(String(transfer?.transfer_type ?? ""));
+    const candidates = transfersByKey.get(key) ?? [];
+    const movements = candidates.map((t) => classifyMovement(t.transfer_type));
+    // A loan only if that is the ONLY thing the key can mean. A key that also
+    // matches a permanent move is not evidence of anything — see transfersByKey.
+    const isLoan =
+      movements.length > 0 &&
+      movements.some((m) => m === "LOAN") &&
+      !movements.some((m) => m === "PERMANENT" || m === "FREE");
     // MOVED_PERMANENTLY_HE, not /\bעבר\b/: JavaScript's `\b` is defined against
     // [A-Za-z0-9_], so it never matches a boundary in Hebrew text and a check
     // written that way reports zero findings on a bank full of them.
@@ -390,6 +458,21 @@ for (const row of active) {
     .map((c) => normalizeAnswer(c.text))
     .join("~")}`;
   if (semanticFingerprints.has(fingerprint)) {
+    /*
+      The same question text with the same answer, under a different semantic
+      key — so the dedupe gate, which keys on semanticKey, never saw it.
+
+      Eleven of these: a hand-written question like "מה הכינוי של מועדון ארסנל?"
+      and a generated one that arrives at the same text from the same data. Both
+      are correct, which is why nothing else flags them, and that is precisely
+      the problem — a quiz dedupes by id, so a player can be asked the identical
+      question twice in one game.
+
+      The copy is deactivated rather than repaired. There is nothing to fix
+      about it; it should not be in the bank. The original stays active, and
+      `active` is sorted by id so "original" means the older row every run.
+    */
+    duplicateIds.set(id, semanticFingerprints.get(fingerprint));
     findings.semanticDuplicates.push({ id, key, questionHe, duplicateOf: semanticFingerprints.get(fingerprint) });
   } else {
     semanticFingerprints.set(fingerprint, id);
@@ -438,6 +521,29 @@ for (const row of active) {
     */
     after[band] = (after[band] ?? 0) + 1;
   }
+}
+
+/*
+  Duplicates are deactivated, and that REPLACES any repair planned for them.
+
+  A duplicate may also have a repair plan from the comparison above — it is a
+  valid question, after all. Both plans would be applied, which means paying to
+  rewrite a question's wording and then switching it off. Deactivation is the
+  only statement worth sending, so it supersedes the plan rather than joining
+  it, and it goes in at priority 0 with the other deactivations.
+*/
+for (const [id, originalId] of duplicateIds) {
+  const existing = repairPlans.findIndex((p) => p.id === id);
+  const plan = {
+    id,
+    key: `duplicate-of-${originalId}`,
+    changes: ["deactivate"],
+    statements: [deactivate(id)],
+    deactivate: true,
+    priority: 0,
+  };
+  if (existing >= 0) repairPlans[existing] = plan;
+  else repairPlans.push(plan);
 }
 
 // ---------------------------------------------------------------------------
@@ -562,7 +668,34 @@ function planRepair({ id, row, want, options, clues, hints, aliases, scopes }) {
   const wantOptionTexts = wantOptions.map((o) => o.text);
   const storedTypes = options.map((o) => classifyOption(o.text));
   const expectedType = archetype ? answerTypeFor(archetype, want.resolvedTeamType) : null;
+
+  /*
+    A POSITION QUESTION HAS A CLOSED VOCABULARY, so "different" really is
+    "wrong" — the one place the plausibility argument above does not apply.
+
+    There are exactly four units and fifteen roles, and the generator picks the
+    four options from that fixed list rather than sampling plausible ones. So an
+    option outside the set the rules now choose is not a different-but-equally
+    good distractor, it is a label the vocabulary no longer contains.
+
+    This is how seven goalkeeper questions survived the repair. They asked
+    "באיזו חוליה משחק אליסון?" — the unit — and offered שוער / מגן / קשר / חלוץ,
+    the pre-semantic-layer vocabulary, in which "חלוץ" names a UNIT. It names
+    the striker's ROLE and nothing else, which is the Forward-is-not-a-Striker
+    bug sitting in the option list instead of the answer. Nothing caught it:
+    curated questions carry no archetype, so the type invariant never ran on
+    them, and for a goalkeeper alone the answer label is unchanged between the
+    two vocabularies, so the answer check passed too. Every other position
+    question was repaired because its answer moved from מגן to הגנה.
+  */
+  const POSITION_LABELS = new Set([...BROAD_LABELS, ...DETAILED_LABELS]);
+  const isPositionQuestion =
+    wantOptionTexts.length > 0 && wantOptionTexts.every((t) => POSITION_LABELS.has(t));
+  const staleVocabulary =
+    isPositionQuestion && storedOptionTexts.some((t) => !wantOptionTexts.includes(t));
+
   const storedIsInvalid =
+    staleVocabulary ||
     options.length !== 4 ||
     options.filter((o) => o.correct).length !== 1 ||
     (expectedType !== null &&
@@ -806,6 +939,15 @@ sample("no longer generatable", findings.noLongerGeneratable, (f) =>
   `#${f.id} [${f.difficulty}] ${f.questionHe}`
 );
 sample("glued Hebrew preposition", findings.gluedPreposition, (f) => `#${f.id} ${f.questionHe}`);
+sample("mixed entity types in one option set", findings.mixedEntityTypes, (f) =>
+  `#${f.id} ${f.questionHe}  [${f.types.join(", ")}]`
+);
+sample("answer type not what the archetype asks", findings.answerTypeMismatch, (f) =>
+  `#${f.id} ${f.questionHe}  (want ${f.expected}, got ${f.got})`
+);
+sample("semantically duplicate questions", findings.semanticDuplicates, (f) =>
+  `#${f.id} ${f.questionHe}  (duplicate of #${f.duplicateOf})`
+);
 
 // ---------------------------------------------------------------------------
 // 7. Apply

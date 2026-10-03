@@ -614,6 +614,22 @@ describe("cup finals and knockout progression", () => {
     assert.equal(opponent.category, "CHAMPIONS_LEAGUE", "a UCL final belongs in the UCL filter, not TITLES");
   });
 
+  /*
+    The maqaf rule applies to ל as much as to מ.
+
+    The transfer generators were fixed to write "מ-Auxerre"; this one still
+    interpolated the away side directly, so production asked "בין Argentina
+    לFrance?" — the same two-scripts-jammed-together bug in the one archetype
+    that names two clubs in a row. Four stored questions read that way.
+  */
+  test("the scoreline question separates ל from a Latin club name", () => {
+    const out = generateCupFinalQuestions([fixture({})], participants, options);
+    const score = out.find((q) => q.questionHe.includes("מה הייתה התוצאה"))!;
+    assert.ok(score, "expected a scoreline question");
+    assert.match(score.questionHe, /ל-Inter/, 'production read "לInter"');
+    assert.doesNotMatch(score.questionHe, /[מלבוכש][A-Za-z]/, "no glued preposition anywhere");
+  });
+
   test("a group-stage fixture is not a final", () => {
     assert.deepEqual(generateCupFinalQuestions([fixture({ round: "Group Stage - 1" })], participants, options), []);
   });
